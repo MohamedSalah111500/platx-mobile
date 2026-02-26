@@ -24,7 +24,6 @@ import type { CoursesStackParamList } from '../../types/navigation.types';
 import type { Course, Section, Lesson } from '../../types/course.types';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { useRTL } from '../../i18n/RTLProvider';
-import { API_CONFIG } from '../../config/env';
 import { useSound } from '../../hooks/useSound';
 
 type Props = NativeStackScreenProps<CoursesStackParamList, 'CourseDetail'>;
@@ -195,10 +194,9 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
     if (!course) return;
     const title = course.title || course.name || '';
     const desc = course.description ? `\n${course.description.substring(0, 120)}...` : '';
-    const baseUrl = API_CONFIG.CLIENT_URL.replace(/\/$/, '');
     const shareUrl = domain
-      ? `${baseUrl}/${domain}/pages/online-courses/${courseId}/details`
-      : `${baseUrl}/pages/online-courses/${courseId}/details`;
+      ? `https://platx.net/${domain}/pages/online-courses/${courseId}/details`
+      : `https://platx.net/pages/online-courses/${courseId}/details`;
     try {
       await Share.share({
         message: `${title}${desc}\n\n${shareUrl}`,

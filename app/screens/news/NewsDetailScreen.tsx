@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,50 +6,24 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
-import { Spinner } from '../../components/ui/Spinner';
 import { Badge } from '../../components/ui/Badge';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
-import { newsApi } from '../../services/api/news.api';
+import { typography } from '../../theme/typography';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import type { HomeStackParamList } from '../../types/navigation.types';
-import type { NewsItem } from '../../types/news.types';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'NewsDetail'>;
 
 export default function NewsDetailScreen({ navigation, route }: Props) {
-  const { newsId } = route.params;
+  const { newsItem } = route.params;
   const { theme } = useTheme();
   const { t } = useRTL();
-  const { width } = useWindowDimensions();
-  const [newsItem, setNewsItem] = useState<NewsItem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadNews();
-  }, [newsId]);
-
-  const loadNews = async () => {
-    try {
-      setError(null);
-      setLoading(true);
-      const data = await newsApi.getSingle(newsId);
-      setNewsItem(data);
-    } catch (err: any) {
-      const msg = err?.userMessage || err?.message || 'Failed to load news details.';
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -65,11 +39,8 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
   };
 
   // Handle both imageUrl and imageURl (backend uses inconsistent casing)
-  // Also prefix relative paths with the API base URL
-  const getImageUrlForItem = (item: NewsItem): string | undefined => {
-    const raw = item.imageUrl || item.imageURl;
-    return getFullImageUrl(raw);
-  };
+  const imageUrl = newsItem ? getFullImageUrl(newsItem.imageUrl || newsItem.imageURl) : undefined;
+  const dateStr = newsItem ? formatDate(newsItem.createdDate || newsItem.createdAt) : '';
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
@@ -134,29 +105,16 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
       color: theme.colors.text,
       lineHeight: 24,
     },
-    tagsContainer: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: spacing.sm,
-      marginTop: spacing.lg,
-    },
-    errorContainer: {
+    emptyContainer: {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
       padding: spacing['3xl'],
     },
-    errorText: { ...typography.body, color: theme.colors.danger, textAlign: 'center', marginTop: spacing.md, marginBottom: spacing.lg },
-    retryButton: {
-      backgroundColor: theme.colors.primary,
-      paddingHorizontal: spacing.xl,
-      paddingVertical: spacing.md,
-      borderRadius: borderRadius.lg,
-    },
-    retryText: { ...typography.button, color: '#fff' },
+    emptyText: { ...typography.body, color: theme.colors.textMuted, textAlign: 'center', marginTop: spacing.md },
   });
 
-  if (loading) {
+  if (!newsItem) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -165,33 +123,13 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('news.title')}</Text>
         </View>
-        <Spinner />
-      </SafeAreaView>
-    );
-  }
-
-  if (error || !newsItem) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('news.title')}</Text>
-        </View>
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color={theme.colors.danger} />
-          <Text style={styles.errorText}>{error || t('news.newsNotFound')}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadNews}>
-            <Text style={styles.retryText}>{t('common.retry')}</Text>
-          </TouchableOpacity>
+        <View style={styles.emptyContainer}>
+          <Ionicons name="newspaper-outline" size={48} color={theme.colors.textMuted} />
+          <Text style={styles.emptyText}>{t('news.newsNotFound')}</Text>
         </View>
       </SafeAreaView>
     );
   }
-
-  const imageUrl = getImageUrlForItem(newsItem);
-  const dateStr = formatDate(newsItem.createdDate || newsItem.createdAt);
 
   return (
     <SafeAreaView style={styles.container}>

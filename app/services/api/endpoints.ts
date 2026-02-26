@@ -31,8 +31,9 @@ export const GROUPS_URLS = {
 
 // News endpoints
 export const NEWS_URLS = {
-  GET_ALL: `${BASE}api/News/GetNewsListAsync`,
-  GET_SINGLE: (id: number | string) => `${BASE}api/News/${id}`,
+  GET_ALL: (domain: string) => `${BASE}api/News/GetNewsListAsync?domain=${encodeURIComponent(domain)}`,
+  GET_SINGLE: (id: number | string, domain: string) => `${BASE}api/News/${id}?domain=${encodeURIComponent(domain)}`,
+  GET_SINGLE_STUDENT: (id: number | string, domain: string) => `${BASE}api/News/GetNewsByIdForStudent/${id}?domain=${encodeURIComponent(domain)}`,
   CREATE: `${BASE}api/News`,
   UPDATE: `${BASE}api/News`,
   DELETE: (id: number | string) => `${BASE}api/News/${id}`,

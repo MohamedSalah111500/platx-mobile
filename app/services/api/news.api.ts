@@ -7,10 +7,11 @@ export const newsApi = {
   getAll: async (
     page = 1,
     size = 10,
-    search?: string
+    search?: string,
+    domain?: string
   ): Promise<PaginatedResponse<NewsItem>> => {
     const { data } = await apiClient.get<any>(
-      withPagination(NEWS_URLS.GET_ALL, page, size, search)
+      withPagination(NEWS_URLS.GET_ALL(domain || ''), page, size, search)
     );
     // reuse same extraction logic as notifications to handle nonstandard shapes
     function extractItems(data: any): { items: NewsItem[]; totalCount: number } {
@@ -47,9 +48,14 @@ export const newsApi = {
     return { items: result.items, totalCount: result.totalCount };
   },
 
-  getSingle: async (id: number | string): Promise<NewsItem> => {
-    const { data } = await apiClient.get<NewsItem>(NEWS_URLS.GET_SINGLE(id));
-    return data;
+  getSingle: async (id: number | string, domain?: string): Promise<NewsItem> => {
+    try {
+      const { data } = await apiClient.get<NewsItem>(NEWS_URLS.GET_SINGLE_STUDENT(id, domain || ''));
+      return data;
+    } catch {
+      const { data } = await apiClient.get<NewsItem>(NEWS_URLS.GET_SINGLE(id, domain || ''));
+      return data;
+    }
   },
 
   create: async (formData: FormData): Promise<NewsItem> => {

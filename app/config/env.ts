@@ -7,7 +7,7 @@ export const ENV = {
   PROD: {
     API_URL: 'https://platx-backend-prod.runasp.net/',
     AI_API_URL: 'https://exam-ai-14pq.onrender.com/',
-    CLIENT_URL: 'https://platx.run',
+    CLIENT_URL: 'https://platx.net',
   },
 };
 

@@ -28,6 +28,7 @@ import type { EventItem } from '../../types/event.types';
 import type { Course } from '../../types/course.types';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { useSound } from '../../hooks/useSound';
+import { studentsApi, type TopStudent } from '../../services/api/students.api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -54,6 +55,7 @@ export default function HomeScreen({ navigation }: Props) {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [newsError, setNewsError] = useState<string | null>(null);
   const [coursesError, setCoursesError] = useState<string | null>(null);
+  const [topStudents, setTopStudents] = useState<TopStudent[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const isTeacherOrAdmin = isStaff || isAdmin;
@@ -69,7 +71,7 @@ export default function HomeScreen({ navigation }: Props) {
       }
     }
     try {
-      const newsRes = await newsApi.getAll(1, 3);
+      const newsRes = await newsApi.getAll(1, 3, undefined, domain);
       setNews(newsRes.items || []);
       setNewsError(null);
     } catch (err: any) {
@@ -96,6 +98,12 @@ export default function HomeScreen({ navigation }: Props) {
       setEvents(Array.isArray(eventsRes) ? eventsRes.slice(0, 3) : []);
     } catch {
       // events may not be available
+    }
+    try {
+      const top = await studentsApi.getTopStudents();
+      setTopStudents(top.slice(0, 5));
+    } catch {
+      // honor board may not be available
     }
   };
 
@@ -336,7 +344,8 @@ export default function HomeScreen({ navigation }: Props) {
       marginBottom: spacing['2xl'],
     },
     quickActionPill: {
-      flex: 1,
+      width: '48%' as any,
+      flexGrow: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
@@ -581,6 +590,76 @@ export default function HomeScreen({ navigation }: Props) {
     sectionSpacing: {
       marginTop: spacing.lg,
       marginBottom: spacing.sm,
+    },
+
+    /* ── Honor Board ───────────────────────────────────────────── */
+    honorCard: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      marginHorizontal: spacing.xl,
+      marginBottom: spacing.sm,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
+      borderRadius: 16,
+      gap: spacing.sm,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.03,
+          shadowRadius: 3,
+        },
+        android: { elevation: 1 },
+      }),
+    },
+    honorRank: {
+      width: 28,
+      height: 28,
+      borderRadius: 9,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+    },
+    honorRankText: {
+      fontSize: 13,
+      fontWeight: '800' as const,
+    },
+    honorAvatar: {
+      width: 36,
+      height: 36,
+      borderRadius: 12,
+      overflow: 'hidden' as const,
+    },
+    honorAvatarImg: {
+      width: '100%' as any,
+      height: '100%' as any,
+    },
+    honorAvatarFallback: {
+      width: '100%' as any,
+      height: '100%' as any,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+    },
+    honorInitial: {
+      fontSize: 15,
+      fontWeight: '700' as const,
+    },
+    honorName: {
+      flex: 1,
+      fontSize: fontSize.sm,
+      fontWeight: '600' as const,
+    },
+    honorScore: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 3,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 8,
+    },
+    honorScoreText: {
+      fontSize: 11,
+      fontWeight: '700' as const,
+      color: '#F5A623',
     },
   });
 
@@ -991,6 +1070,64 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         )}
 
+        {/* ────────────── HONOR BOARD (top 5) ────────────── */}
+        {topStudents.length > 0 && (
+          <View style={[styles.sectionSpacing, { marginTop: spacing['2xl'] }]}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{t('honorBoard.title')}</Text>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => {
+                  play('pop');
+                  navigation.getParent()?.navigate('ProfileTab', { screen: 'HonorBoard' });
+                }}
+              >
+                <Text style={styles.seeAllText}>{t('common.seeAll')}</Text>
+              </TouchableOpacity>
+            </View>
+            {topStudents.map((student, idx) => {
+              const name = `${student.firstName || ''} ${student.lastName || ''}`.trim();
+              const initial = (student.firstName?.[0] || '?').toUpperCase();
+              const imageUrl = getFullImageUrl(student.profileImage);
+              const medalColor = idx === 0 ? '#FFD54F' : idx === 1 ? '#BDBDBD' : idx === 2 ? '#FFB74D' : ACCENT_COLORS[idx % ACCENT_COLORS.length].accent;
+              const medalBg = idx === 0 ? '#FFF8E1' : idx === 1 ? '#F5F5F5' : idx === 2 ? '#FFF3E0' : ACCENT_COLORS[idx % ACCENT_COLORS.length].bg;
+              return (
+                <TouchableOpacity
+                  key={student.id}
+                  style={[styles.honorCard, { backgroundColor: CARD_BG }]}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    play('tap');
+                    navigation.getParent()?.navigate('ProfileTab', { screen: 'HonorBoard' });
+                  }}
+                >
+                  <View style={[styles.honorRank, { backgroundColor: isDark ? theme.colors.surface : medalBg }]}>
+                    {idx < 3 ? (
+                      <Ionicons name="trophy" size={14} color={medalColor} />
+                    ) : (
+                      <Text style={[styles.honorRankText, { color: theme.colors.text }]}>{idx + 1}</Text>
+                    )}
+                  </View>
+                  <View style={styles.honorAvatar}>
+                    {imageUrl ? (
+                      <Image source={{ uri: imageUrl }} style={styles.honorAvatarImg} />
+                    ) : (
+                      <View style={[styles.honorAvatarFallback, { backgroundColor: medalBg }]}>
+                        <Text style={[styles.honorInitial, { color: medalColor }]}>{initial}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={[styles.honorName, { color: theme.colors.text }]} numberOfLines={1}>{name}</Text>
+                  <View style={[styles.honorScore, { backgroundColor: isDark ? theme.colors.surface : '#FFF8E1' }]}>
+                    <Ionicons name="star" size={11} color="#F5A623" />
+                    <Text style={styles.honorScoreText}>{student.totalPoints ?? student.completedLessons ?? 0}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
         {/* ────────────── LATEST NEWS ────────────── */}
         <View style={[styles.sectionSpacing, { marginTop: spacing['2xl'] }]}>
           <View style={styles.sectionHeader}>
@@ -1005,7 +1142,7 @@ export default function HomeScreen({ navigation }: Props) {
                 key={item.id}
                 style={styles.newsCard}
                 activeOpacity={0.85}
-                onPress={() => { play('tap'); navigation.navigate('NewsDetail', { newsId: item.id }); }}
+                onPress={() => { play('tap'); navigation.navigate('NewsDetail', { newsId: item.id, newsItem: item }); }}
               >
                 <View style={styles.newsImageContainer}>
                   {getFullImageUrl(item.imageUrl || item.imageURl) ? (

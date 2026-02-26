@@ -29,7 +29,7 @@ export type MainTabParamList = {
 // Stack param lists for each tab
 export type HomeStackParamList = {
   Home: undefined;
-  NewsDetail: { newsId: number };
+  NewsDetail: { newsId: number; newsItem?: import('./news.types').NewsItem };
   EventDetail: { eventId: number };
 };
 

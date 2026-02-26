@@ -154,7 +154,7 @@ export default function CoursesListScreen({ navigation }: Props) {
     const desc = course.description ? `\n${course.description.substring(0, 100)}...` : '';
     try {
       await Share.share({
-        message: `${title}${desc}\n\nhttps://platx.net/course/${course.id}`,
+        message: `${title}${desc}\n\n${domain ? `https://platx.net/${domain}/pages/online-courses/${course.id}/details` : `https://platx.net/pages/online-courses/${course.id}/details`}`,
         title,
       });
     } catch {}
