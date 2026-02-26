@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npx expo run:android:*)",
+      "Bash(npx expo install:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(npx expo start:*)",
+      "Bash(curl -s https://platx.runasp.net/api/News/GetNewsListAsync?page=1\"&\"size=10)"
+    ]
+  }
+}

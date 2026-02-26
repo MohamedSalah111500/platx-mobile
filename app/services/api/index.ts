@@ -1,0 +1,10 @@
+export { default as apiClient } from './client';
+export { authApi } from './auth.api';
+export { notificationsApi } from './notifications.api';
+export { newsApi } from './news.api';
+export { groupsApi } from './groups.api';
+export { chatApi } from './chat.api';
+export { coursesApi } from './courses.api';
+export { liveApi } from './live.api';
+export { eventsApi } from './events.api';
+export * from './endpoints';
