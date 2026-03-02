@@ -42,8 +42,8 @@ export default function LoginScreen({ navigation }: Props) {
   const { login, googleLogin, isLoading, error, clearError } = useAuthStore();
   const { t } = useRTL();
 
-  const [userName, setUserName] = useState('');
-  const [password, setPassword] = useState('');
+  const [userName, setUserName] = useState('test@gmail.com');
+  const [password, setPassword] = useState('Ms@123456789!');
   const [domain, setDomain] = useState('mohamed-salah');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [googleLoading, setGoogleLoading] = useState(false);

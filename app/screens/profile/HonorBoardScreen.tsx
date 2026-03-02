@@ -8,17 +8,23 @@ import {
   RefreshControl,
   Platform,
   Image,
+  Modal,
+  FlatList,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
+import { useAuth } from '../../hooks/useAuth';
 import { useRTL } from '../../i18n/RTLProvider';
 import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { fontSize } from '../../theme/typography';
 import { honorBoardApi, type HonorBoardEntry } from '../../services/api/honor-board.api';
+import { studentsApi, type TopStudent } from '../../services/api/students.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 
@@ -46,8 +52,10 @@ const PYRAMID_ROWS = [
 
 export default function HonorBoardScreen({ navigation }: Props) {
   const { theme } = useTheme();
+  const { isStaff, isAdmin } = useAuth();
   const { t, isRTL } = useRTL();
   const insets = useSafeAreaInsets();
+  const isTeacher = isStaff || isAdmin;
 
   const now = new Date();
   const [currentMonth, setCurrentMonth] = useState(now.getMonth() + 1);
@@ -55,6 +63,14 @@ export default function HonorBoardScreen({ navigation }: Props) {
   const [entries, setEntries] = useState<HonorBoardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Add student modal state (teacher only)
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [allStudents, setAllStudents] = useState<TopStudent[]>([]);
+  const [studentSearch, setStudentSearch] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState<TopStudent | null>(null);
+  const [selectedRank, setSelectedRank] = useState(1);
+  const [adding, setAdding] = useState(false);
 
   const loadData = useCallback(async (month: number, year: number) => {
     try {
@@ -96,6 +112,87 @@ export default function HonorBoardScreen({ navigation }: Props) {
   const getMonthName = (): string => {
     return t(`months.m${currentMonth}`);
   };
+
+  const openAddModal = async () => {
+    setShowAddModal(true);
+    setSelectedStudent(null);
+    setStudentSearch('');
+    // Find next available rank
+    const usedRanks = new Set(entries.map((e) => e.rank));
+    for (let r = 1; r <= 10; r++) {
+      if (!usedRanks.has(r)) { setSelectedRank(r); break; }
+    }
+    try {
+      const students = await studentsApi.getAll();
+      setAllStudents(students);
+    } catch {
+      setAllStudents([]);
+    }
+  };
+
+  const handleAddStudent = async () => {
+    if (!selectedStudent) return;
+    setAdding(true);
+    try {
+      // Build full students array: existing entries (excluding this rank) + new assignment
+      const students = entries
+        .filter((e) => e.rank !== selectedRank)
+        .map((e) => ({ studentId: e.studentId, rank: e.rank }));
+
+      students.push({
+        studentId: selectedStudent.id,
+        rank: selectedRank,
+      });
+
+      await honorBoardApi.saveRankings({
+        month: currentMonth,
+        year: currentYear,
+        students,
+      });
+      setShowAddModal(false);
+      loadData(currentMonth, currentYear);
+    } catch (err: any) {
+      Alert.alert(t('common.error'), err?.userMessage || err?.message || 'Failed to add student');
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleRemoveEntry = (entry: HonorBoardEntry) => {
+    Alert.alert(
+      t('common.confirm'),
+      `${t('common.delete')} ${entry.studentName}?`,
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Re-save without this student
+              const students = entries
+                .filter((e) => e.studentId !== entry.studentId)
+                .map((e) => ({ studentId: e.studentId, rank: e.rank }));
+
+              await honorBoardApi.saveRankings({
+                month: currentMonth,
+                year: currentYear,
+                students,
+              });
+              loadData(currentMonth, currentYear);
+            } catch {
+              // silently fail
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const filteredStudents = allStudents.filter((s) => {
+    const name = `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase();
+    return name.includes(studentSearch.toLowerCase());
+  });
 
   const getEntryForRank = (rank: number): HonorBoardEntry | undefined => {
     return entries.find((e) => e.rank === rank);
@@ -218,7 +315,13 @@ export default function HonorBoardScreen({ navigation }: Props) {
             <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('honorBoard.title')}</Text>
-          <View style={{ width: 40 }} />
+          {isTeacher ? (
+            <TouchableOpacity style={styles.backBtn} onPress={openAddModal}>
+              <Ionicons name="add" size={22} color="#fff" />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 40 }} />
+          )}
         </View>
 
         {/* Month Switcher */}
@@ -260,7 +363,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
         >
           {entries.length === 0 ? (
             <EmptyState
-              icon="trophy-outline"
+              icon={<Ionicons name="trophy-outline" size={48} color={theme.colors.textMuted} />}
               title={t('honorBoard.noStudents')}
               message={t('honorBoard.noStudentsMessage')}
             />
@@ -274,6 +377,116 @@ export default function HonorBoardScreen({ navigation }: Props) {
             </View>
           )}
         </ScrollView>
+      )}
+
+      {/* ────── Add Student Modal (teacher only) ────── */}
+      {isTeacher && (
+        <Modal visible={showAddModal} animationType="slide" transparent>
+          <View style={modalStyles.overlay}>
+            <View style={[modalStyles.sheet, { backgroundColor: theme.colors.card }]}>
+              {/* Modal header */}
+              <View style={modalStyles.sheetHeader}>
+                <Text style={[modalStyles.sheetTitle, { color: theme.colors.text }]}>
+                  {t('honorBoard.title')}
+                </Text>
+                <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                  <Ionicons name="close" size={24} color={theme.colors.text} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Rank picker */}
+              <Text style={[modalStyles.label, { color: theme.colors.textSecondary }]}>
+                Rank
+              </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: spacing.md }}>
+                {Array.from({ length: 10 }, (_, i) => i + 1).map((rank) => {
+                  const taken = entries.some((e) => e.rank === rank);
+                  return (
+                    <TouchableOpacity
+                      key={rank}
+                      onPress={() => !taken && setSelectedRank(rank)}
+                      style={[
+                        modalStyles.rankChip,
+                        {
+                          backgroundColor: selectedRank === rank ? ACCENT : (taken ? theme.colors.surface : theme.colors.background),
+                          opacity: taken ? 0.4 : 1,
+                        },
+                      ]}
+                    >
+                      <Text style={{
+                        color: selectedRank === rank ? '#fff' : theme.colors.text,
+                        fontWeight: '700',
+                        fontSize: 13,
+                      }}>
+                        {rank}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+
+              {/* Student search */}
+              <View style={[modalStyles.searchRow, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}>
+                <Ionicons name="search" size={18} color={theme.colors.textMuted} />
+                <TextInput
+                  style={[modalStyles.searchInput, { color: theme.colors.text }]}
+                  placeholder={t('common.search')}
+                  placeholderTextColor={theme.colors.textMuted}
+                  value={studentSearch}
+                  onChangeText={setStudentSearch}
+                />
+              </View>
+
+              {/* Student list */}
+              <FlatList
+                data={filteredStudents}
+                keyExtractor={(item) => item.id.toString()}
+                style={{ maxHeight: 280 }}
+                renderItem={({ item }) => {
+                  const name = `${item.firstName || ''} ${item.lastName || ''}`.trim();
+                  const isSelected = selectedStudent?.id === item.id;
+                  return (
+                    <TouchableOpacity
+                      style={[
+                        modalStyles.studentRow,
+                        { backgroundColor: isSelected ? ACCENT + '15' : 'transparent' },
+                      ]}
+                      onPress={() => setSelectedStudent(item)}
+                    >
+                      <View style={[modalStyles.studentAvatar, { backgroundColor: '#F0EDFF' }]}>
+                        <Text style={{ color: ACCENT, fontWeight: '700', fontSize: 13 }}>
+                          {(item.firstName?.[0] || '?').toUpperCase()}
+                        </Text>
+                      </View>
+                      <Text style={[modalStyles.studentName, { color: theme.colors.text }]} numberOfLines={1}>
+                        {name}
+                      </Text>
+                      {isSelected && <Ionicons name="checkmark-circle" size={20} color={ACCENT} />}
+                    </TouchableOpacity>
+                  );
+                }}
+                ListEmptyComponent={
+                  <Text style={{ color: theme.colors.textMuted, textAlign: 'center', padding: spacing.xl }}>
+                    {t('common.noResults')}
+                  </Text>
+                }
+              />
+
+              {/* Add button */}
+              <TouchableOpacity
+                style={[modalStyles.addBtn, { opacity: selectedStudent ? 1 : 0.5 }]}
+                disabled={!selectedStudent || adding}
+                onPress={handleAddStudent}
+              >
+                {adding ? (
+                  <Spinner size="small" />
+                ) : (
+                  <Text style={modalStyles.addBtnText}>{t('common.save')}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       )}
     </View>
   );
@@ -486,5 +699,90 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     maxWidth: 80,
+  },
+});
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: spacing.xl,
+    maxHeight: '85%',
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  sheetTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+  },
+  label: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+  },
+  rankChip: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.xs,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    paddingHorizontal: spacing.md,
+    height: 44,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    gap: spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    paddingVertical: 0,
+  },
+  studentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 12,
+    gap: spacing.sm,
+  },
+  studentAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  studentName: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  addBtn: {
+    backgroundColor: ACCENT,
+    borderRadius: 16,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
+  addBtnText: {
+    color: '#fff',
+    fontSize: fontSize.base,
+    fontWeight: '700',
   },
 });

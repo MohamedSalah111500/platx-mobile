@@ -9,6 +9,7 @@ import {
   Image,
   Dimensions,
   Platform,
+  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -57,6 +58,7 @@ export default function HomeScreen({ navigation }: Props) {
   const [coursesError, setCoursesError] = useState<string | null>(null);
   const [topStudents, setTopStudents] = useState<TopStudent[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchText, setSearchText] = useState('');
 
   const isTeacherOrAdmin = isStaff || isAdmin;
 
@@ -71,7 +73,7 @@ export default function HomeScreen({ navigation }: Props) {
       }
     }
     try {
-      const newsRes = await newsApi.getAll(1, 3, undefined, domain);
+      const newsRes = await newsApi.getAll(1, 3, undefined, domain ?? undefined);
       setNews(newsRes.items || []);
       setNewsError(null);
     } catch (err: any) {
@@ -335,25 +337,21 @@ export default function HomeScreen({ navigation }: Props) {
       textAlign: 'center',
     },
 
-    /* ── Quick Actions (pill grid) ────────────────────────────── */
-    quickActionsContainer: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      paddingHorizontal: spacing.xl,
-      gap: spacing.sm,
+    /* ── Quick Actions (horizontal slider) ────────────────────── */
+    quickActionsScroll: {
+      paddingLeft: spacing.xl,
+      paddingRight: spacing.md,
       marginBottom: spacing['2xl'],
     },
     quickActionPill: {
-      width: '48%' as any,
-      flexGrow: 1,
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
       backgroundColor: CARD_BG,
       borderRadius: borderRadius.full,
       paddingVertical: spacing.md,
-      paddingHorizontal: spacing.sm,
-      gap: 6,
+      paddingHorizontal: spacing.lg,
+      marginRight: spacing.sm,
+      gap: 8,
       borderWidth: 1,
       borderColor: isDark ? theme.colors.border : '#F0F0F0',
     },
@@ -368,6 +366,7 @@ export default function HomeScreen({ navigation }: Props) {
       ...typography.caption,
       fontWeight: '600',
       color: theme.colors.text,
+      textAlign: 'left',
     },
 
     /* ── Section Header ───────────────────────────────────────── */
@@ -711,11 +710,7 @@ export default function HomeScreen({ navigation }: Props) {
         </Text>
 
         {/* ────────────── SEARCH BAR ────────────── */}
-        <TouchableOpacity
-          style={styles.searchBarContainer}
-          activeOpacity={0.8}
-          onPress={() => navigation.getParent()?.navigate('CoursesTab')}
-        >
+        <View style={styles.searchBarContainer}>
           <View style={styles.searchBar}>
             <Ionicons
               name="search"
@@ -723,12 +718,32 @@ export default function HomeScreen({ navigation }: Props) {
               color={theme.colors.textMuted}
               style={styles.searchIcon}
             />
-            <Text style={[styles.searchInput, { color: theme.colors.inputPlaceholder }]}>
-              {t('courses.title')}...
-            </Text>
-            <Ionicons name="options-outline" size={20} color={theme.colors.textMuted} />
+            <TextInput
+              style={[styles.searchInput, { color: theme.colors.text }]}
+              placeholder={`${t('courses.searchCourses')}`}
+              placeholderTextColor={theme.colors.inputPlaceholder}
+              value={searchText}
+              onChangeText={setSearchText}
+              returnKeyType="search"
+              onSubmitEditing={() => {
+                const q = searchText.trim();
+                if (q) {
+                  navigation.getParent()?.navigate('CoursesTab', {
+                    screen: 'CoursesList',
+                    params: { search: q },
+                  });
+                } else {
+                  navigation.getParent()?.navigate('CoursesTab');
+                }
+              }}
+            />
+            {searchText.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchText('')} activeOpacity={0.6}>
+                <Ionicons name="close-circle" size={18} color={theme.colors.textMuted} />
+              </TouchableOpacity>
+            )}
           </View>
-        </TouchableOpacity>
+        </View>
 
         {/* ────────────── STAT CARDS ────────────── */}
         {isTeacherOrAdmin ? (
@@ -797,8 +812,12 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         )}
 
-        {/* ────────────── QUICK ACTIONS ────────────── */}
-        <View style={styles.quickActionsContainer}>
+        {/* ────────────── QUICK ACTIONS (horizontal slider) ────────────── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickActionsScroll}
+        >
           <TouchableOpacity
             style={styles.quickActionPill}
             activeOpacity={0.7}
@@ -848,7 +867,7 @@ export default function HomeScreen({ navigation }: Props) {
             </View>
             <Text style={styles.quickActionText}>{t('home.live')}</Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
 
         {/* ────────────── POPULAR / RECENT COURSES (horizontal) ────────────── */}
         {coursesError ? (

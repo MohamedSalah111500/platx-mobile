@@ -18,4 +18,9 @@ export const studentsApi = {
     const { data } = await apiClient.get<any>(STUDENTS_URLS.GET_TOP_STUDENTS);
     return Array.isArray(data) ? data : data?.data || data?.items || [];
   },
+
+  getAll: async (): Promise<TopStudent[]> => {
+    const { data } = await apiClient.get<any>(STUDENTS_URLS.GET_ALL);
+    return Array.isArray(data) ? data : data?.data || data?.items || [];
+  },
 };

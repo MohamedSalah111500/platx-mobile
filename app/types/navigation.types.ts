@@ -34,7 +34,7 @@ export type HomeStackParamList = {
 };
 
 export type CoursesStackParamList = {
-  CoursesList: undefined;
+  CoursesList: { search?: string } | undefined;
   CourseDetail: { courseId: number };
   MyCourses: undefined;
   LessonPlayer: { lessonId: number; courseId: number };

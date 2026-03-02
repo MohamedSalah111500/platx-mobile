@@ -1,6 +1,6 @@
 import apiClient from './client';
 import { GROUPS_URLS, withPagination } from './endpoints';
-import type { Group, GroupMember, StudentGroupsResponse } from '../../types/group.types';
+import type { Group, GroupMember, GroupFile, StudentGroupsResponse } from '../../types/group.types';
 import type { PaginatedResponse } from '../../types/api.types';
 
 export const groupsApi = {
@@ -21,17 +21,24 @@ export const groupsApi = {
   },
 
   getGroupStudents: async (groupId: number): Promise<GroupMember[]> => {
-    const { data } = await apiClient.get<GroupMember[]>(
-      GROUPS_URLS.GET_GROUP_STUDENTS(groupId)
+    const { data } = await apiClient.get<any>(
+      withPagination(GROUPS_URLS.GET_GROUP_STUDENTS(groupId), 1, 1000)
     );
-    return data;
+    return data?.items || (Array.isArray(data) ? data : []);
   },
 
   getGroupStaff: async (groupId: number): Promise<GroupMember[]> => {
-    const { data } = await apiClient.get<GroupMember[]>(
+    const { data } = await apiClient.get<any>(
       GROUPS_URLS.GET_GROUP_STAFF(groupId)
     );
-    return data;
+    return data?.items || (Array.isArray(data) ? data : []);
+  },
+
+  getGroupFiles: async (groupId: number): Promise<GroupFile[]> => {
+    const { data } = await apiClient.get<any>(
+      GROUPS_URLS.GET_GROUP_FILES(groupId)
+    );
+    return data?.items || (Array.isArray(data) ? data : []);
   },
 
   create: async (payload: {

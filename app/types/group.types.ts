@@ -32,6 +32,15 @@ export interface GroupMember {
   role?: string;
 }
 
+export interface GroupFile {
+  id: number;
+  name: string;
+  url?: string;
+  size?: number;
+  type?: number;
+  attachmentType?: string;
+}
+
 export interface CreateGroupPayload {
   name: string;
   description?: string;

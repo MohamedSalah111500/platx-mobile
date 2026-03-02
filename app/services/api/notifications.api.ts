@@ -83,14 +83,6 @@ export const notificationsApi = {
         break;
     }
 
-    if (role === 'Student' && (studentId == null || studentId <= 0)) {
-      // fail fast so callers can see the problem instead of getting empty data
-      const err = new Error('studentId is required for student notifications');
-      // @ts-ignore
-      err.status = 400;
-      throw err;
-    }
-
     const fullUrl = buildUrl(url, role === 'Student');
     console.log('[Notifications API] Fetching:', fullUrl);
 
@@ -140,7 +132,13 @@ export const notificationsApi = {
   },
 
   markAsRead: async (notificationId: number): Promise<void> => {
-    await apiClient.post(NOTIFICATIONS_URLS.MARK_READ, { notificationId });
+    // Try query-param format first (common in .NET), fallback to body
+    try {
+      const url = `${NOTIFICATIONS_URLS.MARK_READ}?notificationId=${notificationId}`;
+      await apiClient.post(url);
+    } catch {
+      await apiClient.post(NOTIFICATIONS_URLS.MARK_READ, { notificationId });
+    }
   },
 
   delete: async (id: number): Promise<void> => {

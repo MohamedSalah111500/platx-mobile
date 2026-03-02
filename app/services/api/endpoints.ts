@@ -21,6 +21,7 @@ export const GROUPS_URLS = {
   GET_GROUP: (groupId: number) => `${BASE}api/Groups/${groupId}`,
   GET_GROUP_STUDENTS: (groupId: number) => `${BASE}api/Groups/${groupId}/students`,
   GET_GROUP_STAFF: (groupId: number) => `${BASE}api/Groups/${groupId}/staff`,
+  GET_GROUP_FILES: (groupId: number) => `${BASE}api/Groups/${groupId}/files`,
   REMOVE_STUDENT: (groupId: string, studentId: number) =>
     `${BASE}api/Groups/remove-student/${groupId}/${studentId}`,
   ADD_STUDENT: (groupId: string, studentId: number) =>
@@ -144,6 +145,7 @@ export const STUDENTS_URLS = {
 export const HONOR_BOARD_URLS = {
   GET: (month: number, year: number) =>
     `${BASE}api/HonorBoard?month=${month}&year=${year}`,
+  SAVE: `${BASE}api/HonorBoard`,
 };
 
 // Staff endpoints

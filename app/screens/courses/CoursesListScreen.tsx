@@ -32,7 +32,7 @@ const CARD_ACCENT = [ACCENT, '#F5A623', '#34C38F', '#F46A6A', '#9B59B6', '#1ABC9
 
 type Props = NativeStackScreenProps<CoursesStackParamList, 'CoursesList'>;
 
-export default function CoursesListScreen({ navigation }: Props) {
+export default function CoursesListScreen({ navigation, route }: Props) {
   const { theme } = useTheme();
   const { user, domain, isStudent } = useAuth();
   const { t } = useRTL();
@@ -51,7 +51,7 @@ export default function CoursesListScreen({ navigation }: Props) {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(route.params?.search || '');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
