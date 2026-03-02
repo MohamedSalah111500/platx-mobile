@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
   RefreshControl,
   Platform,
@@ -17,8 +17,8 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
-import { studentsApi, type TopStudent } from '../../services/api/students.api';
+import { fontSize } from '../../theme/typography';
+import { honorBoardApi, type HonorBoardEntry } from '../../services/api/honor-board.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 
@@ -27,9 +27,9 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'HonorBoard'>;
 const ACCENT = '#7c63fd';
 
 const MEDAL_COLORS = [
-  { bg: '#FFF8E1', border: '#FFD54F', icon: '#F5A623', medal: 'trophy' },  // Gold
-  { bg: '#F5F5F5', border: '#BDBDBD', icon: '#9E9E9E', medal: 'medal' },   // Silver
-  { bg: '#FFF3E0', border: '#FFB74D', icon: '#E65100', medal: 'medal' },    // Bronze
+  { bg: '#FFF8E1', border: '#FFD54F', icon: '#F5A623' }, // Gold  - Rank 1
+  { bg: '#F5F5F5', border: '#BDBDBD', icon: '#9E9E9E' }, // Silver - Rank 2
+  { bg: '#FFF3E0', border: '#FFB74D', icon: '#E65100' }, // Bronze - Rank 3
 ];
 
 const RANK_COLORS = [
@@ -37,146 +37,171 @@ const RANK_COLORS = [
   '#F0EDFF', '#E8F8F0', '#E8F4FD', '#FFF4E5', '#FCE8EC',
 ];
 
+const PYRAMID_ROWS = [
+  { ranks: [1], label: 'top' },
+  { ranks: [2, 3], label: 'second' },
+  { ranks: [4, 5, 6], label: 'third' },
+  { ranks: [7, 8, 9, 10], label: 'fourth' },
+];
+
 export default function HonorBoardScreen({ navigation }: Props) {
   const { theme } = useTheme();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const insets = useSafeAreaInsets();
-  const [students, setStudents] = useState<TopStudent[]>([]);
+
+  const now = new Date();
+  const [currentMonth, setCurrentMonth] = useState(now.getMonth() + 1);
+  const [currentYear, setCurrentYear] = useState(now.getFullYear());
+  const [entries, setEntries] = useState<HonorBoardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async (month: number, year: number) => {
     try {
-      const data = await studentsApi.getTopStudents();
-      setStudents(data.slice(0, 10));
+      const data = await honorBoardApi.getRankings(month, year);
+      setEntries(data);
     } catch (err) {
       console.error('[HonorBoard] Error:', err);
+      setEntries([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    loadData(currentMonth, currentYear);
+  }, [currentMonth, currentYear, loadData]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadData();
+    loadData(currentMonth, currentYear);
   };
 
-  const renderTopThree = () => {
-    if (students.length < 1) return null;
-    const top3 = students.slice(0, 3);
+  const navigateMonth = (direction: number) => {
+    let newMonth = currentMonth + direction;
+    let newYear = currentYear;
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear++;
+    } else if (newMonth < 1) {
+      newMonth = 12;
+      newYear--;
+    }
+    setCurrentMonth(newMonth);
+    setCurrentYear(newYear);
+  };
 
-    // Arrange as: 2nd | 1st | 3rd
-    const ordered = [top3[1], top3[0], top3[2]].filter(Boolean);
-    const podiumHeights = [100, 130, 80];
+  const getMonthName = (): string => {
+    return t(`months.m${currentMonth}`);
+  };
 
-    return (
-      <View style={styles.podiumContainer}>
-        {/* Trophy header */}
-        <View style={styles.podiumHeader}>
-          <Ionicons name="trophy" size={28} color="#FFD54F" />
-          <Text style={[styles.podiumTitle, { color: '#fff' }]}>
-            {t('honorBoard.topStudents')}
+  const getEntryForRank = (rank: number): HonorBoardEntry | undefined => {
+    return entries.find((e) => e.rank === rank);
+  };
+
+  const getInitial = (name: string): string => {
+    const parts = name.trim().split(/\s+/);
+    return parts.map((p) => p[0] || '').join('').toUpperCase().slice(0, 2) || '?';
+  };
+
+  const renderRankCard = (rank: number) => {
+    const entry = getEntryForRank(rank);
+    const isTopThree = rank <= 3;
+    const medal = isTopThree ? MEDAL_COLORS[rank - 1] : null;
+    const bgColor = RANK_COLORS[(rank - 1) % RANK_COLORS.length];
+
+    if (!entry) {
+      // Empty slot
+      return (
+        <View
+          key={`rank-${rank}`}
+          style={[
+            styles.rankCard,
+            isTopThree && styles.rankCardTop,
+            { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.card },
+          ]}
+        >
+          <View style={[
+            styles.emptyRankBadge,
+            { backgroundColor: medal?.border || (theme.dark ? theme.colors.surface : bgColor) },
+          ]}>
+            <Text style={[styles.emptyRankText, { color: medal ? '#fff' : theme.colors.textMuted }]}>
+              {rank}
+            </Text>
+          </View>
+          <Ionicons
+            name="person-add-outline"
+            size={isTopThree ? 28 : 22}
+            color={theme.colors.textMuted}
+            style={{ marginTop: spacing.xs }}
+          />
+          <Text style={[styles.emptyLabel, { color: theme.colors.textMuted }]}>
+            —
           </Text>
         </View>
+      );
+    }
 
-        <View style={styles.podiumRow}>
-          {ordered.map((student, idx) => {
-            if (!student) return <View key={`empty-${idx}`} style={styles.podiumSlot} />;
-            const actualRank = idx === 0 ? 2 : idx === 1 ? 1 : 3;
-            const medal = MEDAL_COLORS[actualRank - 1];
-            const imageUrl = getFullImageUrl(student.profileImage);
-            const name = `${student.firstName || ''} ${student.lastName || ''}`.trim();
-            const initial = (student.firstName?.[0] || '?').toUpperCase();
+    const imageUrl = getFullImageUrl(entry.studentProfileImage);
+    const initial = getInitial(entry.studentName);
 
-            return (
-              <View key={student.id} style={styles.podiumSlot}>
-                {/* Avatar */}
-                <View style={[styles.podiumAvatarWrap, { borderColor: medal.border }]}>
-                  {imageUrl ? (
-                    <Image source={{ uri: imageUrl }} style={styles.podiumAvatarImg} />
-                  ) : (
-                    <View style={[styles.podiumAvatarFallback, { backgroundColor: medal.bg }]}>
-                      <Text style={[styles.podiumInitial, { color: medal.icon }]}>{initial}</Text>
-                    </View>
-                  )}
-                  {/* Rank badge */}
-                  <View style={[styles.rankBadge, { backgroundColor: medal.border }]}>
-                    <Text style={styles.rankBadgeText}>{actualRank}</Text>
-                  </View>
-                </View>
-
-                {/* Name */}
-                <Text style={styles.podiumName} numberOfLines={1}>{name}</Text>
-
-                {/* Points */}
-                <Text style={styles.podiumPoints}>
-                  {student.totalPoints ?? student.completedLessons ?? 0}
-                </Text>
-
-                {/* Podium block */}
-                <View style={[styles.podiumBlock, { height: podiumHeights[idx], backgroundColor: medal.bg }]}>
-                  {actualRank === 1 && (
-                    <Ionicons name="trophy" size={24} color={medal.icon} style={{ marginTop: 8 }} />
-                  )}
-                </View>
+    if (isTopThree) {
+      return (
+        <View
+          key={`rank-${rank}`}
+          style={[styles.rankCard, styles.rankCardTop]}
+        >
+          {/* Avatar */}
+          <View style={[styles.topAvatarWrap, { borderColor: medal!.border }]}>
+            {imageUrl ? (
+              <Image source={{ uri: imageUrl }} style={styles.topAvatarImg} />
+            ) : (
+              <View style={[styles.topAvatarFallback, { backgroundColor: medal!.bg }]}>
+                <Text style={[styles.topInitial, { color: medal!.icon }]}>{initial}</Text>
               </View>
-            );
-          })}
+            )}
+            <View style={[styles.topRankBadge, { backgroundColor: medal!.border }]}>
+              <Text style={styles.topRankBadgeText}>{rank}</Text>
+            </View>
+          </View>
+
+          {/* Name */}
+          <Text style={styles.topName} numberOfLines={1}>{entry.studentName}</Text>
+
+          {/* Trophy for rank 1 */}
+          {rank === 1 && (
+            <Ionicons name="trophy" size={20} color="#FFD54F" style={{ marginTop: 2 }} />
+          )}
         </View>
-      </View>
-    );
-  };
+      );
+    }
 
-  const renderStudent = ({ item, index }: { item: TopStudent; index: number }) => {
-    if (index < 3) return null; // Top 3 shown in podium
-    const rank = index + 1;
-    const name = `${item.firstName || ''} ${item.lastName || ''}`.trim();
-    const initial = (item.firstName?.[0] || '?').toUpperCase();
-    const imageUrl = getFullImageUrl(item.profileImage);
-    const bgColor = RANK_COLORS[index % RANK_COLORS.length];
-
+    // Ranks 4-10
     return (
-      <View style={[styles.studentCard, { backgroundColor: theme.colors.card }]}>
-        {/* Rank number */}
-        <View style={[styles.rankCircle, { backgroundColor: theme.dark ? theme.colors.surface : bgColor }]}>
-          <Text style={[styles.rankText, { color: theme.colors.text }]}>{rank}</Text>
+      <View
+        key={`rank-${rank}`}
+        style={[
+          styles.rankCard,
+          { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.card },
+        ]}
+      >
+        <View style={[styles.lowerRankBadge, { backgroundColor: theme.dark ? theme.colors.background : bgColor }]}>
+          <Text style={[styles.lowerRankText, { color: theme.colors.text }]}>{rank}</Text>
         </View>
-
-        {/* Avatar */}
-        <View style={styles.studentAvatar}>
+        <View style={styles.lowerAvatar}>
           {imageUrl ? (
-            <Image source={{ uri: imageUrl }} style={styles.studentAvatarImg} />
+            <Image source={{ uri: imageUrl }} style={styles.lowerAvatarImg} />
           ) : (
-            <View style={[styles.studentAvatarFallback, { backgroundColor: bgColor }]}>
-              <Text style={[styles.studentInitial, { color: ACCENT }]}>{initial}</Text>
+            <View style={[styles.lowerAvatarFallback, { backgroundColor: bgColor }]}>
+              <Text style={[styles.lowerInitialText, { color: ACCENT }]}>{initial}</Text>
             </View>
           )}
         </View>
-
-        {/* Name & info */}
-        <View style={styles.studentInfo}>
-          <Text style={[styles.studentName, { color: theme.colors.text }]} numberOfLines={1}>
-            {name}
-          </Text>
-          <Text style={[styles.studentMeta, { color: theme.colors.textMuted }]}>
-            {item.totalPoints != null
-              ? t('honorBoard.points', { count: item.totalPoints })
-              : t('honorBoard.lessons', { count: item.completedLessons ?? 0 })}
-          </Text>
-        </View>
-
-        {/* Score badge */}
-        <View style={[styles.scoreBadge, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
-          <Ionicons name="star" size={12} color="#F5A623" />
-          <Text style={styles.scoreText}>
-            {item.totalPoints ?? item.completedLessons ?? 0}
-          </Text>
-        </View>
+        <Text style={[styles.lowerName, { color: theme.colors.text }]} numberOfLines={1}>
+          {entry.studentName}
+        </Text>
       </View>
     );
   };
@@ -190,31 +215,39 @@ export default function HonorBoardScreen({ navigation }: Props) {
             style={styles.backBtn}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={22} color="#fff" />
+            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('honorBoard.title')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Top 3 podium */}
-        {!loading && students.length > 0 && renderTopThree()}
+        {/* Month Switcher */}
+        <View style={styles.monthSwitcher}>
+          <TouchableOpacity
+            style={styles.monthBtn}
+            onPress={() => navigateMonth(isRTL ? 1 : -1)}
+          >
+            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={20} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.monthDisplay}>
+            <Text style={styles.monthName}>{getMonthName()}</Text>
+            <Text style={styles.monthYear}>{currentYear}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.monthBtn}
+            onPress={() => navigateMonth(isRTL ? -1 : 1)}
+          >
+            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Rest of the list */}
+      {/* Content */}
       {loading ? (
         <Spinner />
-      ) : students.length === 0 ? (
-        <EmptyState
-          icon="trophy-outline"
-          title={t('honorBoard.noStudents')}
-          message={t('honorBoard.noStudentsMessage')}
-        />
       ) : (
-        <FlatList
-          data={students}
-          renderItem={renderStudent}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={styles.listContent}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -224,7 +257,23 @@ export default function HonorBoardScreen({ navigation }: Props) {
               colors={[ACCENT]}
             />
           }
-        />
+        >
+          {entries.length === 0 ? (
+            <EmptyState
+              icon="trophy-outline"
+              title={t('honorBoard.noStudents')}
+              message={t('honorBoard.noStudentsMessage')}
+            />
+          ) : (
+            <View style={styles.pyramidContainer}>
+              {PYRAMID_ROWS.map((row) => (
+                <View key={row.label} style={styles.pyramidRow}>
+                  {row.ranks.map((rank) => renderRankCard(rank))}
+                </View>
+              ))}
+            </View>
+          )}
+        </ScrollView>
       )}
     </View>
   );
@@ -232,6 +281,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+
   // Header
   headerBg: {
     backgroundColor: ACCENT,
@@ -260,55 +310,102 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
   },
-  // Podium
-  podiumContainer: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-  },
-  podiumHeader: {
+
+  // Month Switcher
+  monthSwitcher: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
+    marginTop: spacing.md,
+    gap: spacing.md,
   },
-  podiumTitle: {
+  monthBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  monthDisplay: {
+    alignItems: 'center',
+    minWidth: 120,
+  },
+  monthName: {
     fontSize: fontSize.base,
     fontWeight: '700',
+    color: '#fff',
   },
-  podiumRow: {
+  monthYear: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 2,
+  },
+
+  // Pyramid
+  scrollContent: {
+    padding: spacing.lg,
+    paddingBottom: 120,
+  },
+  pyramidContainer: {
+    gap: spacing.md,
+  },
+  pyramidRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
     justifyContent: 'center',
     gap: spacing.sm,
   },
-  podiumSlot: {
-    flex: 1,
+
+  // Rank Cards
+  rankCard: {
     alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 18,
+    minWidth: 80,
+    flex: 1,
+    maxWidth: 110,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: { elevation: 2 },
+    }),
   },
-  podiumAvatarWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: 20,
+  rankCardTop: {
+    backgroundColor: 'transparent',
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+
+  // Top 3 styles
+  topAvatarWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 22,
     borderWidth: 3,
     overflow: 'hidden',
     marginBottom: spacing.xs,
   },
-  podiumAvatarImg: {
+  topAvatarImg: {
     width: '100%',
     height: '100%',
   },
-  podiumAvatarFallback: {
+  topAvatarFallback: {
     width: '100%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  podiumInitial: {
+  topInitial: {
     fontSize: 22,
     fontWeight: '800',
   },
-  rankBadge: {
+  topRankBadge: {
     position: 'absolute',
     bottom: -2,
     alignSelf: 'center',
@@ -318,108 +415,76 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  rankBadgeText: {
+  topRankBadgeText: {
     fontSize: 11,
     fontWeight: '800',
     color: '#fff',
   },
-  podiumName: {
+  topName: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#fff',
-    marginBottom: 2,
+    color: '#444',
     maxWidth: 90,
     textAlign: 'center',
+    marginTop: 2,
   },
-  podiumPoints: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: 'rgba(255,255,255,0.8)',
-    marginBottom: spacing.xs,
-  },
-  podiumBlock: {
-    width: '100%',
-    borderTopLeftRadius: 14,
-    borderTopRightRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-  // List
-  listContent: {
-    padding: spacing.xl,
-    paddingBottom: 120,
-    gap: spacing.sm,
-  },
-  studentCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.lg,
-    borderRadius: 18,
-    gap: spacing.md,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.03,
-        shadowRadius: 4,
-      },
-      android: { elevation: 1 },
-    }),
-  },
-  rankCircle: {
+
+  // Empty slot
+  emptyRankBadge: {
     width: 32,
     height: 32,
-    borderRadius: 10,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  rankText: {
-    fontSize: fontSize.sm,
+  emptyRankText: {
+    fontSize: 13,
     fontWeight: '800',
   },
-  studentAvatar: {
-    width: 44,
-    height: 44,
+  emptyLabel: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+
+  // Lower ranks (4-10)
+  lowerRankBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  lowerRankText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  lowerAvatar: {
+    width: 40,
+    height: 40,
     borderRadius: 14,
     overflow: 'hidden',
+    marginBottom: spacing.xs,
   },
-  studentAvatarImg: {
+  lowerAvatarImg: {
     width: '100%',
     height: '100%',
   },
-  studentAvatarFallback: {
+  lowerAvatarFallback: {
     width: '100%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 14,
   },
-  studentInitial: {
-    fontSize: 18,
+  lowerInitialText: {
+    fontSize: 16,
     fontWeight: '700',
   },
-  studentInfo: {
-    flex: 1,
-  },
-  studentName: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  studentMeta: {
+  lowerName: {
     fontSize: 11,
-  },
-  scoreBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-  },
-  scoreText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#F5A623',
+    fontWeight: '600',
+    textAlign: 'center',
+    maxWidth: 80,
   },
 });

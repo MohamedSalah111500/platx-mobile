@@ -140,6 +140,12 @@ export const STUDENTS_URLS = {
   DELETE: (id: number) => `${BASE}api/Students/${id}`,
 };
 
+// Honor Board endpoints
+export const HONOR_BOARD_URLS = {
+  GET: (month: number, year: number) =>
+    `${BASE}api/HonorBoard?month=${month}&year=${year}`,
+};
+
 // Staff endpoints
 export const STAFF_URLS = {
   GET_ALL: `${BASE}api/Staffs`,

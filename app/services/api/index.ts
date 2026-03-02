@@ -7,4 +7,5 @@ export { chatApi } from './chat.api';
 export { coursesApi } from './courses.api';
 export { liveApi } from './live.api';
 export { eventsApi } from './events.api';
+export { honorBoardApi } from './honor-board.api';
 export * from './endpoints';
