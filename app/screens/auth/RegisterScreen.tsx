@@ -8,16 +8,10 @@ import {
   Platform,
   TouchableOpacity,
   Alert,
-  TurboModuleRegistry,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 let GoogleSignin: any = null;
 let statusCodes: any = {};
-if (TurboModuleRegistry.get('RNGoogleSignin')) {
-  const gsi = require('@react-native-google-signin/google-signin');
-  GoogleSignin = gsi.GoogleSignin;
-  statusCodes = gsi.statusCodes;
-}
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuthStore } from '../../store/auth.store';
@@ -35,7 +29,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 export default function RegisterScreen({ navigation, route }: Props) {
   const { theme } = useTheme();
   const { register, googleLogin, isLoading, error, clearError } = useAuthStore();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
@@ -52,7 +46,6 @@ export default function RegisterScreen({ navigation, route }: Props) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [domain, setDomain] = useState(route.params?.domain || '');
@@ -81,7 +74,6 @@ export default function RegisterScreen({ navigation, route }: Props) {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
-        phoneNumber: phoneNumber.trim() || undefined,
         password,
         confirmPassword,
         domain: domain.trim(),
@@ -155,20 +147,22 @@ export default function RegisterScreen({ navigation, route }: Props) {
     },
     content: {
       flexGrow: 1,
+      justifyContent: 'center',
       padding: spacing['2xl'],
     },
     header: {
-      marginTop: Platform.OS === 'ios' ? spacing['4xl'] : spacing['2xl'],
       marginBottom: spacing['2xl'],
     },
     title: {
       ...typography.h3,
       color: theme.colors.text,
       marginBottom: spacing.sm,
+      textAlign: 'center',
     },
     subtitle: {
       ...typography.body,
       color: theme.colors.textSecondary,
+      textAlign: 'center',
     },
     errorBanner: {
       backgroundColor: theme.colors.danger + '15',
@@ -181,6 +175,7 @@ export default function RegisterScreen({ navigation, route }: Props) {
     errorText: {
       ...typography.bodySmall,
       color: theme.colors.danger,
+      textAlign: 'left',
     },
     row: {
       flexDirection: 'row',
@@ -202,7 +197,7 @@ export default function RegisterScreen({ navigation, route }: Props) {
     footerLink: {
       ...typography.body,
       color: theme.colors.primary,
-      fontWeight: '600',
+      fontFamily: 'Cairo_600SemiBold',
     },
   });
 
@@ -277,14 +272,6 @@ export default function RegisterScreen({ navigation, route }: Props) {
           error={formErrors.email}
           keyboardType="email-address"
           autoCapitalize="none"
-        />
-
-        <Input
-          label={t('auth.phoneOptional')}
-          placeholder="+20 xxx xxx xxxx"
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
-          keyboardType="phone-pad"
         />
 
         <Input

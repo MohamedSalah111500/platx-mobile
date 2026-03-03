@@ -23,7 +23,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'NewsDetail'>;
 export default function NewsDetailScreen({ navigation, route }: Props) {
   const { newsItem } = route.params;
   const { theme } = useTheme();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -119,7 +119,7 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
+            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('news.title')}</Text>
         </View>
@@ -135,7 +135,7 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
+          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('news.title')}</Text>
       </View>

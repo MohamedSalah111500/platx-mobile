@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { I18nManager } from 'react-native';
 import { getLocales } from 'expo-localization';
 
 import en from './locales/en.json';
@@ -13,7 +14,13 @@ const resources = {
 // Get device locale (expo-localization v16+ API)
 const deviceLocale = getLocales()[0]?.languageCode || 'en';
 const supportedLocales = ['en', 'ar'];
-const defaultLocale = supportedLocales.includes(deviceLocale) ? deviceLocale : 'en';
+const defaultLocale = 'ar';
+
+// Force RTL immediately for Arabic default (before any component renders)
+if (defaultLocale === 'ar' && !I18nManager.isRTL) {
+  I18nManager.allowRTL(true);
+  I18nManager.forceRTL(true);
+}
 
 i18n.use(initReactI18next).init({
   resources,

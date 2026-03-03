@@ -63,7 +63,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function LiveClassroomScreen({ navigation, route }: Props) {
   const { roomId, isTeacher } = route.params;
   const { user, isStudent } = useAuth();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
 
   // Room & session state
   const [room, setRoom] = useState<LiveSession | null>(null);
@@ -507,17 +507,8 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
 
   // ─── Render: Video Area ──────────────────────
   const renderVideoArea = () => {
-    if (!agoraJoined) {
-      return (
-        <View style={styles.videoPlaceholder}>
-          <Spinner />
-          <Text style={styles.placeholderText}>{t('live.connecting')}</Text>
-        </View>
-      );
-    }
-
-    // If Agora is not available (e.g. Expo Go), show a message
-    if (!RtcSurfaceView) {
+    // If Agora is not available, show fallback immediately (don't show infinite spinner)
+    if (!RtcSurfaceView || !AgoraService.isAgoraAvailable()) {
       return (
         <View style={styles.videoPlaceholder}>
           <Ionicons name="videocam-outline" size={48} color={DARK.textSecondary} />
@@ -527,6 +518,16 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           <Text style={[styles.placeholderText, { fontSize: 12, marginTop: 4 }]}>
             Use a development build for full video support
           </Text>
+        </View>
+      );
+    }
+
+    // Agora available but still connecting
+    if (!agoraJoined) {
+      return (
+        <View style={styles.videoPlaceholder}>
+          <Spinner />
+          <Text style={styles.placeholderText}>{t('live.connecting')}</Text>
         </View>
       );
     }
@@ -632,7 +633,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
             style={styles.backBtn}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={24} color={DARK.text} />
+            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={DARK.text} />
           </TouchableOpacity>
           <Text style={styles.topBarTitle}>{t('live.joiningSession')}</Text>
         </View>
@@ -653,7 +654,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
             style={styles.backBtn}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={24} color={DARK.text} />
+            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={DARK.text} />
           </TouchableOpacity>
           <Text style={styles.topBarTitle}>{t('live.liveSession')}</Text>
         </View>
@@ -687,7 +688,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           style={styles.backBtn}
           onPress={() => handleEndOrLeave()}
         >
-          <Ionicons name="chevron-back" size={24} color={DARK.text} />
+          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={DARK.text} />
         </TouchableOpacity>
 
         <View style={styles.liveBadge}>
@@ -951,13 +952,13 @@ const styles = StyleSheet.create({
   liveText: {
     ...typography.caption,
     color: DARK.danger,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     fontSize: 11,
   },
   topBarTitle: {
     ...typography.body,
     color: DARK.text,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     flex: 1,
   },
   participantCountBtn: {
@@ -972,7 +973,7 @@ const styles = StyleSheet.create({
   participantCountText: {
     ...typography.caption,
     color: DARK.text,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     marginLeft: 4,
   },
 
@@ -1044,7 +1045,7 @@ const styles = StyleSheet.create({
   unreadText: {
     color: '#fff',
     fontSize: 10,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
   },
 
   // Chat Overlay
@@ -1070,7 +1071,7 @@ const styles = StyleSheet.create({
   chatSender: {
     ...typography.caption,
     color: DARK.accent,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     marginBottom: 2,
   },
   chatText: {

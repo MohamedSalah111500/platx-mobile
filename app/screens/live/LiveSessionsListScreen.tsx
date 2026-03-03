@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CommonActions } from '@react-navigation/native';
+import { CommonActions, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { useRTL } from '../../i18n/RTLProvider';
@@ -30,7 +30,7 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'LiveSessions'>;
 export default function LiveSessionsListScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { user, can, isStudent } = useAuth();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const [sessions, setSessions] = useState<LiveSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,9 +52,12 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
     }
   };
 
-  useEffect(() => {
-    loadSessions();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      loadSessions();
+    }, []),
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -172,7 +175,7 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
     liveText: {
       ...typography.caption,
       color: theme.colors.danger,
-      fontWeight: '700',
+      fontFamily: 'Cairo_700Bold',
     },
     participants: {
       ...typography.caption,
@@ -207,7 +210,7 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
+            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('live.title')}</Text>
         </View>

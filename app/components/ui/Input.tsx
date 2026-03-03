@@ -8,10 +8,10 @@ import {
   ViewStyle,
   TouchableOpacity,
   Platform,
+  I18nManager,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '@theme/ThemeProvider';
-import { useRTL } from '@i18n/RTLProvider';
 import { spacing, borderRadius } from '@theme/spacing';
 import { typography, fontSize } from '@theme/typography';
 
@@ -37,7 +37,6 @@ export function Input({
   ...inputProps
 }: InputProps) {
   const { theme } = useTheme();
-  const { isRTL } = useRTL();
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -57,7 +56,7 @@ export function Input({
         <Text
           style={[
             styles.label,
-            { color: theme.colors.text, textAlign: isRTL ? 'right' : 'left' },
+            { color: theme.colors.text },
           ]}
         >
           {label}
@@ -68,7 +67,6 @@ export function Input({
         style={[
           styles.inputContainer,
           {
-            flexDirection: isRTL ? 'row-reverse' : 'row',
             backgroundColor: theme.dark ? theme.colors.inputBackground : '#fff',
             borderColor,
             borderWidth: isFocused ? 1.5 : 1,
@@ -76,19 +74,21 @@ export function Input({
         ]}
       >
         {leftIcon && (
-          <View style={isRTL ? { marginLeft: spacing.sm } : { marginRight: spacing.sm }}>
+          <View style={{ marginEnd: spacing.sm }}>
             {leftIcon}
           </View>
         )}
 
         <TextInput
-          style={[
-            styles.input,
-            {
-              color: theme.colors.inputText,
-              textAlign: isRTL ? 'right' : 'left',
-            },
-          ]}
+          style={{
+            flex: 1,
+            height: 50,
+            fontSize: fontSize.base,
+            fontFamily: 'Cairo_400Regular',
+            color: theme.colors.inputText,
+            textAlign: I18nManager.isRTL ? 'right' : 'left',
+            writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+          }}
           placeholderTextColor={theme.colors.inputPlaceholder}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
@@ -99,7 +99,7 @@ export function Input({
         {secureTextEntry && (
           <TouchableOpacity
             onPress={handleTogglePassword}
-            style={isRTL ? { marginRight: spacing.sm } : { marginLeft: spacing.sm }}
+            style={{ marginStart: spacing.sm }}
           >
             <Ionicons
               name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
@@ -113,7 +113,7 @@ export function Input({
           <TouchableOpacity
             onPress={onRightIconPress}
             disabled={!onRightIconPress}
-            style={isRTL ? { marginRight: spacing.sm } : { marginLeft: spacing.sm }}
+            style={{ marginStart: spacing.sm }}
           >
             {rightIcon}
           </TouchableOpacity>
@@ -121,12 +121,12 @@ export function Input({
       </View>
 
       {error && (
-        <Text style={[styles.error, { textAlign: isRTL ? 'right' : 'left' }]}>
+        <Text style={styles.error}>
           {error}
         </Text>
       )}
       {hint && !error && (
-        <Text style={[styles.hint, { color: theme.colors.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>
+        <Text style={[styles.hint, { color: theme.colors.textMuted }]}>
           {hint}
         </Text>
       )}
@@ -140,27 +140,26 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     marginBottom: spacing.sm,
+    textAlign: 'left',
   },
   inputContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 14,
     paddingHorizontal: spacing.lg,
-  },
-  input: {
-    flex: 1,
-    height: 50,
-    fontSize: fontSize.base,
   },
   error: {
     ...typography.caption,
     color: '#F46A6A',
     marginTop: spacing.xs,
+    textAlign: 'left',
   },
   hint: {
     ...typography.caption,
     marginTop: spacing.xs,
+    textAlign: 'left',
   },
 });
 

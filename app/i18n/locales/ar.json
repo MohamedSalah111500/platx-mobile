@@ -110,7 +110,10 @@
     "signUpWithGoogle": "التسجيل بجوجل",
     "googleSignInFailed": "فشل تسجيل الدخول بجوجل. يرجى المحاولة مرة أخرى.",
     "googleSignInCancelled": "تم إلغاء تسجيل الدخول بجوجل.",
-    "domainRequiredForGoogle": "يرجى إدخال النطاق أولاً"
+    "domainRequiredForGoogle": "يرجى إدخال النطاق أولاً",
+    "googleNotAvailable": "تسجيل الدخول بجوجل غير متاح في هذا الإصدار",
+    "playServicesNotAvailable": "خدمات جوجل بلاي غير متوفرة",
+    "changePasswordFailed": "فشل تغيير كلمة المرور."
   },
   "home": {
     "welcome": "مرحباً",
@@ -127,6 +130,8 @@
     "recentCourses": "الدورات الأخيرة",
     "popularCourses": "الدورات الشائعة",
     "noNewsAvailable": "لا توجد أخبار متاحة",
+    "failedToLoadNews": "فشل تحميل الأخبار",
+    "failedToLoadCourses": "فشل تحميل الدورات",
     "live": "مباشر",
     "alerts": "التنبيهات",
     "startLearning": "ابدأ التعلم",
@@ -149,6 +154,9 @@
     "noCoursesYet": "لم تسجل في أي دورة بعد",
     "courseDetails": "تفاصيل الدورة",
     "courseNotFound": "الدورة غير موجودة.",
+    "failedToLoadCourseDetails": "فشل تحميل تفاصيل الدورة.",
+    "failedToLoadEnrolled": "فشل تحميل الدورات المسجلة.",
+    "failedToLoadCoursesList": "فشل تحميل قائمة الدورات.",
     "enrollForFree": "سجل مجاناً",
     "searchCourses": "البحث عن دورات...",
     "noCourses": "لا توجد دورات",
@@ -177,6 +185,8 @@
     "title": "الدرس",
     "loadingLesson": "جاري تحميل الدرس...",
     "lessonNotFound": "الدرس غير موجود.",
+    "failedToLoadLesson": "فشل تحميل الدرس.",
+    "video": "فيديو",
     "noVideo": "لا يوجد فيديو متاح لهذا الدرس",
     "markComplete": "تم",
     "lessonCompleted": "تم وضع علامة اكتمال على الدرس!"
@@ -218,6 +228,8 @@
     "joiningSession": "جاري الانضمام...",
     "liveSession": "جلسة مباشرة",
     "sessionNotFound": "الجلسة غير موجودة.",
+    "failedToLoadSession": "فشل تحميل الجلسة.",
+    "failedToLoadSessions": "فشل تحميل الجلسات.",
     "connected": "متصل",
     "youAreInSession": "أنت في الجلسة",
     "waitingForApproval": "بانتظار الموافقة...",
@@ -296,6 +308,7 @@
     "chats": "المحادثة",
     "noMessages": "لا توجد رسائل بعد",
     "noGroups": "لا توجد مجموعات",
+    "failedToLoadGroups": "فشل تحميل المجموعات.",
     "notAssigned": "لم يتم تعيينك لأي مجموعة بعد.",
     "groupDetails": "تفاصيل المجموعة",
     "group": "المجموعة",
@@ -327,6 +340,7 @@
     "past": "الماضية",
     "noEvents": "لا توجد أحداث مجدولة",
     "eventDetails": "تفاصيل الحدث",
+    "failedToLoadEvent": "فشل تحميل الحدث.",
     "event": "الحدث"
   },
   "profile": {
@@ -383,6 +397,11 @@
     "noStudentsMessage": "ستظهر تصنيفات الطلاب هنا عندما تكون متاحة.",
     "points": "{{count}} نقطة",
     "lessons": "{{count}} دروس مكتملة"
+  },
+  "errorBoundary": {
+    "title": "حدث خطأ ما",
+    "message": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+    "retry": "حاول مرة أخرى"
   },
   "months": {
     "m1": "يناير",

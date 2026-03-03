@@ -89,7 +89,7 @@ export default function MainTabNavigator() {
         tabBarStyle: shouldHideTabBar(route) ? hiddenTabBarStyle : baseTabBarStyle,
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
+          fontFamily: 'Cairo_600SemiBold',
           marginTop: 2,
         },
         tabBarItemStyle: {

@@ -7,20 +7,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  Image,
   Alert,
-  Dimensions,
-  StatusBar,
-  TurboModuleRegistry,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 let GoogleSignin: any = null;
 let statusCodes: any = {};
-if (TurboModuleRegistry.get('RNGoogleSignin')) {
-  const gsi = require('@react-native-google-signin/google-signin');
-  GoogleSignin = gsi.GoogleSignin;
-  statusCodes = gsi.statusCodes;
-}
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuthStore } from '../../store/auth.store';
@@ -31,8 +22,6 @@ import { typography } from '../../theme/typography';
 import type { AuthStackParamList } from '../../types/navigation.types';
 import { useRTL } from '../../i18n/RTLProvider';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 const GOOGLE_WEB_CLIENT_ID = '997004801769-ni3d4vb3d1g551vrj4ku9fsr99k1mhr6.apps.googleusercontent.com';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
@@ -40,11 +29,11 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 export default function LoginScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { login, googleLogin, isLoading, error, clearError } = useAuthStore();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
 
-  const [userName, setUserName] = useState('test@gmail.com');
-  const [password, setPassword] = useState('Ms@123456789!');
-  const [domain, setDomain] = useState('mohamed-salah');
+  const [userName, setUserName] = useState('');
+  const [password, setPassword] = useState('');
+  const [domain, setDomain] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -136,50 +125,25 @@ export default function LoginScreen({ navigation }: Props) {
       flex: 1,
       backgroundColor: theme.dark ? theme.colors.background : '#FFFFFF',
     },
-    heroSection: {
-      height: SCREEN_HEIGHT * 0.32,
-      paddingTop: Platform.OS === 'ios' ? 60 : 48,
-      alignItems: 'center',
+    scrollContent: {
+      flexGrow: 1,
       justifyContent: 'center',
-      backgroundColor: '#7c63fd',
-      borderBottomLeftRadius: 36,
-      borderBottomRightRadius: 36,
-    },
-    heroIconCircle: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      backgroundColor: 'rgba(255,255,255,0.2)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: spacing.md,
-    },
-    logoText: {
-      ...typography.h2,
-      color: '#ffffff',
-      fontSize: 32,
-      fontWeight: '800',
-      letterSpacing: 2,
-    },
-    heroSubtitle: {
-      ...typography.body,
-      color: 'rgba(255,255,255,0.85)',
-      marginTop: 8,
     },
     formSection: {
       padding: spacing['2xl'],
-      paddingTop: spacing.xl,
     },
     title: {
       ...typography.h3,
       color: theme.colors.text,
-      fontWeight: '700',
+      fontFamily: 'Cairo_700Bold',
       marginBottom: spacing.xs,
+      textAlign: 'center',
     },
     welcomeText: {
       ...typography.body,
       color: theme.colors.textSecondary,
       marginBottom: spacing.xl,
+      textAlign: 'center',
     },
     errorBanner: {
       backgroundColor: theme.colors.danger + '15',
@@ -192,6 +156,7 @@ export default function LoginScreen({ navigation }: Props) {
     errorText: {
       ...typography.bodySmall,
       color: theme.colors.danger,
+      textAlign: 'left',
     },
     forgotPassword: {
       alignSelf: 'flex-end',
@@ -214,7 +179,7 @@ export default function LoginScreen({ navigation }: Props) {
     footerLink: {
       ...typography.body,
       color: '#7c63fd',
-      fontWeight: '600',
+      fontFamily: 'Cairo_600SemiBold',
     },
     divider: {
       flexDirection: 'row',
@@ -255,18 +220,10 @@ export default function LoginScreen({ navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero Header */}
-        <View style={styles.heroSection}>
-          <View style={styles.heroIconCircle}>
-            <Ionicons name="school" size={40} color="#ffffff" />
-          </View>
-          <Text style={styles.logoText}>PLATX</Text>
-          <Text style={styles.heroSubtitle}>{t('auth.learningPlatform')}</Text>
-        </View>
-
         {/* Form Section */}
         <View style={styles.formSection}>
           <Text style={styles.title}>{t('auth.loginTitle')}</Text>

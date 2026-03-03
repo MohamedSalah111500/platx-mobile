@@ -35,7 +35,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
   const { courseId } = route.params;
   const { theme } = useTheme();
   const { user, isStudent, domain } = useAuth();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const { play } = useSound();
 
   if (isStudent && !user?.studentId) {
@@ -258,7 +258,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
             style={[styles.backBtn, { backgroundColor: theme.colors.card }]}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color={theme.colors.text} />
+            <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color={theme.colors.text} />
           </TouchableOpacity>
         </View>
         <Spinner />
@@ -274,7 +274,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
             style={[styles.backBtn, { backgroundColor: theme.colors.card }]}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color={theme.colors.text} />
+            <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{t('courses.courseDetails')}</Text>
           <View style={{ width: 40 }} />
@@ -326,7 +326,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
               style={styles.heroNavBtn}
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={20} color="#fff" />
+              <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.heroNavBtn}
@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...typography.h3,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     flex: 1,
     textAlign: 'center',
   },
@@ -638,7 +638,7 @@ const styles = StyleSheet.create({
   },
   courseTitle: {
     ...typography.h3,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     marginBottom: spacing.sm,
   },
   instructorRow: {
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
   },
   instructorName: {
     fontSize: fontSize.sm,
-    fontWeight: '500',
+    fontFamily: 'Cairo_500Medium',
   },
   metaPills: {
     flexDirection: 'row',
@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
   },
   metaPillText: {
     fontSize: fontSize.xs,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
   },
   priceRow: {
     marginBottom: spacing.lg,
@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
   },
   freeBadgeText: {
     fontSize: fontSize.sm,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     color: '#34C38F',
   },
   priceWrap: {
@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
   },
   priceMain: {
     fontSize: fontSize['2xl'],
-    fontWeight: '800',
+    fontFamily: 'Cairo_700Bold',
     color: ACCENT,
   },
   priceOld: {
@@ -716,7 +716,7 @@ const styles = StyleSheet.create({
   },
   sectionsHeading: {
     ...typography.h4,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     marginBottom: spacing.md,
   },
   sectionCard: {
@@ -748,7 +748,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.base,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     flex: 1,
   },
   lessonRow: {
@@ -771,7 +771,7 @@ const styles = StyleSheet.create({
   },
   lessonTitle: {
     fontSize: fontSize.sm,
-    fontWeight: '500',
+    fontFamily: 'Cairo_500Medium',
     marginBottom: 2,
   },
   lessonMeta: {
@@ -780,7 +780,7 @@ const styles = StyleSheet.create({
   },
   lessonNumber: {
     fontSize: 11,
-    fontWeight: '500',
+    fontFamily: 'Cairo_500Medium',
   },
   lessonMetaDot: {
     fontSize: 11,
@@ -790,7 +790,7 @@ const styles = StyleSheet.create({
   },
   lessonTypeBadge: {
     fontSize: 11,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
   },
   completedBadge: {
     width: 18,

@@ -108,7 +108,7 @@ export function Button({
     return {
       ...sizeStyles[size],
       ...variantStyles[variant],
-      fontWeight: '700',
+      fontFamily: 'Cairo_700Bold',
     };
   };
 

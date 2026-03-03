@@ -1,36 +1,63 @@
 {
   "expo": {
-    "name": "platx-mobile",
-    "slug": "platx-mobile",
+    "name": "Platx",
+    "slug": "platx",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/images/logo-icon.png",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#121935"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.platx.mobile"
+      "bundleIdentifier": "com.platx.app"
     },
     "android": {
-      "package": "com.platx.mobile",
+      "package": "com.platx.app",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/logo-icon.png",
+        "backgroundColor": "#121935"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": ["CAMERA", "RECORD_AUDIO"]
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "_plugins_disabled_for_expo_go": [
-      "@react-native-google-signin/google-signin"
-    ]
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableHermes": true,
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "enableMinifyInReleaseBuilds": true,
+            "extraProguardRules": "-dontwarn com.google.devtools.build.android.desugar.runtime.ThrowableExtension\n-keep class io.agora.** { *; }"
+          },
+          "ios": {
+            "enableHermes": true
+          }
+        }
+      ],
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5678442e-0445-4ce2-bf53-ca22b8cb6e44"
+      }
+    }
   }
 }

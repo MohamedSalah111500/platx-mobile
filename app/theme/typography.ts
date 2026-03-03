@@ -1,22 +1,9 @@
-import { Platform } from 'react-native';
-
-// Font families
+// Font families — Cairo loaded in App.tsx via @expo-google-fonts/cairo
 export const fontFamily = {
-  regular: Platform.select({
-    ios: 'System',
-    android: 'Roboto',
-    default: 'System',
-  }),
-  medium: Platform.select({
-    ios: 'System',
-    android: 'Roboto-Medium',
-    default: 'System',
-  }),
-  bold: Platform.select({
-    ios: 'System',
-    android: 'Roboto-Bold',
-    default: 'System',
-  }),
+  regular: 'Cairo_400Regular',
+  medium: 'Cairo_500Medium',
+  semibold: 'Cairo_600SemiBold',
+  bold: 'Cairo_700Bold',
 } as const;
 
 // Font sizes
@@ -49,50 +36,51 @@ export const lineHeightMultiplier = {
 
 // Typography presets
 // Note: React Native requires lineHeight as absolute pixel values, not multipliers
+// On Android, custom fonts need fontFamily to set weight — fontWeight alone won't work
 export const typography = {
   h1: {
+    fontFamily: fontFamily.bold,
     fontSize: fontSize['4xl'],
-    fontWeight: fontWeight.bold,
     lineHeight: Math.round(fontSize['4xl'] * lineHeightMultiplier.tight),
   },
   h2: {
+    fontFamily: fontFamily.bold,
     fontSize: fontSize['3xl'],
-    fontWeight: fontWeight.bold,
     lineHeight: Math.round(fontSize['3xl'] * lineHeightMultiplier.tight),
   },
   h3: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize['2xl'],
-    fontWeight: fontWeight.semibold,
     lineHeight: Math.round(fontSize['2xl'] * lineHeightMultiplier.tight),
   },
   h4: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.xl,
-    fontWeight: fontWeight.semibold,
     lineHeight: Math.round(fontSize.xl * lineHeightMultiplier.normal),
   },
   body: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.base,
-    fontWeight: fontWeight.normal,
     lineHeight: Math.round(fontSize.base * lineHeightMultiplier.normal),
   },
   bodySmall: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.normal,
     lineHeight: Math.round(fontSize.sm * lineHeightMultiplier.normal),
   },
   caption: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.xs,
-    fontWeight: fontWeight.normal,
     lineHeight: Math.round(fontSize.xs * lineHeightMultiplier.normal),
   },
   button: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.base,
-    fontWeight: fontWeight.semibold,
     lineHeight: Math.round(fontSize.base * lineHeightMultiplier.tight),
   },
   buttonSmall: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
     lineHeight: Math.round(fontSize.sm * lineHeightMultiplier.tight),
   },
 } as const;

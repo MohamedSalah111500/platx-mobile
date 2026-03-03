@@ -14,7 +14,7 @@ export const colors = {
     900: '#3d2196',
   },
 
-  // Secondary (Gray)
+  // Secondary (Navy-tinted for dark mode consistency)
   secondary: {
     50: '#f9fafb',
     100: '#f3f4f6',
@@ -22,10 +22,10 @@ export const colors = {
     300: '#d1d5db',
     400: '#9ca3af',
     500: '#74788d', // Main secondary
-    600: '#5c5f72',
-    700: '#454755',
-    800: '#2d2f38',
-    900: '#16171c',
+    600: '#4a4e6a',
+    700: '#323759',
+    800: '#252a4a',
+    900: '#121935',
   },
 
   // Semantic colors

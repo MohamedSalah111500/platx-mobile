@@ -27,7 +27,7 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'CreateLive'>;
 export default function CreateLiveScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { user } = useAuth();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const [title, setTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -92,7 +92,7 @@ export default function CreateLiveScreen({ navigation }: Props) {
       ...typography.bodySmall,
       color: theme.colors.textSecondary,
       marginBottom: spacing.xs,
-      fontWeight: '600',
+      fontFamily: 'Cairo_600SemiBold',
     },
     groupsSection: { marginTop: spacing.md },
     groupOption: {
@@ -111,7 +111,7 @@ export default function CreateLiveScreen({ navigation }: Props) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
+          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('live.createLiveSession')}</Text>
       </View>

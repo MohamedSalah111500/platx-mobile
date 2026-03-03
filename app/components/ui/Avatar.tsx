@@ -55,7 +55,7 @@ export function Avatar({ source, name, size = 'medium', style }: AvatarProps) {
     },
     initials: {
       fontSize: fontSizeMap[size],
-      fontWeight: '600',
+      fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.primary,
     },
   });

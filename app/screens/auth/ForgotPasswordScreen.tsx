@@ -108,7 +108,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
     backText: {
       ...typography.body,
       color: theme.colors.primary,
-      fontWeight: '600',
+      fontFamily: 'Cairo_600SemiBold',
     },
   });
 

@@ -415,7 +415,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
                     >
                       <Text style={{
                         color: selectedRank === rank ? '#fff' : theme.colors.text,
-                        fontWeight: '700',
+                        fontFamily: 'Cairo_700Bold',
                         fontSize: 13,
                       }}>
                         {rank}
@@ -454,7 +454,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
                       onPress={() => setSelectedStudent(item)}
                     >
                       <View style={[modalStyles.studentAvatar, { backgroundColor: '#F0EDFF' }]}>
-                        <Text style={{ color: ACCENT, fontWeight: '700', fontSize: 13 }}>
+                        <Text style={{ color: ACCENT, fontFamily: 'Cairo_700Bold', fontSize: 13 }}>
                           {(item.firstName?.[0] || '?').toUpperCase()}
                         </Text>
                       </View>
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     color: '#fff',
   },
 
@@ -546,12 +546,12 @@ const styles = StyleSheet.create({
   },
   monthName: {
     fontSize: fontSize.base,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     color: '#fff',
   },
   monthYear: {
     fontSize: fontSize.sm,
-    fontWeight: '500',
+    fontFamily: 'Cairo_500Medium',
     color: 'rgba(255,255,255,0.7)',
     marginTop: 2,
   },
@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
   },
   topInitial: {
     fontSize: 22,
-    fontWeight: '800',
+    fontFamily: 'Cairo_700Bold',
   },
   topRankBadge: {
     position: 'absolute',
@@ -630,12 +630,12 @@ const styles = StyleSheet.create({
   },
   topRankBadgeText: {
     fontSize: 11,
-    fontWeight: '800',
+    fontFamily: 'Cairo_700Bold',
     color: '#fff',
   },
   topName: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     color: '#444',
     maxWidth: 90,
     textAlign: 'center',
@@ -652,7 +652,7 @@ const styles = StyleSheet.create({
   },
   emptyRankText: {
     fontSize: 13,
-    fontWeight: '800',
+    fontFamily: 'Cairo_700Bold',
   },
   emptyLabel: {
     fontSize: 12,
@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
   },
   lowerRankText: {
     fontSize: 12,
-    fontWeight: '800',
+    fontFamily: 'Cairo_700Bold',
   },
   lowerAvatar: {
     width: 40,
@@ -692,11 +692,11 @@ const styles = StyleSheet.create({
   },
   lowerInitialText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
   },
   lowerName: {
     fontSize: 11,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     textAlign: 'center',
     maxWidth: 80,
   },
@@ -722,11 +722,11 @@ const modalStyles = StyleSheet.create({
   },
   sheetTitle: {
     fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
   },
   label: {
     fontSize: fontSize.sm,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     marginBottom: spacing.sm,
   },
   rankChip: {
@@ -770,7 +770,7 @@ const modalStyles = StyleSheet.create({
   studentName: {
     flex: 1,
     fontSize: fontSize.sm,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
   },
   addBtn: {
     backgroundColor: ACCENT,
@@ -783,6 +783,6 @@ const modalStyles = StyleSheet.create({
   addBtnText: {
     color: '#fff',
     fontSize: fontSize.base,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
   },
 });

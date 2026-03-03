@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
-  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -16,15 +15,12 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { useNotificationsStore } from '../../store/notifications.store';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Spinner } from '../../components/ui/Spinner';
-import { spacing } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
 import type { NotificationItem } from '../../types/notification.types';
 
-const ACCENT = '#7c63fd';
-const BG = '#FFFFFF';
+const PRIMARY = '#7c63fd';
 
 export default function NotificationsListScreen() {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { user, role, isStudent } = useAuth();
   const { t } = useRTL();
   const insets = useSafeAreaInsets();
@@ -37,11 +33,6 @@ export default function NotificationsListScreen() {
     loadMore,
     markAsRead,
   } = useNotificationsStore();
-
-  // sanity check student id
-  if (isStudent && !user?.studentId) {
-    console.warn('[Notifications] student user missing studentId - fetch will use admin endpoint');
-  }
 
   const studentId = isStudent ? user?.studentId : undefined;
   const canFetch = !!user;
@@ -69,7 +60,7 @@ export default function NotificationsListScreen() {
     }
   };
 
-  const bgColor = theme.dark ? theme.colors.background : BG;
+  const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const renderItem = ({ item }: { item: NotificationItem }) => {
     const date = new Date(item.createdDate);
@@ -78,67 +69,67 @@ export default function NotificationsListScreen() {
 
     return (
       <TouchableOpacity
-        style={[
-          styles.card,
-          { backgroundColor: theme.colors.card },
-          isUnread && styles.unreadCard,
-        ]}
+        style={styles.card}
         onPress={() => handleNotificationPress(item)}
         activeOpacity={0.7}
       >
-        <View style={[
-          styles.iconCircle,
-          { backgroundColor: isUnread ? ACCENT : (theme.dark ? theme.colors.surface : '#F0EDFF') },
-        ]}>
+        {/* Icon */}
+        <View style={[styles.iconCircle, isUnread && styles.iconCircleUnread]}>
           <Ionicons
             name={isUnread ? 'notifications' : 'notifications-outline'}
             size={20}
-            color={isUnread ? '#fff' : ACCENT}
+            color={isUnread ? '#fff' : PRIMARY}
           />
         </View>
+
+        {/* Content */}
         <View style={styles.cardContent}>
           <View style={styles.cardTopRow}>
             <Text
-              style={[styles.cardTitle, { color: theme.colors.text }]}
+              style={[styles.cardTitle, isUnread && styles.cardTitleUnread]}
               numberOfLines={1}
             >
               {item.title}
             </Text>
-            {isUnread && <View style={styles.unreadDot} />}
+            <Text style={styles.cardTime}>{timeAgo}</Text>
           </View>
-          <Text
-            style={[styles.cardBody, { color: theme.colors.textSecondary }]}
-            numberOfLines={2}
-          >
+          <Text style={styles.cardBody} numberOfLines={2}>
             {item.body}
           </Text>
-          <Text style={[styles.cardTime, { color: theme.colors.textMuted }]}>
-            {timeAgo}
-          </Text>
         </View>
+
+        {/* Unread dot */}
+        {isUnread && <View style={styles.unreadDot} />}
       </TouchableOpacity>
     );
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: bgColor }]}>
-      <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>
-          {t('notifications.title')}
-        </Text>
-        {unreadCount > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{unreadCount}</Text>
-          </View>
-        )}
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>{t('notifications.title')}</Text>
+          {unreadCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{unreadCount}</Text>
+            </View>
+          )}
+        </View>
       </View>
 
+      {/* List */}
       <FlatList
         data={notifications}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={onRefresh}
+            tintColor={PRIMARY}
+            colors={[PRIMARY]}
+          />
         }
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
@@ -157,12 +148,16 @@ export default function NotificationsListScreen() {
         }
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
     </View>
   );
 }
 
-function getTimeAgo(date: Date, t: (key: string, options?: Record<string, unknown>) => string): string {
+function getTimeAgo(
+  date: Date,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (seconds < 60) return t('notifications.justNow');
   const minutes = Math.floor(seconds / 60);
@@ -174,93 +169,106 @@ function getTimeAgo(date: Date, t: (key: string, options?: Record<string, unknow
   return date.toLocaleDateString();
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.lg,
-  },
-  title: {
-    ...typography.h2,
-    fontWeight: '800',
-  },
-  badge: {
-    backgroundColor: ACCENT,
-    borderRadius: 12,
-    minWidth: 28,
-    height: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  listContent: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: 120,
-  },
-  card: {
-    flexDirection: 'row',
-    padding: spacing.lg,
-    borderRadius: 18,
-    marginBottom: spacing.sm,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.03,
-        shadowRadius: 3,
-      },
-      android: { elevation: 1 },
-    }),
-  },
-  unreadCard: {
-    borderLeftWidth: 3,
-    borderLeftColor: ACCENT,
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  cardContent: {
-    flex: 1,
-  },
-  cardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  cardTitle: {
-    fontSize: fontSize.base,
-    fontWeight: '700',
-    flex: 1,
-  },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: ACCENT,
-    marginLeft: spacing.sm,
-  },
-  cardBody: {
-    ...typography.bodySmall,
-    marginTop: 4,
-    lineHeight: 20,
-  },
-  cardTime: {
-    fontSize: fontSize.xs,
-    marginTop: 6,
-  },
-});
+function createStyles(theme: any, isDark: boolean) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    header: {
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 12,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    headerTitle: {
+      fontSize: 28,
+      fontFamily: 'Cairo_700Bold',
+      color: theme.colors.text,
+    },
+    badge: {
+      backgroundColor: PRIMARY,
+      borderRadius: 12,
+      minWidth: 26,
+      height: 26,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 8,
+    },
+    badgeText: {
+      color: '#fff',
+      fontSize: 12,
+      fontFamily: 'Cairo_700Bold',
+    },
+    listContent: {
+      paddingHorizontal: 16,
+      paddingTop: 4,
+      paddingBottom: 120,
+    },
+    separator: {
+      height: 1,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+      marginStart: 68,
+    },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      paddingVertical: 14,
+      paddingHorizontal: 4,
+    },
+    iconCircle: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDark ? 'rgba(124,99,253,0.15)' : '#F0EDFF',
+      marginEnd: 12,
+    },
+    iconCircleUnread: {
+      backgroundColor: PRIMARY,
+    },
+    cardContent: {
+      flex: 1,
+      paddingTop: 2,
+    },
+    cardTopRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 4,
+    },
+    cardTitle: {
+      fontSize: 15,
+      fontFamily: 'Cairo_500Medium',
+      color: theme.colors.textSecondary,
+      flex: 1,
+      marginEnd: 8,
+    },
+    cardTitleUnread: {
+      fontFamily: 'Cairo_700Bold',
+      color: theme.colors.text,
+    },
+    cardBody: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: theme.colors.textMuted,
+    },
+    cardTime: {
+      fontSize: 12,
+      color: theme.colors.textMuted,
+    },
+    unreadDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: PRIMARY,
+      marginTop: 18,
+      marginStart: 4,
+    },
+  });
+}

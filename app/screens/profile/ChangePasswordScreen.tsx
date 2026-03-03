@@ -27,7 +27,7 @@ const BG = '#FFFFFF';
 
 export default function ChangePasswordScreen({ navigation }: Props) {
   const { theme } = useTheme();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const insets = useSafeAreaInsets();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -76,7 +76,7 @@ export default function ChangePasswordScreen({ navigation }: Props) {
           style={[styles.backBtn, { backgroundColor: theme.colors.card }]}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={20} color={theme.colors.text} />
+          <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
           {t('auth.changePassword')}
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...typography.h3,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     flex: 1,
     textAlign: 'center',
   },
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     marginBottom: spacing.xs,
   },
   inputRow: {
@@ -258,6 +258,6 @@ const styles = StyleSheet.create({
   submitText: {
     ...typography.button,
     color: '#fff',
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
   },
 });

@@ -23,7 +23,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'EventDetail'>;
 export default function EventDetailScreen({ navigation, route }: Props) {
   const { eventId } = route.params;
   const { theme } = useTheme();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -117,7 +117,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
+            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('events.event')}</Text>
         </View>
@@ -133,7 +133,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
+          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('events.eventDetails')}</Text>
       </View>

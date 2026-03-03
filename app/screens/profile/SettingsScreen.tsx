@@ -28,7 +28,7 @@ const BG = '#FFFFFF';
 export default function SettingsScreen({ navigation }: Props) {
   const { theme, setTheme, themeMode } = useTheme();
   const { logout } = useAuth();
-  const { locale, setLocale, t } = useRTL();
+  const { locale, setLocale, t, isRTL } = useRTL();
   const insets = useSafeAreaInsets();
 
   const bgColor = theme.dark ? theme.colors.background : BG;
@@ -95,7 +95,7 @@ export default function SettingsScreen({ navigation }: Props) {
           style={[styles.backBtn, { backgroundColor: theme.colors.card }]}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={20} color={theme.colors.text} />
+          <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
           {t('settings.title')}
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...typography.h3,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     flex: 1,
     textAlign: 'center',
   },
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.xs,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: spacing.sm,
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: fontSize.base,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
   },
   settingDesc: {
     fontSize: fontSize.xs,
@@ -287,11 +287,11 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: fontSize.sm,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
   },
   versionText: {
     fontSize: fontSize.sm,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
   },
   logoutBtn: {
     borderRadius: 20,

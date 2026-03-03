@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h2,
-    fontWeight: '800',
+    fontFamily: 'Cairo_700Bold',
     marginBottom: spacing.xs,
   },
   searchContainer: {
@@ -448,14 +448,14 @@ const styles = StyleSheet.create({
   priceBadgeText: {
     color: '#fff',
     fontSize: fontSize.xs,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
   },
   cardInfo: {
     padding: spacing.lg,
   },
   cardTitle: {
     fontSize: fontSize.base,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     lineHeight: fontSize.base * 1.4,
     marginBottom: 4,
   },
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
   },
   metaChipText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
   },
   errorContainer: {
     flex: 1,
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: fontSize.sm,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
   },
   tabTextActive: {
     color: '#fff',

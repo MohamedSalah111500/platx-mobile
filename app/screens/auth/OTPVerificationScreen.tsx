@@ -137,7 +137,7 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
     },
     emailHighlight: {
       color: theme.colors.primary,
-      fontWeight: '600',
+      fontFamily: 'Cairo_600SemiBold',
     },
     otpContainer: {
       flexDirection: 'row',
@@ -153,7 +153,7 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
       borderRadius: borderRadius.lg,
       textAlign: 'center',
       fontSize: fontSize.xl,
-      fontWeight: '700',
+      fontFamily: 'Cairo_700Bold',
       color: theme.colors.text,
       backgroundColor: theme.colors.inputBackground,
     },
@@ -184,7 +184,7 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
     resendLink: {
       ...typography.body,
       color: theme.colors.primary,
-      fontWeight: '600',
+      fontFamily: 'Cairo_600SemiBold',
     },
     timerText: {
       ...typography.body,

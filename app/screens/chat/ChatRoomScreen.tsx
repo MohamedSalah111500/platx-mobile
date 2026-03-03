@@ -43,7 +43,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
   const { groupId, groupName, staffId, staffName, chatType } = route.params;
   const { theme } = useTheme();
   const { user, isStudent } = useAuth();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const { play } = useSound();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -215,7 +215,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: theme.colors.divider }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={22} color={theme.colors.text} />
+          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color={theme.colors.text} />
         </TouchableOpacity>
         <View style={[styles.headerAvatar, { backgroundColor: '#F0EDFF' }]}>
           {isStaffChat ? (
@@ -317,11 +317,11 @@ const styles = StyleSheet.create({
   },
   headerAvatarText: {
     fontSize: 17,
-    fontWeight: '800',
+    fontFamily: 'Cairo_700Bold',
     color: ACCENT,
   },
   headerInfo: { flex: 1, gap: 1 },
-  headerName: { ...typography.body, fontWeight: '700' },
+  headerName: { ...typography.body, fontFamily: 'Cairo_700Bold' },
   headerSub: { fontSize: fontSize.xs },
   // Messages
   messagesList: { flex: 1 },
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 10,
   },
-  dateText: { fontSize: fontSize.xs, fontWeight: '600' },
+  dateText: { fontSize: fontSize.xs, fontFamily: 'Cairo_600SemiBold' },
   // Message rows
   msgRow: {
     flexDirection: 'row',
@@ -355,13 +355,13 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
     marginBottom: 2,
   },
-  msgAvatarText: { fontSize: 12, fontWeight: '800' },
+  msgAvatarText: { fontSize: 12, fontFamily: 'Cairo_700Bold' },
   msgContent: { maxWidth: '78%' },
   msgContentOwn: { alignItems: 'flex-end' },
   msgContentOther: { alignItems: 'flex-start' },
   senderLabel: {
     fontSize: fontSize.xs,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     marginBottom: 2,
     marginLeft: 4,
   },
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
   bubbleTextOwn: { color: '#fff' },
   timeInBubble: {
     fontSize: 10,
-    fontWeight: '500',
+    fontFamily: 'Cairo_500Medium',
     marginTop: 4,
     alignSelf: 'flex-end',
   },

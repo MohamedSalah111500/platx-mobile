@@ -110,7 +110,10 @@
     "signUpWithGoogle": "Sign up with Google",
     "googleSignInFailed": "Google sign-in failed. Please try again.",
     "googleSignInCancelled": "Google sign-in was cancelled.",
-    "domainRequiredForGoogle": "Please enter your domain first"
+    "domainRequiredForGoogle": "Please enter your domain first",
+    "googleNotAvailable": "Google Sign-In is not available in this build",
+    "playServicesNotAvailable": "Google Play Services not available",
+    "changePasswordFailed": "Failed to change password."
   },
   "home": {
     "welcome": "Welcome",
@@ -127,6 +130,8 @@
     "recentCourses": "Recent Courses",
     "popularCourses": "Popular Courses",
     "noNewsAvailable": "No news available",
+    "failedToLoadNews": "Failed to load news",
+    "failedToLoadCourses": "Failed to load courses",
     "live": "Live",
     "alerts": "Alerts",
     "startLearning": "Start learning",
@@ -149,6 +154,9 @@
     "noCoursesYet": "You haven't enrolled in any courses yet",
     "courseDetails": "Course Details",
     "courseNotFound": "Course not found.",
+    "failedToLoadCourseDetails": "Failed to load course details.",
+    "failedToLoadEnrolled": "Failed to load enrolled courses.",
+    "failedToLoadCoursesList": "Failed to load courses.",
     "enrollForFree": "Enroll for Free",
     "searchCourses": "Search courses...",
     "noCourses": "No Courses",
@@ -177,6 +185,8 @@
     "title": "Lesson",
     "loadingLesson": "Loading Lesson...",
     "lessonNotFound": "Lesson not found.",
+    "failedToLoadLesson": "Failed to load lesson.",
+    "video": "Video",
     "noVideo": "No video available for this lesson",
     "markComplete": "Done",
     "lessonCompleted": "Lesson marked as complete!"
@@ -218,6 +228,8 @@
     "joiningSession": "Joining Session...",
     "liveSession": "Live Session",
     "sessionNotFound": "Session not found.",
+    "failedToLoadSession": "Failed to load session.",
+    "failedToLoadSessions": "Failed to load sessions.",
     "connected": "Connected",
     "youAreInSession": "You are in the session",
     "waitingForApproval": "Waiting for approval...",
@@ -296,6 +308,7 @@
     "chats": "Chat",
     "noMessages": "No messages yet",
     "noGroups": "No groups found",
+    "failedToLoadGroups": "Failed to load groups.",
     "notAssigned": "You are not assigned to any groups yet.",
     "groupDetails": "Group Details",
     "group": "Group",
@@ -327,6 +340,7 @@
     "past": "Past",
     "noEvents": "No events scheduled",
     "eventDetails": "Event Details",
+    "failedToLoadEvent": "Failed to load event.",
     "event": "Event"
   },
   "profile": {
@@ -383,6 +397,11 @@
     "noStudentsMessage": "Student rankings will appear here once available.",
     "points": "{{count}} points",
     "lessons": "{{count}} lessons completed"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "message": "An unexpected error occurred. Please try again.",
+    "retry": "Try Again"
   },
   "months": {
     "m1": "January",

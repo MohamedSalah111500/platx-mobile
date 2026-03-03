@@ -42,7 +42,7 @@ const AVATAR_COLORS = [
 export default function ChatListScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { user, isStudent } = useAuth();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const { play } = useSound();
   const insets = useSafeAreaInsets();
   const [groups, setGroups] = useState<Group[]>([]);
@@ -131,7 +131,7 @@ export default function ChatListScreen({ navigation }: Props) {
           </Text>
         </View>
         <View style={[styles.arrowCircle, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
-          <Ionicons name="chevron-forward" size={16} color={ACCENT} />
+          <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={16} color={ACCENT} />
         </View>
       </TouchableOpacity>
     );
@@ -168,7 +168,7 @@ export default function ChatListScreen({ navigation }: Props) {
           </Text>
         </View>
         <View style={[styles.arrowCircle, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
-          <Ionicons name="chevron-forward" size={16} color={ACCENT} />
+          <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={16} color={ACCENT} />
         </View>
       </TouchableOpacity>
     );
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h2,
-    fontWeight: '800',
+    fontFamily: 'Cairo_700Bold',
     flex: 1,
   },
   countBadge: {
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   countBadgeText: {
     color: '#fff',
     fontSize: fontSize.xs,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
   },
   searchBar: {
     flexDirection: 'row',
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   },
   avatarLetter: {
     fontSize: 21,
-    fontWeight: '800',
+    fontFamily: 'Cairo_700Bold',
   },
   onlineDot: {
     position: 'absolute',
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   },
   cardName: {
     fontSize: fontSize.base,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
   },
   cardSub: {
     fontSize: fontSize.xs,

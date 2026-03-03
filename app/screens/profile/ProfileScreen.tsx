@@ -26,7 +26,7 @@ const BG = '#FFFFFF';
 export default function ProfileScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { user, role: authRole, can, isStudent, logout } = useAuth();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const insets = useSafeAreaInsets();
 
   const role = authRole || 'Student';
@@ -160,7 +160,7 @@ export default function ProfileScreen({ navigation }: Props) {
                     <Ionicons name={item.iconName as any} size={20} color={item.iconColor} />
                   </View>
                   <Text style={[styles.menuLabel, { color: theme.colors.text }]}>{item.label}</Text>
-                  <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
+                  <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -182,7 +182,7 @@ export default function ProfileScreen({ navigation }: Props) {
                 <Ionicons name="settings" size={20} color={ACCENT} />
               </View>
               <Text style={[styles.menuLabel, { color: theme.colors.text }]}>{t('profile.settings')}</Text>
-              <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
+              <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.menuRow}
@@ -193,7 +193,7 @@ export default function ProfileScreen({ navigation }: Props) {
                 <Ionicons name="lock-closed" size={20} color="#F5A623" />
               </View>
               <Text style={[styles.menuLabel, { color: theme.colors.text }]}>{t('auth.changePassword')}</Text>
-              <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
+              <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
             </TouchableOpacity>
           </View>
         </View>
@@ -239,13 +239,13 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 30,
-    fontWeight: '800',
+    fontFamily: 'Cairo_700Bold',
     color: ACCENT,
   },
   userName: {
     ...typography.h3,
     color: '#ffffff',
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
   },
   email: {
     ...typography.bodySmall,
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   },
   roleText: {
     fontSize: fontSize.xs,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     color: '#ffffff',
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: fontSize.lg,
-    fontWeight: '800',
+    fontFamily: 'Cairo_700Bold',
   },
   statLabel: {
     fontSize: 11,
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.xs,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: spacing.sm,
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   menuLabel: {
     flex: 1,
     fontSize: fontSize.base,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
   },
   logoutBtn: {
     borderRadius: 20,

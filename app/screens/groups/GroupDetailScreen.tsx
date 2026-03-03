@@ -237,7 +237,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
   const getInitials = (first?: string, last?: string) =>
     `${(first?.[0] || '').toUpperCase()}${(last?.[0] || '').toUpperCase()}` || '?';
 
-  const currentUserId = user?.id || user?.userId;
+  const currentUserId = (user as any)?.id || user?.userId;
 
   const isMySender = (msg: ChatMessage) => {
     if (msg.senderId === currentUserId) return true;
@@ -740,7 +740,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
                       onPress={() => setSelectedInviteStudent(item)}
                     >
                       <View style={[ms.studentAvatar, { backgroundColor: '#F0EDFF' }]}>
-                        <Text style={{ color: ACCENT, fontWeight: '700', fontSize: 13 }}>
+                        <Text style={{ color: ACCENT, fontFamily: 'Cairo_700Bold', fontSize: 13 }}>
                           {(item.firstName?.[0] || '?').toUpperCase()}
                         </Text>
                       </View>
@@ -807,7 +807,7 @@ const s = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     color: '#fff',
   },
 
@@ -832,7 +832,7 @@ const s = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     color: 'rgba(255,255,255,0.5)',
   },
   tabLabelActive: {
@@ -872,7 +872,7 @@ const s = StyleSheet.create({
   // Section label
   sectionLabel: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: spacing.sm,
@@ -906,11 +906,11 @@ const s = StyleSheet.create({
   },
   avatarText: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
   },
   studentName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
   },
   studentMeta: {
     fontSize: 12,
@@ -939,7 +939,7 @@ const s = StyleSheet.create({
   },
   msgSender: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     marginBottom: 2,
   },
   msgText: {
@@ -1000,11 +1000,11 @@ const s = StyleSheet.create({
   },
   infoGroupName: {
     fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
   },
   infoGrade: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     marginTop: spacing.xs,
   },
   infoDesc: {
@@ -1031,7 +1031,7 @@ const s = StyleSheet.create({
   },
   statValue: {
     fontSize: 16,
-    fontWeight: '800',
+    fontFamily: 'Cairo_700Bold',
   },
   statLabel: {
     fontSize: 11,
@@ -1052,7 +1052,7 @@ const s = StyleSheet.create({
   },
   infoRowValue: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     marginTop: 2,
   },
 
@@ -1078,7 +1078,7 @@ const s = StyleSheet.create({
   },
   fileName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
   },
   fileMeta: {
     fontSize: 12,
@@ -1107,7 +1107,7 @@ const ms = StyleSheet.create({
   },
   sheetTitle: {
     fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
   },
   searchRow: {
     flexDirection: 'row',
@@ -1142,7 +1142,7 @@ const ms = StyleSheet.create({
   studentName: {
     flex: 1,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
   },
   addBtn: {
     backgroundColor: ACCENT,
@@ -1155,6 +1155,6 @@ const ms = StyleSheet.create({
   addBtnText: {
     color: '#fff',
     fontSize: fontSize.base,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
   },
 });

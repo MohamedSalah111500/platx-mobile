@@ -46,7 +46,7 @@ const ACCENT_COLORS = [
 export default function HomeScreen({ navigation }: Props) {
   const { theme, isDark } = useTheme();
   const { user, role, domain, isStudent, isStaff, isAdmin } = useAuth();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const { play } = useSound();
   const insets = useSafeAreaInsets();
 
@@ -175,7 +175,7 @@ export default function HomeScreen({ navigation }: Props) {
     avatarText: {
       color: '#FFFFFF',
       fontSize: fontSize.lg,
-      fontWeight: '700',
+      fontFamily: 'Cairo_700Bold',
     },
     headerTextBlock: {
       flex: 1,
@@ -189,7 +189,7 @@ export default function HomeScreen({ navigation }: Props) {
     headerName: {
       ...typography.h4,
       color: theme.colors.text,
-      fontWeight: '700',
+      fontFamily: 'Cairo_700Bold',
       marginTop: 1,
     },
     bellButton: {
@@ -215,7 +215,7 @@ export default function HomeScreen({ navigation }: Props) {
     /* ── Main Heading ─────────────────────────────────────────── */
     mainHeading: {
       fontSize: fontSize['2xl'],
-      fontWeight: '800',
+      fontFamily: 'Cairo_700Bold',
       color: theme.colors.text,
       lineHeight: 32,
       paddingHorizontal: spacing.xl,
@@ -285,12 +285,12 @@ export default function HomeScreen({ navigation }: Props) {
     },
     statValue: {
       fontSize: fontSize['2xl'],
-      fontWeight: '800',
+      fontFamily: 'Cairo_700Bold',
       marginTop: spacing.sm,
     },
     statLabel: {
       ...typography.caption,
-      fontWeight: '500',
+      fontFamily: 'Cairo_500Medium',
       marginTop: 2,
     },
 
@@ -327,7 +327,7 @@ export default function HomeScreen({ navigation }: Props) {
     },
     adminStatValue: {
       fontSize: fontSize.xl,
-      fontWeight: '800',
+      fontFamily: 'Cairo_700Bold',
       color: theme.colors.text,
     },
     adminStatLabel: {
@@ -364,7 +364,7 @@ export default function HomeScreen({ navigation }: Props) {
     },
     quickActionText: {
       ...typography.caption,
-      fontWeight: '600',
+      fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.text,
       textAlign: 'left',
     },
@@ -380,12 +380,12 @@ export default function HomeScreen({ navigation }: Props) {
     sectionTitle: {
       ...typography.h4,
       color: theme.colors.text,
-      fontWeight: '700',
+      fontFamily: 'Cairo_700Bold',
     },
     seeAllText: {
       ...typography.bodySmall,
       color: PRIMARY,
-      fontWeight: '600',
+      fontFamily: 'Cairo_600SemiBold',
     },
 
     /* ── Horizontal Course Cards ──────────────────────────────── */
@@ -433,7 +433,7 @@ export default function HomeScreen({ navigation }: Props) {
     },
     courseBadgeText: {
       ...typography.caption,
-      fontWeight: '700',
+      fontFamily: 'Cairo_700Bold',
       color: '#1B1464',
     },
     courseInfo: {
@@ -441,7 +441,7 @@ export default function HomeScreen({ navigation }: Props) {
     },
     courseTitle: {
       ...typography.bodySmall,
-      fontWeight: '700',
+      fontFamily: 'Cairo_700Bold',
       color: theme.colors.text,
       marginBottom: spacing.xs,
     },
@@ -505,7 +505,7 @@ export default function HomeScreen({ navigation }: Props) {
     },
     newsTitle: {
       ...typography.bodySmall,
-      fontWeight: '600',
+      fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.text,
     },
     newsSubtitle: {
@@ -549,13 +549,13 @@ export default function HomeScreen({ navigation }: Props) {
     },
     eventDay: {
       fontSize: fontSize.lg,
-      fontWeight: '800',
+      fontFamily: 'Cairo_700Bold',
       color: PRIMARY,
     },
     eventMonth: {
       ...typography.caption,
       color: PRIMARY,
-      fontWeight: '600',
+      fontFamily: 'Cairo_600SemiBold',
     },
     eventInfo: {
       flex: 1,
@@ -563,7 +563,7 @@ export default function HomeScreen({ navigation }: Props) {
     eventTitle: {
       ...typography.bodySmall,
       color: theme.colors.text,
-      fontWeight: '600',
+      fontFamily: 'Cairo_600SemiBold',
     },
     eventTime: {
       ...typography.caption,
@@ -620,7 +620,7 @@ export default function HomeScreen({ navigation }: Props) {
     },
     honorRankText: {
       fontSize: 13,
-      fontWeight: '800' as const,
+      fontFamily: 'Cairo_700Bold' as const,
     },
     honorAvatar: {
       width: 36,
@@ -640,12 +640,12 @@ export default function HomeScreen({ navigation }: Props) {
     },
     honorInitial: {
       fontSize: 15,
-      fontWeight: '700' as const,
+      fontFamily: 'Cairo_700Bold' as const,
     },
     honorName: {
       flex: 1,
       fontSize: fontSize.sm,
-      fontWeight: '600' as const,
+      fontFamily: 'Cairo_600SemiBold' as const,
     },
     honorScore: {
       flexDirection: 'row' as const,
@@ -657,7 +657,7 @@ export default function HomeScreen({ navigation }: Props) {
     },
     honorScoreText: {
       fontSize: 11,
-      fontWeight: '700' as const,
+      fontFamily: 'Cairo_700Bold' as const,
       color: '#F5A623',
     },
   });
@@ -1037,7 +1037,7 @@ export default function HomeScreen({ navigation }: Props) {
                     <Text
                       style={{
                         ...typography.bodySmall,
-                        fontWeight: '700',
+                        fontFamily: 'Cairo_700Bold',
                         color: theme.colors.text,
                         marginBottom: 4,
                       }}
@@ -1081,7 +1081,7 @@ export default function HomeScreen({ navigation }: Props) {
                   </View>
                   {/* Arrow */}
                   <View style={{ justifyContent: 'center', paddingRight: spacing.md }}>
-                    <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
+                    <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
                   </View>
                 </TouchableOpacity>
               );
@@ -1238,7 +1238,7 @@ export default function HomeScreen({ navigation }: Props) {
                     </Text>
                   </View>
                   <Ionicons
-                    name="chevron-forward"
+                    name={isRTL ? 'chevron-back' : 'chevron-forward'}
                     size={18}
                     color={theme.colors.textMuted}
                   />

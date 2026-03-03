@@ -27,7 +27,7 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'Groups'>;
 export default function GroupsListScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { user, isStudent } = useAuth();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -104,7 +104,7 @@ export default function GroupsListScreen({ navigation }: Props) {
           ) : null}
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
+      <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color={theme.colors.textMuted} />
     </TouchableOpacity>
   );
 
@@ -152,7 +152,7 @@ export default function GroupsListScreen({ navigation }: Props) {
     groupName: {
       ...typography.body,
       color: theme.colors.text,
-      fontWeight: '600',
+      fontFamily: 'Cairo_600SemiBold',
     },
     groupGrade: {
       ...typography.caption,
@@ -201,7 +201,7 @@ export default function GroupsListScreen({ navigation }: Props) {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
+          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{isStudent ? t('groups.myGroups') : t('groups.title')}</Text>
       </View>

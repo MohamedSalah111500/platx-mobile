@@ -19,7 +19,9 @@ interface RTLProviderProps {
 
 export function RTLProvider({ children }: RTLProviderProps) {
   const [locale, setLocaleState] = useState(i18n.language || 'en');
-  const [isRTL, setIsRTL] = useState(I18nManager.isRTL);
+  const [isRTL, setIsRTL] = useState(
+    RTL_LANGUAGES.includes(i18n.language) || I18nManager.isRTL,
+  );
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -31,6 +33,9 @@ export function RTLProvider({ children }: RTLProviderProps) {
       const saved = await AsyncStorage.getItem(STORAGE_KEYS.LOCALE);
       if (saved) {
         await changeLocale(saved, false);
+      } else {
+        // No saved preference — apply default locale RTL setting
+        await changeLocale(i18n.language, false);
       }
     } catch (error) {
       console.error('Failed to load locale preference:', error);

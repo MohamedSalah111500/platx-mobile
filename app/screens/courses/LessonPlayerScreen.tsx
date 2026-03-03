@@ -30,7 +30,7 @@ const ACCENT = '#7c63fd';
 export default function LessonPlayerScreen({ navigation, route }: Props) {
   const { lessonId, courseId } = route.params;
   const { theme } = useTheme();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const { play } = useSound();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,7 +104,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
           <TouchableOpacity style={[styles.backButton, { backgroundColor: theme.colors.card }]} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={20} color={theme.colors.text} />
+            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={20} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{t('lessons.loadingLesson')}</Text>
           <View style={{ width: 40 }} />
@@ -119,7 +119,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
           <TouchableOpacity style={[styles.backButton, { backgroundColor: theme.colors.card }]} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={20} color={theme.colors.text} />
+            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={20} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{t('lessons.title')}</Text>
           <View style={{ width: 40 }} />
@@ -145,7 +145,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
           style={[styles.backButton, { backgroundColor: 'rgba(255,255,255,0.12)' }]}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="chevron-back" size={20} color="#fff" />
+          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={20} color="#fff" />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: '#fff' }]} numberOfLines={1}>
           {lesson.title}
@@ -265,7 +265,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
                 {t('lessons.lessonCompleted')}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
+            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.base,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     flex: 1,
   },
   completeButton: {
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   },
   typeBadgeText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
   },
   completedTag: {
     flexDirection: 'row',
@@ -394,12 +394,12 @@ const styles = StyleSheet.create({
   },
   completedTagText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     color: '#34C38F',
   },
   lessonTitle: {
     fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontFamily: 'Cairo_700Bold',
     marginBottom: spacing.sm,
     lineHeight: 26,
   },
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: fontSize.xs,
-    fontWeight: '500',
+    fontFamily: 'Cairo_500Medium',
   },
   descriptionWrap: {
     borderTopWidth: 1,
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   },
   completeCardTitle: {
     fontSize: fontSize.sm,
-    fontWeight: '600',
+    fontFamily: 'Cairo_600SemiBold',
     marginBottom: 2,
   },
   completeCardSub: {
