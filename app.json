@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Platx",
-    "slug": "platx",
+    "name": "PlatX",
+    "slug": "PlatX",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo-icon.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -20,7 +20,7 @@
       "package": "com.platx.app",
       "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo-icon.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#121935"
       },
       "edgeToEdgeEnabled": true,
@@ -42,10 +42,9 @@
         {
           "android": {
             "enableHermes": true,
-            "enableProguardInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true,
-            "enableMinifyInReleaseBuilds": true,
-            "extraProguardRules": "-dontwarn com.google.devtools.build.android.desugar.runtime.ThrowableExtension\n-keep class io.agora.** { *; }"
+            "enableProguardInReleaseBuilds": false,
+            "enableShrinkResourcesInReleaseBuilds": false,
+            "enableMinifyInReleaseBuilds": false
           },
           "ios": {
             "enableHermes": true
@@ -56,8 +55,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "5678442e-0445-4ce2-bf53-ca22b8cb6e44"
+        "projectId": "498a52c9-b0a6-4bbb-b6e4-58901c4ce4af"
       }
-    }
+    },
+    "owner": "mostafaalgamal"
   }
 }

@@ -7,7 +7,10 @@
       "Bash(taskkill:*)",
       "Bash(powershell -Command:*)",
       "Bash(npx expo start:*)",
-      "Bash(curl -s https://platx.runasp.net/api/News/GetNewsListAsync?page=1\"&\"size=10)"
+      "Bash(curl -s https://platx.runasp.net/api/News/GetNewsListAsync?page=1\"&\"size=10)",
+      "Bash(npx sharp-cli --version)",
+      "Bash(node -e \":*)",
+      "Bash(C:/Users/moham/AppData/Local/Android/Sdk/emulator/emulator.exe -list-avds)"
     ]
   }
 }

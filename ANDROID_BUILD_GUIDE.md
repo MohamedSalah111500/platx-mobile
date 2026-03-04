@@ -54,7 +54,7 @@ emulator -avd Pixel_6_API_33 -netdelay none -netspeed full
 - App should auto-install and launch on emulator
 - Check logcat for any runtime errors:
   ```bash
-  adb logcat | findstr "platx"
+  adb logcat | findstr "PlatX"
   ```
 
 ## Build Output Location
