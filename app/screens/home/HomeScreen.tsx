@@ -30,6 +30,8 @@ import type { Course } from '../../types/course.types';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { useSound } from '../../hooks/useSound';
 import { studentsApi, type TopStudent } from '../../services/api/students.api';
+import { honorBoardApi, type HonorBoardEntry } from '../../services/api/honor-board.api';
+import SectionHeader from '../../components/ui/SectionHeader';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -57,6 +59,7 @@ export default function HomeScreen({ navigation }: Props) {
   const [newsError, setNewsError] = useState<string | null>(null);
   const [coursesError, setCoursesError] = useState<string | null>(null);
   const [topStudents, setTopStudents] = useState<TopStudent[]>([]);
+  const [honorTop3, setHonorTop3] = useState<HonorBoardEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
 
@@ -82,9 +85,9 @@ export default function HomeScreen({ navigation }: Props) {
       setNews([]);
     }
     try {
-      const coursesRes = isTeacherOrAdmin
+      const coursesRes = (isTeacherOrAdmin || !domain)
         ? await coursesApi.getAll(1, 6)
-        : await coursesApi.getPublic(domain || '', 1, 6);
+        : await coursesApi.getPublic(domain, 1, 6);
       setCourses(coursesRes.items || []);
       setCoursesError(null);
     } catch (err: any) {
@@ -104,6 +107,13 @@ export default function HomeScreen({ navigation }: Props) {
     try {
       const top = await studentsApi.getTopStudents();
       setTopStudents(top.slice(0, 5));
+    } catch {
+      // honor board may not be available
+    }
+    try {
+      const now = new Date();
+      const entries = await honorBoardApi.getRankings(now.getMonth() + 1, now.getFullYear());
+      setHonorTop3(entries.sort((a, b) => a.rank - b.rank).slice(0, 3));
     } catch {
       // honor board may not be available
     }
@@ -161,6 +171,11 @@ export default function HomeScreen({ navigation }: Props) {
       backgroundColor: BG_COLOR,
     },
     headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    headerUserPress: {
+      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
     },
@@ -258,17 +273,17 @@ export default function HomeScreen({ navigation }: Props) {
     statCardDark: {
       flex: 1,
       backgroundColor: DARK_CARD,
-      borderRadius: borderRadius['3xl'],
-      padding: spacing.lg,
-      minHeight: 130,
+      borderRadius: borderRadius['2xl'],
+      padding: spacing.sm,
+      minHeight: 80,
       justifyContent: 'space-between',
     },
     statCardLight: {
       flex: 1,
       backgroundColor: LIGHT_CARD,
-      borderRadius: borderRadius['3xl'],
-      padding: spacing.lg,
-      minHeight: 130,
+      borderRadius: borderRadius['2xl'],
+      padding: spacing.sm,
+      minHeight: 80,
       justifyContent: 'space-between',
     },
     statIconRow: {
@@ -277,21 +292,22 @@ export default function HomeScreen({ navigation }: Props) {
       justifyContent: 'space-between',
     },
     statIconCircle: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
+      width: 32,
+      height: 32,
+      borderRadius: 16,
       justifyContent: 'center',
       alignItems: 'center',
     },
     statValue: {
-      fontSize: fontSize['2xl'],
+      fontSize: fontSize.lg,
       fontFamily: 'Cairo_700Bold',
-      marginTop: spacing.sm,
+      marginTop: spacing.xs,
     },
     statLabel: {
       ...typography.caption,
+      fontSize: 10,
       fontFamily: 'Cairo_500Medium',
-      marginTop: 2,
+      marginTop: 1,
     },
 
     /* ── Teacher / Admin 3-column stats ───────────────────────── */
@@ -304,8 +320,8 @@ export default function HomeScreen({ navigation }: Props) {
     adminStatCard: {
       flex: 1,
       backgroundColor: CARD_BG,
-      borderRadius: borderRadius['3xl'],
-      padding: spacing.lg,
+      borderRadius: borderRadius['2xl'],
+      padding: spacing.sm,
       alignItems: 'center',
       ...Platform.select({
         ios: {
@@ -318,22 +334,23 @@ export default function HomeScreen({ navigation }: Props) {
       }),
     },
     adminStatIconCircle: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
       justifyContent: 'center',
       alignItems: 'center',
-      marginBottom: spacing.sm,
+      marginBottom: spacing.xs,
     },
     adminStatValue: {
-      fontSize: fontSize.xl,
+      fontSize: fontSize.base,
       fontFamily: 'Cairo_700Bold',
       color: theme.colors.text,
     },
     adminStatLabel: {
-      ...typography.caption,
+      fontSize: 10,
+      fontFamily: 'Cairo_500Medium',
       color: theme.colors.textSecondary,
-      marginTop: 3,
+      marginTop: 2,
       textAlign: 'center',
     },
 
@@ -367,25 +384,6 @@ export default function HomeScreen({ navigation }: Props) {
       fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.text,
       textAlign: 'left',
-    },
-
-    /* ── Section Header ───────────────────────────────────────── */
-    sectionHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: spacing.xl,
-      marginBottom: spacing.md,
-    },
-    sectionTitle: {
-      ...typography.h4,
-      color: theme.colors.text,
-      fontFamily: 'Cairo_700Bold',
-    },
-    seeAllText: {
-      ...typography.bodySmall,
-      color: PRIMARY,
-      fontFamily: 'Cairo_600SemiBold',
     },
 
     /* ── Horizontal Course Cards ──────────────────────────────── */
@@ -660,6 +658,62 @@ export default function HomeScreen({ navigation }: Props) {
       fontFamily: 'Cairo_700Bold' as const,
       color: '#F5A623',
     },
+
+    /* ── Top 3 honor tree inside stat card ─────────────────── */
+    honorTree: {
+      alignItems: 'center',
+      marginTop: spacing.sm,
+    },
+    honorTreeTop: {
+      alignItems: 'center',
+      marginBottom: 4,
+    },
+    honorTreeBottom: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: spacing.md,
+    },
+    honorTreeItem: {
+      alignItems: 'center',
+    },
+    honorTreeAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      justifyContent: 'center',
+      alignItems: 'center',
+      overflow: 'hidden' as const,
+      borderWidth: 2,
+    },
+    honorTreeAvatarGold: {
+      borderColor: '#FFD54F',
+      backgroundColor: 'rgba(255,213,79,0.2)',
+    },
+    honorTreeAvatarSilver: {
+      borderColor: '#BDBDBD',
+      backgroundColor: 'rgba(189,189,189,0.2)',
+    },
+    honorTreeAvatarBronze: {
+      borderColor: '#FFB74D',
+      backgroundColor: 'rgba(255,183,77,0.2)',
+    },
+    honorTreeAvatarImg: {
+      width: '100%' as any,
+      height: '100%' as any,
+    },
+    honorTreeInitials: {
+      color: '#FFFFFF',
+      fontSize: 11,
+      fontFamily: 'Cairo_700Bold',
+    },
+    honorTreeName: {
+      color: 'rgba(255,255,255,0.8)',
+      fontSize: 8,
+      fontFamily: 'Cairo_600SemiBold',
+      marginTop: 2,
+      maxWidth: 60,
+      textAlign: 'center',
+    },
   });
 
   // ------------------------------------------------------------------ RENDER
@@ -680,15 +734,21 @@ export default function HomeScreen({ navigation }: Props) {
         {/* ────────────── HEADER ────────────── */}
         <View style={styles.header}>
           <View style={styles.headerRow}>
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarText}>{initials}</Text>
-            </View>
-            <View style={styles.headerTextBlock}>
-              <Text style={styles.headerWelcome}>{getGreeting()}</Text>
-              <Text style={styles.headerName} numberOfLines={1}>
-                {firstName} {user?.lastName || ''}
-              </Text>
-            </View>
+            <TouchableOpacity
+              style={styles.headerUserPress}
+              activeOpacity={0.7}
+              onPress={() => navigation.getParent()?.navigate('ProfileTab')}
+            >
+              <View style={styles.avatarCircle}>
+                <Text style={styles.avatarText}>{initials}</Text>
+              </View>
+              <View style={styles.headerTextBlock}>
+                <Text style={styles.headerWelcome}>{getGreeting()}</Text>
+                <Text style={styles.headerName} numberOfLines={1}>
+                  {firstName} {user?.lastName || ''}
+                </Text>
+              </View>
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.bellButton}
               activeOpacity={0.7}
@@ -751,21 +811,21 @@ export default function HomeScreen({ navigation }: Props) {
           <View style={styles.adminStatsRow}>
             <View style={styles.adminStatCard}>
               <View style={[styles.adminStatIconCircle, { backgroundColor: ACCENT_COLORS[0].bg }]}>
-                <Ionicons name="people" size={22} color={ACCENT_COLORS[0].accent} />
+                <Ionicons name="people" size={17} color={ACCENT_COLORS[0].accent} />
               </View>
               <Text style={styles.adminStatValue}>{stats?.totalStudents ?? '-'}</Text>
               <Text style={styles.adminStatLabel}>{t('home.students')}</Text>
             </View>
             <View style={styles.adminStatCard}>
               <View style={[styles.adminStatIconCircle, { backgroundColor: ACCENT_COLORS[1].bg }]}>
-                <Ionicons name="school" size={22} color={ACCENT_COLORS[1].accent} />
+                <Ionicons name="school" size={17} color={ACCENT_COLORS[1].accent} />
               </View>
               <Text style={styles.adminStatValue}>{stats?.totalLecturers ?? '-'}</Text>
               <Text style={styles.adminStatLabel}>{t('home.lecturers')}</Text>
             </View>
             <View style={styles.adminStatCard}>
               <View style={[styles.adminStatIconCircle, { backgroundColor: ACCENT_COLORS[2].bg }]}>
-                <Ionicons name="book" size={22} color={ACCENT_COLORS[2].accent} />
+                <Ionicons name="book" size={17} color={ACCENT_COLORS[2].accent} />
               </View>
               <Text style={styles.adminStatValue}>{stats?.totalOnlineCourses ?? '-'}</Text>
               <Text style={styles.adminStatLabel}>{t('courses.title')}</Text>
@@ -774,31 +834,83 @@ export default function HomeScreen({ navigation }: Props) {
         ) : (
           /* Student: 2 horizontal metric cards (dark + light) */
           <View style={styles.statCardsRow}>
-            {/* Dark card -- Enrolled Courses */}
-            <View style={styles.statCardDark}>
+            {/* Dark card -- Honor Board Top 3 */}
+            <TouchableOpacity
+              style={styles.statCardDark}
+              activeOpacity={0.85}
+              onPress={() => {
+                play('tap');
+                navigation.getParent()?.navigate('ProfileTab', { screen: 'HonorBoard' });
+              }}
+            >
               <View style={styles.statIconRow}>
                 <View style={[styles.statIconCircle, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
-                  <Ionicons name="book" size={20} color="#FFFFFF" />
+                  <Ionicons name="trophy" size={16} color="#FFD54F" />
                 </View>
-                <Ionicons name="trending-up" size={18} color="rgba(255,255,255,0.5)" />
+                <Ionicons name="medal-outline" size={14} color="rgba(255,255,255,0.5)" />
               </View>
-              <View>
-                <Text style={[styles.statValue, { color: '#FFFFFF' }]}>
-                  {courses.length}
-                </Text>
-                <Text style={[styles.statLabel, { color: 'rgba(255,255,255,0.7)' }]}>
-                  {t('home.enrolledCourses')}
-                </Text>
-              </View>
-            </View>
+              {honorTop3.length > 0 ? (
+                <View style={styles.honorTree}>
+                  {/* Top 1 - center */}
+                  {honorTop3[0] && (
+                    <View style={styles.honorTreeTop}>
+                      {(() => {
+                        const s = honorTop3[0];
+                        const parts = (s.studentName || '').trim().split(/\s+/);
+                        const ini = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
+                        return (
+                          <View style={styles.honorTreeItem}>
+                            <View style={[styles.honorTreeAvatar, styles.honorTreeAvatarGold]}>
+                              {s.studentProfileImage ? (
+                                <Image source={{ uri: getFullImageUrl(s.studentProfileImage) }} style={styles.honorTreeAvatarImg} />
+                              ) : (
+                                <Text style={styles.honorTreeInitials}>{ini}</Text>
+                              )}
+                            </View>
+                            <Text style={styles.honorTreeName} numberOfLines={1}>{parts.slice(0, 2).join(' ')}</Text>
+                          </View>
+                        );
+                      })()}
+                    </View>
+                  )}
+                  {/* Bottom row - rank 2 & 3 */}
+                  {honorTop3.length > 1 && (
+                    <View style={styles.honorTreeBottom}>
+                      {honorTop3.slice(1, 3).map((s, i) => {
+                        const parts = (s.studentName || '').trim().split(/\s+/);
+                        const ini = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
+                        return (
+                          <View key={s.id} style={styles.honorTreeItem}>
+                            <View style={[styles.honorTreeAvatar, i === 0 ? styles.honorTreeAvatarSilver : styles.honorTreeAvatarBronze]}>
+                              {s.studentProfileImage ? (
+                                <Image source={{ uri: getFullImageUrl(s.studentProfileImage) }} style={styles.honorTreeAvatarImg} />
+                              ) : (
+                                <Text style={styles.honorTreeInitials}>{ini}</Text>
+                              )}
+                            </View>
+                            <Text style={styles.honorTreeName} numberOfLines={1}>{parts.slice(0, 2).join(' ')}</Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+                </View>
+              ) : (
+                <View>
+                  <Text style={[styles.statLabel, { color: 'rgba(255,255,255,0.7)' }]}>
+                    {t('honorBoard.title')}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
 
             {/* Light card -- Learning Hours */}
             <View style={styles.statCardLight}>
               <View style={styles.statIconRow}>
                 <View style={[styles.statIconCircle, { backgroundColor: isDark ? 'rgba(124,99,253,0.2)' : '#EDE8FF' }]}>
-                  <Ionicons name="time" size={20} color={PRIMARY} />
+                  <Ionicons name="time" size={16} color={PRIMARY} />
                 </View>
-                <Ionicons name="trending-up" size={18} color={isDark ? theme.colors.textMuted : '#C4B5FD'} />
+                <Ionicons name="trending-up" size={14} color={isDark ? theme.colors.textMuted : '#C4B5FD'} />
               </View>
               <View>
                 <Text style={[styles.statValue, { color: isDark ? theme.colors.text : '#1B1464' }]}>
@@ -874,17 +986,10 @@ export default function HomeScreen({ navigation }: Props) {
           <Text style={[styles.errorText, { color: theme.colors.danger }]}>{coursesError}</Text>
         ) : courses.length > 0 ? (
           <View style={styles.sectionSpacing}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
-                {isTeacherOrAdmin ? t('home.recentCourses') : t('home.popularCourses')}
-              </Text>
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => navigation.getParent()?.navigate('CoursesTab')}
-              >
-                <Text style={styles.seeAllText}>{t('common.seeAll')}</Text>
-              </TouchableOpacity>
-            </View>
+            <SectionHeader
+              title={isTeacherOrAdmin ? t('home.recentCourses') : t('home.popularCourses')}
+              onSeeAll={() => navigation.getParent()?.navigate('CoursesTab')}
+            />
 
             <ScrollView
               horizontal
@@ -970,15 +1075,10 @@ export default function HomeScreen({ navigation }: Props) {
         {/* ────────────── ENROLLED COURSES (list) ────────────── */}
         {courses.length > 0 && (
           <View style={[styles.sectionSpacing, { marginTop: spacing['2xl'] }]}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{t('home.enrolledCourses')}</Text>
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => navigation.getParent()?.navigate('CoursesTab')}
-              >
-                <Text style={styles.seeAllText}>{t('common.seeAll')}</Text>
-              </TouchableOpacity>
-            </View>
+            <SectionHeader
+              title={t('home.enrolledCourses')}
+              onSeeAll={() => navigation.getParent()?.navigate('CoursesTab')}
+            />
 
             {courses.slice(0, 3).map((course, idx) => {
               const palette = ACCENT_COLORS[idx % ACCENT_COLORS.length];
@@ -1092,18 +1192,13 @@ export default function HomeScreen({ navigation }: Props) {
         {/* ────────────── HONOR BOARD (top 5) ────────────── */}
         {topStudents.length > 0 && (
           <View style={[styles.sectionSpacing, { marginTop: spacing['2xl'] }]}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{t('honorBoard.title')}</Text>
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => {
-                  play('pop');
-                  navigation.getParent()?.navigate('ProfileTab', { screen: 'HonorBoard' });
-                }}
-              >
-                <Text style={styles.seeAllText}>{t('common.seeAll')}</Text>
-              </TouchableOpacity>
-            </View>
+            <SectionHeader
+              title={t('honorBoard.title')}
+              onSeeAll={() => {
+                play('pop');
+                navigation.getParent()?.navigate('ProfileTab', { screen: 'HonorBoard' });
+              }}
+            />
             {topStudents.map((student, idx) => {
               const name = `${student.firstName || ''} ${student.lastName || ''}`.trim();
               const initial = (student.firstName?.[0] || '?').toUpperCase();
@@ -1149,9 +1244,7 @@ export default function HomeScreen({ navigation }: Props) {
 
         {/* ────────────── LATEST NEWS ────────────── */}
         <View style={[styles.sectionSpacing, { marginTop: spacing['2xl'] }]}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('home.latestNews')}</Text>
-          </View>
+          <SectionHeader title={t('home.latestNews')} />
           {newsError ? (
             <Text style={[styles.errorText, { color: theme.colors.danger }]}>{newsError}</Text>
           ) : news.length > 0 ? (
@@ -1205,9 +1298,7 @@ export default function HomeScreen({ navigation }: Props) {
         {/* ────────────── UPCOMING EVENTS ────────────── */}
         {events.length > 0 && (
           <View style={[styles.sectionSpacing, { marginTop: spacing['2xl'] }]}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{t('home.upcomingEvents')}</Text>
-            </View>
+            <SectionHeader title={t('home.upcomingEvents')} />
             {events.map((event) => {
               const date = new Date(event.startDate);
               return (

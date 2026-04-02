@@ -30,8 +30,6 @@ import type { ProfileStackParamList } from '../../types/navigation.types';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'HonorBoard'>;
 
-const ACCENT = '#7c63fd';
-
 const MEDAL_COLORS = [
   { bg: '#FFF8E1', border: '#FFD54F', icon: '#F5A623' }, // Gold  - Rank 1
   { bg: '#F5F5F5', border: '#BDBDBD', icon: '#9E9E9E' }, // Silver - Rank 2
@@ -292,7 +290,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
             <Image source={{ uri: imageUrl }} style={styles.lowerAvatarImg} />
           ) : (
             <View style={[styles.lowerAvatarFallback, { backgroundColor: bgColor }]}>
-              <Text style={[styles.lowerInitialText, { color: ACCENT }]}>{initial}</Text>
+              <Text style={[styles.lowerInitialText, { color: theme.colors.primary }]}>{initial}</Text>
             </View>
           )}
         </View>
@@ -306,7 +304,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
-      <View style={[styles.headerBg, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={[styles.headerBg, { paddingTop: insets.top + spacing.sm, backgroundColor: theme.colors.primary }]}>
         <View style={styles.headerRow}>
           <TouchableOpacity
             style={styles.backBtn}
@@ -356,8 +354,8 @@ export default function HonorBoardScreen({ navigation }: Props) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={ACCENT}
-              colors={[ACCENT]}
+              tintColor={theme.colors.primary}
+              colors={[theme.colors.primary]}
             />
           }
         >
@@ -408,7 +406,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
                       style={[
                         modalStyles.rankChip,
                         {
-                          backgroundColor: selectedRank === rank ? ACCENT : (taken ? theme.colors.surface : theme.colors.background),
+                          backgroundColor: selectedRank === rank ? theme.colors.primary : (taken ? theme.colors.surface : theme.colors.background),
                           opacity: taken ? 0.4 : 1,
                         },
                       ]}
@@ -449,19 +447,19 @@ export default function HonorBoardScreen({ navigation }: Props) {
                     <TouchableOpacity
                       style={[
                         modalStyles.studentRow,
-                        { backgroundColor: isSelected ? ACCENT + '15' : 'transparent' },
+                        { backgroundColor: isSelected ? theme.colors.primary + '15' : 'transparent' },
                       ]}
                       onPress={() => setSelectedStudent(item)}
                     >
                       <View style={[modalStyles.studentAvatar, { backgroundColor: '#F0EDFF' }]}>
-                        <Text style={{ color: ACCENT, fontFamily: 'Cairo_700Bold', fontSize: 13 }}>
+                        <Text style={{ color: theme.colors.primary, fontFamily: 'Cairo_700Bold', fontSize: 13 }}>
                           {(item.firstName?.[0] || '?').toUpperCase()}
                         </Text>
                       </View>
                       <Text style={[modalStyles.studentName, { color: theme.colors.text }]} numberOfLines={1}>
                         {name}
                       </Text>
-                      {isSelected && <Ionicons name="checkmark-circle" size={20} color={ACCENT} />}
+                      {isSelected && <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />}
                     </TouchableOpacity>
                   );
                 }}
@@ -474,7 +472,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
 
               {/* Add button */}
               <TouchableOpacity
-                style={[modalStyles.addBtn, { opacity: selectedStudent ? 1 : 0.5 }]}
+                style={[modalStyles.addBtn, { opacity: selectedStudent ? 1 : 0.5, backgroundColor: theme.colors.primary }]}
                 disabled={!selectedStudent || adding}
                 onPress={handleAddStudent}
               >
@@ -497,7 +495,6 @@ const styles = StyleSheet.create({
 
   // Header
   headerBg: {
-    backgroundColor: ACCENT,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     paddingBottom: spacing.xl,
@@ -773,7 +770,6 @@ const modalStyles = StyleSheet.create({
     fontFamily: 'Cairo_600SemiBold',
   },
   addBtn: {
-    backgroundColor: ACCENT,
     borderRadius: 16,
     height: 50,
     justifyContent: 'center',

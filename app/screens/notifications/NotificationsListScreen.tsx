@@ -17,7 +17,6 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { Spinner } from '../../components/ui/Spinner';
 import type { NotificationItem } from '../../types/notification.types';
 
-const PRIMARY = '#7c63fd';
 
 export default function NotificationsListScreen() {
   const { theme, isDark } = useTheme();
@@ -55,7 +54,7 @@ export default function NotificationsListScreen() {
   }, [canFetch, role, studentId]);
 
   const handleNotificationPress = async (item: NotificationItem) => {
-    if (!item.isReaded) {
+    if (!item.isReaded && isStudent) {
       await markAsRead(item.id);
     }
   };
@@ -78,7 +77,7 @@ export default function NotificationsListScreen() {
           <Ionicons
             name={isUnread ? 'notifications' : 'notifications-outline'}
             size={20}
-            color={isUnread ? '#fff' : PRIMARY}
+            color={isUnread ? '#fff' : theme.colors.primary}
           />
         </View>
 
@@ -127,8 +126,8 @@ export default function NotificationsListScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={onRefresh}
-            tintColor={PRIMARY}
-            colors={[PRIMARY]}
+            tintColor={theme.colors.primary}
+            colors={[theme.colors.primary]}
           />
         }
         onEndReached={handleEndReached}
@@ -191,7 +190,7 @@ function createStyles(theme: any, isDark: boolean) {
       color: theme.colors.text,
     },
     badge: {
-      backgroundColor: PRIMARY,
+      backgroundColor: theme.colors.primary,
       borderRadius: 12,
       minWidth: 26,
       height: 26,
@@ -230,7 +229,7 @@ function createStyles(theme: any, isDark: boolean) {
       marginEnd: 12,
     },
     iconCircleUnread: {
-      backgroundColor: PRIMARY,
+      backgroundColor: theme.colors.primary,
     },
     cardContent: {
       flex: 1,
@@ -266,7 +265,7 @@ function createStyles(theme: any, isDark: boolean) {
       width: 8,
       height: 8,
       borderRadius: 4,
-      backgroundColor: PRIMARY,
+      backgroundColor: theme.colors.primary,
       marginTop: 18,
       marginStart: 4,
     },

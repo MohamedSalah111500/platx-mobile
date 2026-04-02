@@ -6,3 +6,8 @@ export { Badge } from './Badge';
 export { Spinner } from './Spinner';
 export { EmptyState } from './EmptyState';
 export { Divider } from './Divider';
+export { SectionHeader } from './SectionHeader';
+export { ScreenHeader } from './ScreenHeader';
+export { SearchBar } from './SearchBar';
+export { ErrorBanner } from './ErrorBanner';
+export { ErrorRetry } from './ErrorRetry';

@@ -83,7 +83,7 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
         await confirmEmail({ email, code, domain });
         // Auto-login after email confirmation
         if (password) {
-          await login({ userName: email, password, domain });
+          await login({ userName: email, password });
         }
       } else {
         const result = await verifyOtpResetPassword({ email, code, domain });

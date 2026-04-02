@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  Alert,
+  Modal,
+  TextInput,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-let GoogleSignin: any = null;
-let statusCodes: any = {};
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuthStore } from '../../store/auth.store';
@@ -21,6 +22,9 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import type { AuthStackParamList } from '../../types/navigation.types';
 import { useRTL } from '../../i18n/RTLProvider';
+import { ErrorBanner } from '../../components/ui/ErrorBanner';
+
+WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_WEB_CLIENT_ID = '997004801769-ni3d4vb3d1g551vrj4ku9fsr99k1mhr6.apps.googleusercontent.com';
 
@@ -28,31 +32,91 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export default function LoginScreen({ navigation }: Props) {
   const { theme } = useTheme();
-  const { login, googleLogin, isLoading, error, clearError } = useAuthStore();
-  const { t, isRTL } = useRTL();
+  const { login, googleLogin, isLoading, error, clearError, pendingTenants } = useAuthStore();
+  const { t } = useRTL();
 
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
-  const [domain, setDomain] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [googleLoading, setGoogleLoading] = useState(false);
 
+  // Domain modal for Google Sign-In
+  const [domainModalVisible, setDomainModalVisible] = useState(false);
+  const [domainInput, setDomainInput] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const pendingDomainRef = useRef<string>('');
+
+  const discovery = {
+    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+  };
+
+  const redirectUri = AuthSession.makeRedirectUri();
+
+  const [request, response, promptAsync] = AuthSession.useAuthRequest(
+    {
+      clientId: GOOGLE_WEB_CLIENT_ID,
+      scopes: ['profile', 'email'],
+      responseType: AuthSession.ResponseType.Token,
+      redirectUri,
+    },
+    discovery,
+  );
+
+  // Navigate to tenant selection when pendingTenants is set
   useEffect(() => {
-    try {
-      GoogleSignin.configure({
-        webClientId: GOOGLE_WEB_CLIENT_ID,
-        offlineAccess: true,
-      });
-    } catch {
-      // Google Sign-In native module not available (e.g. Expo Go)
+    if (pendingTenants && pendingTenants.length > 0) {
+      navigation.navigate('TenantSelection');
     }
-  }, []);
+  }, [pendingTenants, navigation]);
+
+  // Handle Google OAuth response
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const accessToken = (response as any).params?.access_token;
+      if (accessToken) {
+        handleGoogleResponse(accessToken);
+      } else {
+        setGoogleLoading(false);
+      }
+    } else if (response?.type === 'error' || response?.type === 'dismiss') {
+      setGoogleLoading(false);
+    }
+  }, [response]);
+
+  const handleGoogleResponse = async (accessToken: string) => {
+    try {
+      // Fetch user info from Google
+      const userInfoRes = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const userInfo = await userInfoRes.json();
+
+      if (!userInfo?.id) throw new Error('Failed to get Google user info');
+
+      await googleLogin(
+        {
+          id: userInfo.id,
+          email: userInfo.email || '',
+          name: userInfo.name || '',
+          givenName: userInfo.given_name || '',
+          familyName: userInfo.family_name || '',
+          picture: userInfo.picture || '',
+          accessToken,
+          returnUrl: '',
+          Domain: pendingDomainRef.current,
+        },
+        pendingDomainRef.current,
+      );
+    } catch (err: any) {
+      // Error shown via store
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
     if (!userName.trim()) errors.userName = t('auth.usernameRequired');
     if (!password.trim()) errors.password = t('auth.passwordRequired');
-    if (!domain.trim()) errors.domain = t('auth.domainRequired');
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -60,70 +124,177 @@ export default function LoginScreen({ navigation }: Props) {
   const handleLogin = async () => {
     clearError();
     if (!validate()) return;
-
     try {
-      await login({ userName: userName.trim(), password, domain: domain.trim() });
+      await login({ userName: userName.trim(), password });
     } catch {
       // Error is set in store
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    if (!domain.trim()) {
-      setFormErrors({ domain: t('auth.domainRequiredForGoogle') });
-      return;
-    }
+  const handleGoogleSignIn = () => {
     clearError();
-    setGoogleLoading(true);
-    try {
-      // Check if Google Sign-In native module is available
-      if (!GoogleSignin || typeof GoogleSignin.signIn !== 'function') {
-        Alert.alert(t('common.error'), 'Google Sign-In is not available in this build');
-        return;
-      }
-      await GoogleSignin.hasPlayServices();
-      const response = await GoogleSignin.signIn();
-      const userInfo = response.data;
-      if (!userInfo?.user) throw new Error('No user info');
-
-      const tokens = await GoogleSignin.getTokens();
-
-      await googleLogin(
-        {
-          id: userInfo.user.id,
-          email: userInfo.user.email,
-          name: userInfo.user.name || '',
-          givenName: userInfo.user.givenName || '',
-          familyName: userInfo.user.familyName || '',
-          picture: userInfo.user.photo || '',
-          accessToken: tokens.accessToken,
-          returnUrl: '',
-          Domain: domain.trim(),
-        },
-        domain.trim(),
-      );
-    } catch (err: any) {
-      if (err?.code === statusCodes.SIGN_IN_CANCELLED) {
-        // User cancelled
-      } else if (err?.code === statusCodes.IN_PROGRESS) {
-        // Already in progress
-      } else if (err?.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert(t('common.error'), 'Google Play Services not available');
-      } else {
-        if (!useAuthStore.getState().error) {
-          useAuthStore.getState().clearError();
-          Alert.alert(t('common.error'), t('auth.googleSignInFailed'));
-        }
-      }
-    } finally {
-      setGoogleLoading(false);
-    }
+    setDomainInput('');
+    setDomainModalVisible(true);
   };
 
-  const styles = StyleSheet.create({
+  const confirmDomainAndSignIn = async () => {
+    const domain = domainInput.trim();
+    if (!domain) return;
+    pendingDomainRef.current = domain;
+    setDomainModalVisible(false);
+    setGoogleLoading(true);
+    await promptAsync();
+  };
+
+  const styles = createStyles(theme);
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.formSection}>
+          <Text style={styles.title}>{t('auth.loginTitle')}</Text>
+          <Text style={styles.welcomeText}>{t('auth.signInToContinue')}</Text>
+
+          {error && <ErrorBanner message={error} />}
+
+          <Input
+            label={t('auth.username')}
+            placeholder={t('auth.enterUsername')}
+            value={userName}
+            onChangeText={(text) => {
+              setUserName(text);
+              if (formErrors.userName) setFormErrors((e) => ({ ...e, userName: '' }));
+            }}
+            error={formErrors.userName}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+
+          <Input
+            label={t('auth.password')}
+            placeholder={t('auth.enterPassword')}
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (formErrors.password) setFormErrors((e) => ({ ...e, password: '' }));
+            }}
+            error={formErrors.password}
+            secureTextEntry
+          />
+
+          <TouchableOpacity
+            style={styles.forgotPassword}
+            onPress={() => navigation.navigate('ForgotPassword')}
+          >
+            <Text style={[styles.forgotPasswordText, { color: theme.colors.primary }]}>
+              {t('auth.forgotPassword')}
+            </Text>
+          </TouchableOpacity>
+
+          <Button
+            title={t('auth.signIn')}
+            onPress={handleLogin}
+            loading={isLoading}
+            fullWidth
+            size="large"
+          />
+
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>{t('auth.orContinueWith')}</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.googleButton, (googleLoading || isLoading) && { opacity: 0.6 }]}
+            onPress={handleGoogleSignIn}
+            disabled={googleLoading || isLoading || !request}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="logo-google" size={20} color="#DB4437" />
+            <Text style={styles.googleButtonText}>
+              {googleLoading ? t('common.loading') : t('auth.signInWithGoogle')}
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>{t('auth.noAccount')} </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+              <Text style={[styles.footerLink, { color: theme.colors.primary }]}>
+                {t('auth.signUp')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Domain Modal for Google Sign-In */}
+      <Modal
+        visible={domainModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDomainModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+              {t('auth.domain')}
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: theme.colors.textMuted }]}>
+              {t('auth.enterDomain')}
+            </Text>
+            <TextInput
+              style={[styles.domainInput, {
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.inputBackground,
+                color: theme.colors.text,
+              }]}
+              placeholder={t('auth.domainPlaceholder') || 'e.g. school'}
+              placeholderTextColor={theme.colors.inputPlaceholder}
+              value={domainInput}
+              onChangeText={setDomainInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+              onSubmitEditing={confirmDomainAndSignIn}
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { borderColor: theme.colors.border }]}
+                onPress={() => setDomainModalVisible(false)}
+              >
+                <Text style={[styles.modalBtnText, { color: theme.colors.textSecondary }]}>
+                  {t('common.cancel')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.modalBtnPrimary, { backgroundColor: theme.colors.primary }]}
+                onPress={confirmDomainAndSignIn}
+                disabled={!domainInput.trim()}
+              >
+                <Text style={[styles.modalBtnText, { color: '#fff' }]}>
+                  {t('common.continue') || 'Continue'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </KeyboardAvoidingView>
+  );
+}
+
+function createStyles(theme: any) {
+  return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.dark ? theme.colors.background : '#FFFFFF',
+      backgroundColor: theme.colors.background,
     },
     scrollContent: {
       flexGrow: 1,
@@ -145,26 +316,12 @@ export default function LoginScreen({ navigation }: Props) {
       marginBottom: spacing.xl,
       textAlign: 'center',
     },
-    errorBanner: {
-      backgroundColor: theme.colors.danger + '15',
-      borderRadius: borderRadius['2xl'],
-      padding: spacing.md,
-      marginBottom: spacing.lg,
-      borderLeftWidth: 3,
-      borderLeftColor: theme.colors.danger,
-    },
-    errorText: {
-      ...typography.bodySmall,
-      color: theme.colors.danger,
-      textAlign: 'left',
-    },
     forgotPassword: {
       alignSelf: 'flex-end',
       marginBottom: spacing.xl,
     },
     forgotPasswordText: {
       ...typography.bodySmall,
-      color: '#7c63fd',
     },
     footer: {
       flexDirection: 'row',
@@ -178,7 +335,6 @@ export default function LoginScreen({ navigation }: Props) {
     },
     footerLink: {
       ...typography.body,
-      color: '#7c63fd',
       fontFamily: 'Cairo_600SemiBold',
     },
     divider: {
@@ -212,115 +368,55 @@ export default function LoginScreen({ navigation }: Props) {
       color: theme.colors.text,
       marginLeft: spacing.md,
     },
+    // Domain Modal
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: spacing['2xl'],
+    },
+    modalCard: {
+      width: '100%',
+      borderRadius: 20,
+      padding: spacing['2xl'],
+    },
+    modalTitle: {
+      fontFamily: 'Cairo_700Bold',
+      fontSize: 18,
+      marginBottom: spacing.xs,
+    },
+    modalSubtitle: {
+      fontFamily: 'Cairo_400Regular',
+      fontSize: 14,
+      marginBottom: spacing.lg,
+    },
+    domainInput: {
+      borderWidth: 1.5,
+      borderRadius: 12,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 12,
+      fontSize: 15,
+      fontFamily: 'Cairo_400Regular',
+      marginBottom: spacing.lg,
+    },
+    modalActions: {
+      flexDirection: 'row',
+      gap: spacing.md,
+    },
+    modalBtn: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 12,
+      borderWidth: 1,
+      alignItems: 'center',
+    },
+    modalBtnPrimary: {
+      borderWidth: 0,
+    },
+    modalBtnText: {
+      fontFamily: 'Cairo_600SemiBold',
+      fontSize: 15,
+    },
   });
-
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Form Section */}
-        <View style={styles.formSection}>
-          <Text style={styles.title}>{t('auth.loginTitle')}</Text>
-          <Text style={styles.welcomeText}>{t('auth.signInToContinue')}</Text>
-
-          {/* Error Banner */}
-          {error && (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
-
-          {/* Form */}
-          <Input
-            label={t('auth.domain')}
-            placeholder={t('auth.enterDomain')}
-            value={domain}
-            onChangeText={(text) => {
-              setDomain(text);
-              if (formErrors.domain) setFormErrors((e) => ({ ...e, domain: '' }));
-            }}
-            error={formErrors.domain}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-
-          <Input
-            label={t('auth.username')}
-            placeholder={t('auth.enterUsername')}
-            value={userName}
-            onChangeText={(text) => {
-              setUserName(text);
-              if (formErrors.userName) setFormErrors((e) => ({ ...e, userName: '' }));
-            }}
-            error={formErrors.userName}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-
-          <Input
-            label={t('auth.password')}
-            placeholder={t('auth.enterPassword')}
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              if (formErrors.password) setFormErrors((e) => ({ ...e, password: '' }));
-            }}
-            error={formErrors.password}
-            secureTextEntry
-          />
-
-          {/* Forgot Password */}
-          <TouchableOpacity
-            style={styles.forgotPassword}
-            onPress={() => navigation.navigate('ForgotPassword')}
-          >
-            <Text style={styles.forgotPasswordText}>{t('auth.forgotPassword')}</Text>
-          </TouchableOpacity>
-
-          {/* Login Button */}
-          <Button
-            title={t('auth.signIn')}
-            onPress={handleLogin}
-            loading={isLoading}
-            fullWidth
-            size="large"
-          />
-
-          {/* Divider */}
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>{t('auth.orContinueWith')}</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          {/* Google Sign-In */}
-          <TouchableOpacity
-            style={[styles.googleButton, { opacity: googleLoading ? 0.7 : 1 }]}
-            onPress={handleGoogleSignIn}
-            disabled={googleLoading || isLoading}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="logo-google" size={20} color="#DB4437" />
-            <Text style={styles.googleButtonText}>
-              {googleLoading ? t('common.loading') : t('auth.signInWithGoogle')}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Sign Up Link */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>{t('auth.noAccount')} </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register', { domain })}>
-              <Text style={styles.footerLink}>{t('auth.signUp')}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
 }

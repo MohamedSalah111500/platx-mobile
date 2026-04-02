@@ -6,8 +6,9 @@ export type RootStackParamList = {
 };
 
 export type AuthStackParamList = {
-  Login: { domain?: string } | undefined;
+  Login: undefined;
   Register: { domain?: string } | undefined;
+  TenantSelection: undefined;
   ForgotPassword: undefined;
   OTPVerification: {
     email: string;
@@ -20,7 +21,7 @@ export type AuthStackParamList = {
 
 export type MainTabParamList = {
   HomeTab: undefined;
-  CoursesTab: undefined;
+  ExamsTab: undefined;
   ChatTab: undefined;
   NotificationsTab: undefined;
   ProfileTab: undefined;
@@ -55,6 +56,12 @@ export type ChatStackParamList = {
 export type NotificationsStackParamList = {
   NotificationsList: undefined;
   NotificationDetail: { notificationId: number };
+};
+
+export type ExamsStackParamList = {
+  ExamsList: undefined;
+  ExamTaking: { examId: number };
+  ExamResult: { examId: number };
 };
 
 export type ProfileStackParamList = {

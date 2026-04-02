@@ -20,8 +20,7 @@ import type { ProfileStackParamList } from '../../types/navigation.types';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
 
-const ACCENT = '#7c63fd';
-const BG = '#FFFFFF';
+
 
 export default function ProfileScreen({ navigation }: Props) {
   const { theme } = useTheme();
@@ -49,7 +48,7 @@ export default function ProfileScreen({ navigation }: Props) {
   const lastName = user?.lastName || '';
   const initials = (firstName?.[0] || '') + (lastName?.[0] || '');
 
-  const bgColor = theme.dark ? theme.colors.background : BG;
+  const bgColor = theme.colors.background;
 
   const generalMenuItems: { iconName: string; iconBg: string; iconColor: string; label: string; onPress: () => void }[] = [];
   if (canManageGroups || canMyGroup) {
@@ -85,9 +84,9 @@ export default function ProfileScreen({ navigation }: Props) {
         contentContainerStyle={{ paddingBottom: 120 }}
       >
         {/* Purple header */}
-        <View style={[styles.headerBg, { paddingTop: insets.top + spacing.lg }]}>
+        <View style={[styles.headerBg, { paddingTop: insets.top + spacing.lg, backgroundColor: theme.colors.primary }]}>
           <View style={[styles.avatar, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
-            <Text style={styles.avatarText}>
+            <Text style={[styles.avatarText, { color: theme.colors.primary }]}>
               {initials.toUpperCase() || '?'}
             </Text>
           </View>
@@ -110,7 +109,7 @@ export default function ProfileScreen({ navigation }: Props) {
             onPress={() => navigation.getParent()?.navigate('CoursesTab')}
           >
             <View style={[styles.statIcon, { backgroundColor: '#F0EDFF' }]}>
-              <Ionicons name="book" size={18} color={ACCENT} />
+              <Ionicons name="book" size={18} color={theme.colors.primary} />
             </View>
             <Text style={[styles.statValue, { color: theme.colors.text }]}>-</Text>
             <Text style={[styles.statLabel, { color: theme.colors.textMuted }]}>{t('profile.courses')}</Text>
@@ -179,7 +178,7 @@ export default function ProfileScreen({ navigation }: Props) {
               activeOpacity={0.6}
             >
               <View style={[styles.menuIcon, { backgroundColor: '#F0EDFF' }]}>
-                <Ionicons name="settings" size={20} color={ACCENT} />
+                <Ionicons name="settings" size={20} color={theme.colors.primary} />
               </View>
               <Text style={[styles.menuLabel, { color: theme.colors.text }]}>{t('profile.settings')}</Text>
               <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
@@ -221,7 +220,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerBg: {
-    backgroundColor: ACCENT,
     paddingBottom: 44,
     alignItems: 'center',
     borderBottomLeftRadius: 32,
@@ -240,7 +238,6 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 30,
     fontFamily: 'Cairo_700Bold',
-    color: ACCENT,
   },
   userName: {
     ...typography.h3,

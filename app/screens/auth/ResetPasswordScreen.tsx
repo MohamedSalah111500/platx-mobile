@@ -50,7 +50,7 @@ export default function ResetPasswordScreen({ navigation, route }: Props) {
       Alert.alert(t('common.success'), t('auth.passwordResetSuccess'), [
         {
           text: t('common.ok'),
-          onPress: () => navigation.navigate('Login', {}),
+          onPress: () => navigation.navigate('Login'),
         },
       ]);
     } catch {

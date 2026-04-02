@@ -23,14 +23,16 @@
     "by": "بواسطة",
     "ok": "حسناً",
     "validation": "تحقق",
-    "info": "معلومة"
+    "info": "معلومة",
+    "continue": "متابعة"
   },
   "tabs": {
     "home": "الرئيسية",
     "courses": "الدورات",
     "chat": "المحادثة",
     "alerts": "التنبيهات",
-    "profile": "الملف الشخصي"
+    "profile": "البروفايل",
+    "exams": "الاختبارات"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -68,7 +70,8 @@
     "tenantInactive": "مؤسستك غير نشطة حالياً",
     "learningPlatform": "منصة التعلم",
     "signInToContinue": "سجل الدخول للمتابعة إلى حسابك",
-    "enterDomain": "أدخل نطاق المؤسسة",
+    "enterDomain": "أدخل نطاق مؤسستك للمتابعة بـ Google",
+    "domainPlaceholder": "مثال: myschool",
     "enterUsername": "أدخل اسم المستخدم",
     "enterPassword": "أدخل كلمة المرور",
     "usernameRequired": "اسم المستخدم مطلوب",
@@ -113,7 +116,9 @@
     "domainRequiredForGoogle": "يرجى إدخال النطاق أولاً",
     "googleNotAvailable": "تسجيل الدخول بجوجل غير متاح في هذا الإصدار",
     "playServicesNotAvailable": "خدمات جوجل بلاي غير متوفرة",
-    "changePasswordFailed": "فشل تغيير كلمة المرور."
+    "changePasswordFailed": "فشل تغيير كلمة المرور.",
+    "selectTenant": "اختر الأكاديمية",
+    "selectTenantSubtitle": "أنت مسجل في أكثر من أكاديمية. يرجى اختيار واحدة للمتابعة."
   },
   "home": {
     "welcome": "مرحباً",
@@ -416,5 +421,49 @@
     "m10": "أكتوبر",
     "m11": "نوفمبر",
     "m12": "ديسمبر"
+  },
+  "exams": {
+    "title": "الاختبارات",
+    "exam": "اختبار",
+    "noExams": "لا توجد اختبارات",
+    "noExamsMessage": "لا توجد اختبارات متاحة حالياً.",
+    "failedToLoad": "فشل تحميل الاختبارات.",
+    "failedToLoadResults": "فشل تحميل نتائج الاختبار.",
+    "examNotFound": "الاختبار غير موجود.",
+    "scheduled": "مجدول",
+    "dynamic": "فوري",
+    "min": "دقيقة",
+    "answered": "تمت الإجابة",
+    "notAnswered": "لم تتم الإجابة",
+    "alreadyAnswered": "لقد قمت بتقديم هذا الاختبار بالفعل.",
+    "examStartsIn": "يبدأ الاختبار خلال",
+    "days": "أيام",
+    "hours": "ساعات",
+    "minutes": "دقائق",
+    "seconds": "ثوانٍ",
+    "duration": "المدة",
+    "questions": "أسئلة",
+    "singleChoice": "اختيار واحد",
+    "multipleChoice": "اختيار متعدد",
+    "submit": "تقديم الاختبار",
+    "submitSuccess": "تم تقديم الاختبار بنجاح!",
+    "submitFailed": "فشل تقديم الاختبار.",
+    "confirmSubmitTitle": "تقديم الاختبار",
+    "confirmSubmitMessage": "هل أنت متأكد من تقديم الاختبار؟ لا يمكنك تغيير إجاباتك بعد التقديم.",
+    "timeUp": "انتهى الوقت!",
+    "autoSubmitMessage": "انتهى وقت الاختبار. سيتم تقديم إجاباتك تلقائياً.",
+    "viewResults": "عرض النتائج",
+    "results": "نتائج الاختبار",
+    "totalScore": "الدرجة الكلية",
+    "percentage": "النسبة المئوية",
+    "correct": "صحيح",
+    "incorrect": "خطأ",
+    "timeTaken": "الوقت المستغرق",
+    "questionDetails": "تفاصيل الأسئلة",
+    "yourAnswer": "إجابتك",
+    "preview": "معاينة",
+    "deleteExam": "حذف الاختبار",
+    "deleteExamConfirm": "هل أنت متأكد من حذف هذا الاختبار؟",
+    "deleteFailed": "فشل حذف الاختبار."
   }
 }

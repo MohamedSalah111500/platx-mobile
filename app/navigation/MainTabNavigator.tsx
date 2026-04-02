@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Platform, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../hooks/useAuth';
@@ -10,16 +11,16 @@ import type { MainTabParamList } from '../types/navigation.types';
 
 // Import stacks
 import HomeStack from './stacks/HomeStack';
-import CoursesStack from './stacks/CoursesStack';
 import ChatStack from './stacks/ChatStack';
 import NotificationsStack from './stacks/NotificationsStack';
+import ExamsStack from './stacks/ExamsStack';
 import ProfileStack from './stacks/ProfileStack';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const TAB_ICONS: Record<string, [string, string]> = {
   HomeTab: ['home', 'home-outline'],
-  CoursesTab: ['book', 'book-outline'],
+  ExamsTab: ['clipboard', 'clipboard-outline'],
   ChatTab: ['chatbubbles', 'chatbubbles-outline'],
   NotificationsTab: ['notifications', 'notifications-outline'],
   ProfileTab: ['person', 'person-outline'],
@@ -35,6 +36,9 @@ const HIDE_TAB_BAR_SCREENS = [
   'EventDetail',
   'NotificationDetail',
   'HonorBoard',
+  'ExamTaking',
+  'ExamResult',
+  'CreateLive',
 ];
 
 function shouldHideTabBar(route: any): boolean {
@@ -48,6 +52,9 @@ export default function MainTabNavigator() {
   const { theme } = useTheme();
   const { can } = useAuth();
   const { t } = useRTL();
+  const insets = useSafeAreaInsets();
+
+  const bottomInset = Platform.OS === 'ios' ? 26 : Math.max(insets.bottom, 8);
 
   const baseTabBarStyle = {
     backgroundColor: theme.colors.tabBarBackground,
@@ -57,8 +64,8 @@ export default function MainTabNavigator() {
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
-    height: TAB_BAR_HEIGHT,
-    paddingBottom: Platform.OS === 'ios' ? 26 : 8,
+    height: TAB_BAR_HEIGHT + (Platform.OS === 'android' ? insets.bottom : 0),
+    paddingBottom: bottomInset,
     paddingTop: 8,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -103,9 +110,9 @@ export default function MainTabNavigator() {
         options={{ tabBarLabel: t('tabs.home') }}
       />
       <Tab.Screen
-        name="CoursesTab"
-        component={CoursesStack}
-        options={{ tabBarLabel: t('tabs.courses') }}
+        name="ExamsTab"
+        component={ExamsStack}
+        options={{ tabBarLabel: t('tabs.exams') }}
       />
       <Tab.Screen
         name="ChatTab"

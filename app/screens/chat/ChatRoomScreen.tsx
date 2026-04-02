@@ -27,10 +27,8 @@ import type { ChatMessage } from '../../types/chat.types';
 
 type Props = NativeStackScreenProps<ChatStackParamList, 'ChatRoom'>;
 
-const ACCENT = '#7c63fd';
-
 const AVATAR_COLORS = [
-  { bg: '#F0EDFF', color: ACCENT },
+  { bg: '#F0EDFF', color: '#7c63fd' },
   { bg: '#E8F8F0', color: '#34C38F' },
   { bg: '#E8F4FD', color: '#3B82F6' },
   { bg: '#FFF4E5', color: '#F5A623' },
@@ -192,7 +190,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
           <View
             style={[
               styles.bubble,
-              own ? styles.bubbleOwn : [styles.bubbleOther, { backgroundColor: theme.colors.surface }],
+              own ? [styles.bubbleOwn, { backgroundColor: theme.colors.primary }] : [styles.bubbleOther, { backgroundColor: theme.colors.surface }],
             ]}
           >
             <Text style={[styles.bubbleText, own ? styles.bubbleTextOwn : { color: theme.colors.text }]}>
@@ -219,9 +217,9 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
         </TouchableOpacity>
         <View style={[styles.headerAvatar, { backgroundColor: '#F0EDFF' }]}>
           {isStaffChat ? (
-            <Text style={styles.headerAvatarText}>{headerInitial}</Text>
+            <Text style={[styles.headerAvatarText, { color: theme.colors.primary }]}>{headerInitial}</Text>
           ) : (
-            <Ionicons name="people" size={18} color={ACCENT} />
+            <Ionicons name="people" size={18} color={theme.colors.primary} />
           )}
         </View>
         <View style={styles.headerInfo}>
@@ -272,6 +270,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
           <TouchableOpacity
             style={[
               styles.sendBtn,
+              { backgroundColor: theme.colors.primary, shadowColor: theme.colors.primary },
               (!newMessage.trim() || sending) && styles.sendBtnDisabled,
             ]}
             onPress={handleSend}
@@ -318,7 +317,6 @@ const styles = StyleSheet.create({
   headerAvatarText: {
     fontSize: 17,
     fontFamily: 'Cairo_700Bold',
-    color: ACCENT,
   },
   headerInfo: { flex: 1, gap: 1 },
   headerName: { ...typography.body, fontFamily: 'Cairo_700Bold' },
@@ -371,7 +369,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
   },
   bubbleOwn: {
-    backgroundColor: ACCENT,
     borderBottomRightRadius: borderRadius.sm,
   },
   bubbleOther: {
@@ -413,13 +410,11 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 15,
-    backgroundColor: ACCENT,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Platform.OS === 'ios' ? 2 : 0,
     ...Platform.select({
       ios: {
-        shadowColor: ACCENT,
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.3,
         shadowRadius: 6,

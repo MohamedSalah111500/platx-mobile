@@ -13,6 +13,8 @@ export const AUTH_URLS = {
   VERIFY_OTP_RESET_PASSWORD: `${BASE}api/Auth/verify-otp-reset-password`,
   CHANGE_PASSWORD: `${BASE}api/Auth/change-password`,
   GOOGLE_SIGNIN: `${BASE}api/Auth/google-signin`,
+  MOBILE_LOGIN: `${BASE}api/auth/mobile-login`,
+  MOBILE_SELECT_TENANT: `${BASE}api/auth/mobile-select-tenant`,
 };
 
 // Groups endpoints
@@ -32,9 +34,15 @@ export const GROUPS_URLS = {
 
 // News endpoints
 export const NEWS_URLS = {
-  GET_ALL: (domain: string) => `${BASE}api/News/GetNewsListAsync?domain=${encodeURIComponent(domain)}`,
-  GET_SINGLE: (id: number | string, domain: string) => `${BASE}api/News/${id}?domain=${encodeURIComponent(domain)}`,
-  GET_SINGLE_STUDENT: (id: number | string, domain: string) => `${BASE}api/News/GetNewsByIdForStudent/${id}?domain=${encodeURIComponent(domain)}`,
+  GET_ALL: (domain: string) => domain
+    ? `${BASE}api/News/GetNewsListAsync?domain=${encodeURIComponent(domain)}`
+    : `${BASE}api/News/GetNewsListAsync`,
+  GET_SINGLE: (id: number | string, domain: string) => domain
+    ? `${BASE}api/News/${id}?domain=${encodeURIComponent(domain)}`
+    : `${BASE}api/News/${id}`,
+  GET_SINGLE_STUDENT: (id: number | string, domain: string) => domain
+    ? `${BASE}api/News/GetNewsByIdForStudent/${id}?domain=${encodeURIComponent(domain)}`
+    : `${BASE}api/News/GetNewsByIdForStudent/${id}`,
   CREATE: `${BASE}api/News`,
   UPDATE: `${BASE}api/News`,
   DELETE: (id: number | string) => `${BASE}api/News/${id}`,
@@ -72,8 +80,11 @@ export const CHAT_URLS = {
 export const COURSES_URLS = {
   GET_ALL: `${BASE}api/Course/`,
   GET_SINGLE: (id: number) => `${BASE}api/Course/${id}`,
-  GET_PUBLIC: (domain: string, page: number, size: number) =>
-    `${BASE}api/Course/GetCourseForStudent?domain=${domain}&page=${page}&size=${size}`,
+  GET_PUBLIC: (domain: string, page: number, size: number) => {
+    const params = [`page=${page}`, `size=${size}`];
+    if (domain) params.unshift(`domain=${encodeURIComponent(domain)}`);
+    return `${BASE}api/Course/GetCourseForStudent?${params.join('&')}`;
+  },
   GET_STUDENT_ENROLLMENTS: (studentId: number) =>
     `${BASE}api/Learning/student/${studentId}/enrollments`,
   ENROLL_FREE: (courseId: number, studentId: number) =>
@@ -146,6 +157,22 @@ export const HONOR_BOARD_URLS = {
   GET: (month: number, year: number) =>
     `${BASE}api/HonorBoard?month=${month}&year=${year}`,
   SAVE: `${BASE}api/HonorBoard`,
+};
+
+// Exam endpoints
+export const EXAM_URLS = {
+  GET_PAGED: (page: number, size: number) =>
+    `${BASE}api/OnlineExam/GetOnlineExamsPaged?page=${page}&size=${size}`,
+  GET_BY_ID: (id: number) =>
+    `${BASE}api/OnlineExam/GetOnlineExamById/${id}`,
+  GET_FOR_STUDENT: (id: number) =>
+    `${BASE}api/OnlineExam/GetOnlineExamByIdForStuden/${id}`,
+  DELETE: (id: number) => `${BASE}api/OnlineExam/${id}`,
+  SUBMIT: `${BASE}api/OnlineExam/SubmitOnlineExamAsync`,
+  GET_RESULTS: (examId: number, studentId: number) =>
+    `${BASE}api/OnlineExam/GetExamResultsForStudent?examId=${examId}&studentId=${studentId}`,
+  GET_ALL_RESULTS: (examId: number) =>
+    `${BASE}api/OnlineExam/GetExamResultsAllStudents/${examId}?studentName=&submissionDateFrom=&submissionDateTo=`,
 };
 
 // Staff endpoints

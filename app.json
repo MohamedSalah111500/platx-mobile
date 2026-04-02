@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "PlatX",
-    "slug": "PlatX",
+    "slug": "platx",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -30,7 +30,9 @@
         "RECORD_AUDIO",
         "INTERNET",
         "ACCESS_NETWORK_STATE",
-        "MODIFY_AUDIO_SETTINGS"
+        "MODIFY_AUDIO_SETTINGS",
+        "POST_NOTIFICATIONS",
+        "VIBRATE"
       ]
     },
     "web": {
@@ -51,7 +53,15 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "sounds": [],
+          "defaultChannel": "default"
+        }
+      ],
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {

@@ -35,7 +35,6 @@ import type { ChatMessage } from '../../types/chat.types';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'GroupDetail'>;
 
-const ACCENT = '#7c63fd';
 type Tab = 'students' | 'chat' | 'info';
 
 export default function GroupDetailScreen({ navigation, route }: Props) {
@@ -305,7 +304,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
           {imageUrl ? (
             <Image source={{ uri: imageUrl }} style={s.avatarImg} />
           ) : (
-            <Text style={[s.avatarText, { color: ACCENT }]}>{initials}</Text>
+            <Text style={[s.avatarText, { color: theme.colors.primary }]}>{initials}</Text>
           )}
         </View>
         <View style={{ flex: 1 }}>
@@ -348,39 +347,11 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
           />
         </View>
         {isTeacher && (
-          <TouchableOpacity style={s.inviteBtn} onPress={openInviteModal}>
+          <TouchableOpacity style={[s.inviteBtn, { backgroundColor: theme.colors.primary }]} onPress={openInviteModal}>
             <Ionicons name="person-add" size={18} color="#fff" />
           </TouchableOpacity>
         )}
       </View>
-
-      {/* Staff section */}
-      {staff.length > 0 && (
-        <View style={{ marginBottom: spacing.md }}>
-          <Text style={[s.sectionLabel, { color: theme.colors.textMuted }]}>{t('groups.staff')}</Text>
-          {staff.map((member) => {
-            const initials = getInitials(member.firstName, member.lastName);
-            const imageUrl = getFullImageUrl(member.profileImage);
-            return (
-              <View key={`staff-${member.id}`} style={[s.studentCard, { backgroundColor: theme.colors.card }]}>
-                <View style={[s.avatar, { backgroundColor: '#E8F5E9' }]}>
-                  {imageUrl ? (
-                    <Image source={{ uri: imageUrl }} style={s.avatarImg} />
-                  ) : (
-                    <Text style={[s.avatarText, { color: '#4CAF50' }]}>{initials}</Text>
-                  )}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[s.studentName, { color: theme.colors.text }]}>
-                    {member.firstName} {member.lastName}
-                  </Text>
-                  <Text style={[s.studentMeta, { color: ACCENT }]}>{t('groups.staff')}</Text>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-      )}
 
       {/* Student list */}
       <Text style={[s.sectionLabel, { color: theme.colors.textMuted }]}>
@@ -415,13 +386,13 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
           style={[
             s.messageBubble,
             {
-              backgroundColor: isMine ? ACCENT : (theme.dark ? theme.colors.surface : '#F0EDFF'),
+              backgroundColor: isMine ? theme.colors.primary : (theme.dark ? theme.colors.surface : '#F0EDFF'),
               alignSelf: isMine ? 'flex-end' : 'flex-start',
             },
           ]}
         >
           {!isMine && senderName ? (
-            <Text style={[s.msgSender, { color: ACCENT }]}>{senderName}</Text>
+            <Text style={[s.msgSender, { color: theme.colors.primary }]}>{senderName}</Text>
           ) : null}
           <Text style={[s.msgText, { color: isMine ? '#fff' : theme.colors.text }]}>
             {item.content}
@@ -480,7 +451,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
           maxLength={1000}
         />
         <TouchableOpacity
-          style={[s.sendBtn, { opacity: messageText.trim() ? 1 : 0.4 }]}
+          style={[s.sendBtn, { opacity: messageText.trim() ? 1 : 0.4, backgroundColor: theme.colors.primary }]}
           onPress={handleSendMessage}
           disabled={!messageText.trim() || sending}
         >
@@ -501,11 +472,11 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
       {/* Group header card */}
       <View style={[s.infoCard, { backgroundColor: theme.colors.card }]}>
         <View style={[s.infoIcon, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
-          <Ionicons name="people" size={32} color={ACCENT} />
+          <Ionicons name="people" size={32} color={theme.colors.primary} />
         </View>
         <Text style={[s.infoGroupName, { color: theme.colors.text }]}>{group?.name}</Text>
         {group?.gradeName ? (
-          <Text style={[s.infoGrade, { color: ACCENT }]}>{group.gradeName}</Text>
+          <Text style={[s.infoGrade, { color: theme.colors.primary }]}>{group.gradeName}</Text>
         ) : null}
         {group?.description ? (
           <Text style={[s.infoDesc, { color: theme.colors.textMuted }]}>{group.description}</Text>
@@ -515,7 +486,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
       {/* Stats */}
       <View style={s.statsGrid}>
         <View style={[s.statCard, { backgroundColor: theme.colors.card }]}>
-          <Ionicons name="people" size={22} color={ACCENT} />
+          <Ionicons name="people" size={22} color={theme.colors.primary} />
           <Text style={[s.statValue, { color: theme.colors.text }]}>{students.length}</Text>
           <Text style={[s.statLabel, { color: theme.colors.textMuted }]}>{t('groups.students')}</Text>
         </View>
@@ -536,7 +507,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
       {/* Dates */}
       {group?.nextDueDate ? (
         <View style={[s.infoRow, { backgroundColor: theme.colors.card }]}>
-          <Ionicons name="calendar-outline" size={20} color={ACCENT} />
+          <Ionicons name="calendar-outline" size={20} color={theme.colors.primary} />
           <View style={{ marginLeft: spacing.md }}>
             <Text style={[s.infoRowLabel, { color: theme.colors.textMuted }]}>{t('groups.startDate')}</Text>
             <Text style={[s.infoRowValue, { color: theme.colors.text }]}>
@@ -548,7 +519,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
 
       {group?.createdAt ? (
         <View style={[s.infoRow, { backgroundColor: theme.colors.card }]}>
-          <Ionicons name="time-outline" size={20} color={ACCENT} />
+          <Ionicons name="time-outline" size={20} color={theme.colors.primary} />
           <View style={{ marginLeft: spacing.md }}>
             <Text style={[s.infoRowLabel, { color: theme.colors.textMuted }]}>{t('groups.createdAt')}</Text>
             <Text style={[s.infoRowValue, { color: theme.colors.text }]}>{group.createdAt}</Text>
@@ -610,7 +581,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
             activeOpacity={0.7}
           >
             <View style={[s.fileIconWrap, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
-              <Ionicons name={getFileIcon(file) as any} size={22} color={ACCENT} />
+              <Ionicons name={getFileIcon(file) as any} size={22} color={theme.colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[s.fileName, { color: theme.colors.text }]} numberOfLines={1}>
@@ -623,7 +594,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
               ) : null}
             </View>
             {file.url ? (
-              <Ionicons name="download-outline" size={20} color={ACCENT} />
+              <Ionicons name="download-outline" size={20} color={theme.colors.primary} />
             ) : null}
           </TouchableOpacity>
         ))
@@ -636,7 +607,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
   if (loading) {
     return (
       <View style={[s.container, { backgroundColor: theme.colors.background }]}>
-        <View style={[s.headerBg, { paddingTop: insets.top + spacing.sm }]}>
+        <View style={[s.headerBg, { paddingTop: insets.top + spacing.sm, backgroundColor: theme.colors.primary }]}>
           <View style={s.headerRow}>
             <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
               <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color="#fff" />
@@ -653,7 +624,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
   return (
     <View style={[s.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
-      <View style={[s.headerBg, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={[s.headerBg, { paddingTop: insets.top + spacing.sm, backgroundColor: theme.colors.primary }]}>
         <View style={s.headerRow}>
           <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
             <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color="#fff" />
@@ -689,7 +660,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
           contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ACCENT} colors={[ACCENT]} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} colors={[theme.colors.primary]} />
           }
         >
           {renderStudentsTab()}
@@ -736,18 +707,18 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
                   const isSelected = selectedInviteStudent?.id === item.id;
                   return (
                     <TouchableOpacity
-                      style={[ms.studentRow, { backgroundColor: isSelected ? ACCENT + '15' : 'transparent' }]}
+                      style={[ms.studentRow, { backgroundColor: isSelected ? theme.colors.primary + '15' : 'transparent' }]}
                       onPress={() => setSelectedInviteStudent(item)}
                     >
                       <View style={[ms.studentAvatar, { backgroundColor: '#F0EDFF' }]}>
-                        <Text style={{ color: ACCENT, fontFamily: 'Cairo_700Bold', fontSize: 13 }}>
+                        <Text style={{ color: theme.colors.primary, fontFamily: 'Cairo_700Bold', fontSize: 13 }}>
                           {(item.firstName?.[0] || '?').toUpperCase()}
                         </Text>
                       </View>
                       <Text style={[ms.studentName, { color: theme.colors.text }]} numberOfLines={1}>
                         {name}
                       </Text>
-                      {isSelected && <Ionicons name="checkmark-circle" size={20} color={ACCENT} />}
+                      {isSelected && <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />}
                     </TouchableOpacity>
                   );
                 }}
@@ -759,7 +730,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
               />
 
               <TouchableOpacity
-                style={[ms.addBtn, { opacity: selectedInviteStudent ? 1 : 0.5 }]}
+                style={[ms.addBtn, { opacity: selectedInviteStudent ? 1 : 0.5, backgroundColor: theme.colors.primary }]}
                 disabled={!selectedInviteStudent || inviting}
                 onPress={handleInviteStudent}
               >
@@ -784,7 +755,6 @@ const s = StyleSheet.create({
 
   // Header
   headerBg: {
-    backgroundColor: ACCENT,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     paddingBottom: spacing.md,
@@ -864,7 +834,6 @@ const s = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: ACCENT,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -973,7 +942,6 @@ const s = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 14,
-    backgroundColor: ACCENT,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 2,
@@ -1145,7 +1113,6 @@ const ms = StyleSheet.create({
     fontFamily: 'Cairo_600SemiBold',
   },
   addBtn: {
-    backgroundColor: ACCENT,
     borderRadius: 16,
     height: 50,
     justifyContent: 'center',

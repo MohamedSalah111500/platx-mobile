@@ -22,8 +22,7 @@ import type { ProfileStackParamList } from '../../types/navigation.types';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'ChangePassword'>;
 
-const ACCENT = '#7c63fd';
-const BG = '#FFFFFF';
+
 
 export default function ChangePasswordScreen({ navigation }: Props) {
   const { theme } = useTheme();
@@ -36,7 +35,7 @@ export default function ChangePasswordScreen({ navigation }: Props) {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
 
-  const bgColor = theme.dark ? theme.colors.background : BG;
+  const bgColor = theme.colors.background;
 
   const handleSubmit = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -92,7 +91,7 @@ export default function ChangePasswordScreen({ navigation }: Props) {
           {/* Lock icon */}
           <View style={styles.iconWrap}>
             <View style={[styles.iconCircle, { backgroundColor: '#F0EDFF' }]}>
-              <Ionicons name="lock-closed" size={32} color={ACCENT} />
+              <Ionicons name="lock-closed" size={32} color={theme.colors.primary} />
             </View>
           </View>
 
@@ -163,7 +162,7 @@ export default function ChangePasswordScreen({ navigation }: Props) {
 
             {/* Submit */}
             <TouchableOpacity
-              style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
+              style={[styles.submitBtn, { backgroundColor: theme.colors.primary }, loading && styles.submitBtnDisabled]}
               onPress={handleSubmit}
               disabled={loading}
               activeOpacity={0.7}
@@ -246,7 +245,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
   },
   submitBtn: {
-    backgroundColor: ACCENT,
     borderRadius: 16,
     paddingVertical: spacing.lg,
     flexDirection: 'row',

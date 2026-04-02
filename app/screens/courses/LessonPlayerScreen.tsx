@@ -25,7 +25,6 @@ import { useSound } from '../../hooks/useSound';
 
 type Props = NativeStackScreenProps<CoursesStackParamList, 'LessonPlayer'>;
 
-const ACCENT = '#7c63fd';
 
 export default function LessonPlayerScreen({ navigation, route }: Props) {
   const { lessonId, courseId } = route.params;
@@ -86,14 +85,14 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
   const videoUrl = loading ? null : getVideoUrl();
 
   const getLessonTypeInfo = () => {
-    if (!lesson) return { icon: 'play-circle', label: 'Video', color: ACCENT, bg: '#F0EDFF' };
+    if (!lesson) return { icon: 'play-circle', label: 'Video', color: theme.colors.primary, bg: '#F0EDFF' };
     switch (lesson.type) {
       case 2:
         return { icon: 'document-text', label: t('courses.document'), color: '#3B82F6', bg: '#EFF6FF' };
       case 3:
         return { icon: 'clipboard', label: t('courses.exam'), color: '#F59E0B', bg: '#FFFBEB' };
       default:
-        return { icon: 'play-circle', label: 'Video', color: ACCENT, bg: '#F0EDFF' };
+        return { icon: 'play-circle', label: 'Video', color: theme.colors.primary, bg: '#F0EDFF' };
     }
   };
 
@@ -129,7 +128,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
             <Ionicons name="alert-circle" size={40} color={theme.colors.danger} />
           </View>
           <Text style={[styles.errorText, { color: theme.colors.danger }]}>{error || t('lessons.lessonNotFound')}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadLesson} activeOpacity={0.7}>
+          <TouchableOpacity style={[styles.retryButton, { backgroundColor: theme.colors.primary }]} onPress={loadLesson} activeOpacity={0.7}>
             <Text style={styles.retryText}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
@@ -180,7 +179,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
             startInLoadingState
             renderLoading={() => (
               <View style={styles.videoLoading}>
-                <ActivityIndicator size="large" color={ACCENT} />
+                <ActivityIndicator size="large" color={theme.colors.primary} />
               </View>
             )}
           />
@@ -350,7 +349,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    marginTop: -16,
+    marginTop: 0,
   },
   infoContent: {
     padding: spacing.xl,
@@ -483,7 +482,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   retryButton: {
-    backgroundColor: ACCENT,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderRadius: 14,

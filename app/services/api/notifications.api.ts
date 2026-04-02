@@ -84,12 +84,10 @@ export const notificationsApi = {
     }
 
     const fullUrl = buildUrl(url, role === 'Student');
-    console.log('[Notifications API] Fetching:', fullUrl);
 
     try {
       const { data } = await apiClient.get<any>(fullUrl);
       const result = extractItems(data);
-      console.log('[Notifications API] Extracted', result.items.length, 'items, totalCount:', result.totalCount);
 
       // If we got results or this isn't a student, return as-is
       if (result.items.length > 0 || role !== 'Student') {
@@ -97,22 +95,18 @@ export const notificationsApi = {
       }
 
       // Student endpoint returned empty — try admin endpoint as fallback
-      console.log('[Notifications API] Student endpoint returned empty, trying admin fallback');
       const fallbackUrl = buildUrl(NOTIFICATIONS_URLS.GET_ADMIN, false);
       const { data: fbData } = await apiClient.get<any>(fallbackUrl);
       const fbResult = extractItems(fbData);
-      console.log('[Notifications API] Admin fallback got', fbResult.items.length, 'items');
       return fbResult;
     } catch (err: any) {
       // If student endpoint errored, try admin endpoint as fallback
       if (role === 'Student') {
-        console.warn('[Notifications API] Student endpoint failed:', err?.message, '— trying admin fallback');
         try {
           const fallbackUrl = buildUrl(NOTIFICATIONS_URLS.GET_ADMIN, false);
           const { data: fbData } = await apiClient.get<any>(fallbackUrl);
           const fbResult = extractItems(fbData);
-          console.log('[Notifications API] Admin fallback got', fbResult.items.length, 'items');
-          return fbResult;
+              return fbResult;
         } catch {
           // admin fallback also failed, throw original error
         }
@@ -131,14 +125,8 @@ export const notificationsApi = {
     await apiClient.post(NOTIFICATIONS_URLS.CREATE, payload);
   },
 
-  markAsRead: async (notificationId: number): Promise<void> => {
-    // Try query-param format first (common in .NET), fallback to body
-    try {
-      const url = `${NOTIFICATIONS_URLS.MARK_READ}?notificationId=${notificationId}`;
-      await apiClient.post(url);
-    } catch {
-      await apiClient.post(NOTIFICATIONS_URLS.MARK_READ, { notificationId });
-    }
+  markAsRead: async (id: number): Promise<void> => {
+    await apiClient.post(NOTIFICATIONS_URLS.MARK_READ, { id });
   },
 
   delete: async (id: number): Promise<void> => {

@@ -17,11 +17,26 @@ export function decodeJwtPayload(token: string): Record<string, unknown> {
   }
 }
 
+export function extractTenantDomain(token: string): string | undefined {
+  const payload = decodeJwtPayload(token);
+  // Only check domain-specific claims (not tenantId which is a GUID)
+  const candidates = [
+    payload.domain,
+    payload.Domain,
+    payload.tenantDomain,
+    payload.TenantDomain,
+    payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/tenant'],
+  ];
+  const GUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  for (const val of candidates) {
+    if (val != null && typeof val === 'string' && val.length > 0 && !GUID_RE.test(val)) return val;
+  }
+  return undefined;
+}
+
 export function extractNumericId(token: string): number | undefined {
   const payload = decodeJwtPayload(token);
-  console.log('[JWT] Token claims:', JSON.stringify(payload).substring(0, 600));
 
-  // Check common .NET JWT claim keys for numeric IDs
   const candidates = [
     payload.StudentId,
     payload.studentId,

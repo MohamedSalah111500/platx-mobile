@@ -48,7 +48,6 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    console.log(`[API] ${config.method?.toUpperCase()} ${config.url} token:${token ? 'yes' : 'NO'}`);
     return config;
   },
   (error) => Promise.reject(error)
@@ -57,7 +56,6 @@ apiClient.interceptors.request.use(
 // Response interceptor - handles errors
 apiClient.interceptors.response.use(
   (response) => {
-    console.log(`[API] ${response.status} ${response.config.url}`);
     return response;
   },
   async (error: AxiosError<{ message?: string; errors?: Record<string, string[]> }>) => {

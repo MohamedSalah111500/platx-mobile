@@ -17,6 +17,7 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import type { AuthStackParamList } from '../../types/navigation.types';
 import { useRTL } from '../../i18n/RTLProvider';
+import { ErrorBanner } from '../../components/ui/ErrorBanner';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
@@ -88,18 +89,6 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
       textAlign: 'center',
       marginBottom: spacing['3xl'],
     },
-    errorBanner: {
-      backgroundColor: theme.colors.danger + '15',
-      borderRadius: borderRadius.lg,
-      padding: spacing.md,
-      marginBottom: spacing.lg,
-      borderLeftWidth: 3,
-      borderLeftColor: theme.colors.danger,
-    },
-    errorText: {
-      ...typography.bodySmall,
-      color: theme.colors.danger,
-    },
     backLink: {
       flexDirection: 'row',
       justifyContent: 'center',
@@ -127,11 +116,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
           {t('auth.forgotPasswordSubtitle')}
         </Text>
 
-        {error && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+        {error && <ErrorBanner message={error} />}
 
         <Input
           label={t('auth.domain')}

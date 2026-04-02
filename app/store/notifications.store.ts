@@ -35,13 +35,8 @@ export const useNotificationsStore = create<NotificationsStore>((set, get) => ({
 
   fetch: async (role: TRole, page = 1, size = PAGE_SIZE, studentId?: number) => {
     set({ isLoading: true });
-    if (role === 'Student' && !studentId) {
-      console.warn('[NotificationsStore] called fetch for student without studentId');
-    }
     try {
-      console.log('[NotificationsStore] Fetching for role:', role, 'page:', page, 'studentId:', studentId);
       const response = await notificationsApi.getByRole(role, page, size, studentId);
-      console.log('[NotificationsStore] Got', response.items.length, 'items, total:', response.totalCount);
       const allItems = page === 1 ? response.items : [...get().notifications, ...response.items];
       const unread = allItems.filter((n) => !n.isReaded).length;
       set({
@@ -52,8 +47,7 @@ export const useNotificationsStore = create<NotificationsStore>((set, get) => ({
         hasMore: response.items.length === size,
         isLoading: false,
       });
-    } catch (err: any) {
-      console.error('[NotificationsStore] Fetch error:', err?.message || err, 'status:', err?.status);
+    } catch {
       set({ isLoading: false, hasMore: false });
     }
   },

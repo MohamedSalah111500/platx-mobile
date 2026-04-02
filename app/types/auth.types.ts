@@ -73,6 +73,32 @@ export interface ChangePasswordPayload {
   confirmPassword: string;
 }
 
+// Mobile login (no domain required)
+export interface MobileLoginPayload {
+  userName: string;
+  password: string;
+}
+
+export interface MobileSelectTenantPayload {
+  userName: string;
+  password: string;
+  tenantId: string;
+}
+
+export interface TenantInfo {
+  tenantId: string;
+  tenantName: string;
+  logoUrl: string;
+  roles: TRole[];
+}
+
+export interface MobileLoginResponse {
+  requiresTenantSelection: boolean;
+  authResponse: LoginResponse | null;
+  tenants: TenantInfo[] | null;
+  message: string | null;
+}
+
 export interface GoogleSignInPayload {
   id: string;
   email: string;

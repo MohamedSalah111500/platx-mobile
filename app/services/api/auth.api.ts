@@ -3,6 +3,9 @@ import { AUTH_URLS } from './endpoints';
 import type {
   LoginPayload,
   LoginResponse,
+  MobileLoginPayload,
+  MobileLoginResponse,
+  MobileSelectTenantPayload,
   RegisterPayload,
   EmailConfirmPayload,
   ResetPasswordPayload,
@@ -13,8 +16,16 @@ import type {
 export const authApi = {
   login: async (payload: LoginPayload): Promise<LoginResponse> => {
     const { data } = await apiClient.post<LoginResponse>(AUTH_URLS.LOGIN, payload);
-    console.log('[Auth] Full login response keys:', Object.keys(data));
-    console.log('[Auth] Login response:', JSON.stringify(data).substring(0, 800));
+    return data;
+  },
+
+  mobileLogin: async (payload: MobileLoginPayload): Promise<MobileLoginResponse> => {
+    const { data } = await apiClient.post<MobileLoginResponse>(AUTH_URLS.MOBILE_LOGIN, payload);
+    return data;
+  },
+
+  mobileSelectTenant: async (payload: MobileSelectTenantPayload): Promise<MobileLoginResponse> => {
+    const { data } = await apiClient.post<MobileLoginResponse>(AUTH_URLS.MOBILE_SELECT_TENANT, payload);
     return data;
   },
 

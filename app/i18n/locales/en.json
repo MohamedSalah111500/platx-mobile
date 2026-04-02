@@ -23,14 +23,16 @@
     "by": "By",
     "ok": "OK",
     "validation": "Validation",
-    "info": "Info"
+    "info": "Info",
+    "continue": "Continue"
   },
   "tabs": {
     "home": "Home",
     "courses": "Courses",
     "chat": "Chat",
     "alerts": "Alerts",
-    "profile": "Profile"
+    "profile": "Profile",
+    "exams": "Exams"
   },
   "auth": {
     "login": "Login",
@@ -68,7 +70,8 @@
     "tenantInactive": "Your organization is currently inactive",
     "learningPlatform": "Learning Platform",
     "signInToContinue": "Sign in to continue to your account",
-    "enterDomain": "Enter your institution domain",
+    "enterDomain": "Enter your institution domain to continue with Google",
+    "domainPlaceholder": "e.g. myschool",
     "enterUsername": "Enter your username",
     "enterPassword": "Enter your password",
     "usernameRequired": "Username is required",
@@ -113,7 +116,9 @@
     "domainRequiredForGoogle": "Please enter your domain first",
     "googleNotAvailable": "Google Sign-In is not available in this build",
     "playServicesNotAvailable": "Google Play Services not available",
-    "changePasswordFailed": "Failed to change password."
+    "changePasswordFailed": "Failed to change password.",
+    "selectTenant": "Select Your Academy",
+    "selectTenantSubtitle": "You are registered in multiple academies. Please select one to continue."
   },
   "home": {
     "welcome": "Welcome",
@@ -416,5 +421,49 @@
     "m10": "October",
     "m11": "November",
     "m12": "December"
+  },
+  "exams": {
+    "title": "Exams",
+    "exam": "Exam",
+    "noExams": "No Exams",
+    "noExamsMessage": "No exams available at the moment.",
+    "failedToLoad": "Failed to load exams.",
+    "failedToLoadResults": "Failed to load exam results.",
+    "examNotFound": "Exam not found.",
+    "scheduled": "Scheduled",
+    "dynamic": "Dynamic",
+    "min": "min",
+    "answered": "Answered",
+    "notAnswered": "Not Answered",
+    "alreadyAnswered": "You have already submitted this exam.",
+    "examStartsIn": "Exam Starts In",
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "seconds": "Seconds",
+    "duration": "Duration",
+    "questions": "Questions",
+    "singleChoice": "Single Choice",
+    "multipleChoice": "Multiple Choice",
+    "submit": "Submit Exam",
+    "submitSuccess": "Exam submitted successfully!",
+    "submitFailed": "Failed to submit exam.",
+    "confirmSubmitTitle": "Submit Exam",
+    "confirmSubmitMessage": "Are you sure you want to submit? You cannot change your answers after submission.",
+    "timeUp": "Time's Up!",
+    "autoSubmitMessage": "The exam time has ended. Your answers will be submitted automatically.",
+    "viewResults": "View Results",
+    "results": "Exam Results",
+    "totalScore": "Total Score",
+    "percentage": "Percentage",
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "timeTaken": "Time Taken",
+    "questionDetails": "Question Details",
+    "yourAnswer": "Your Answer",
+    "preview": "Preview",
+    "deleteExam": "Delete Exam",
+    "deleteExamConfirm": "Are you sure you want to delete this exam?",
+    "deleteFailed": "Failed to delete exam."
   }
 }

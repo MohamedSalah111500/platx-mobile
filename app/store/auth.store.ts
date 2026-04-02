@@ -4,14 +4,15 @@ import { STORAGE_KEYS } from '../config';
 import { authApi } from '../services/api/auth.api';
 import { setInMemoryToken, setOnUnauthorized } from '../services/api/client';
 import { signalRService } from '../services/realtime/signalr.service';
-import { extractNumericId } from '../utils/jwt';
+import { extractNumericId, extractTenantDomain } from '../utils/jwt';
 import type {
   User,
-  TRole,
-  LoginPayload,
+  LoginResponse,
+  MobileLoginPayload,
   RegisterPayload,
   EmailConfirmPayload,
   GoogleSignInPayload,
+  TenantInfo,
 } from '../types/auth.types';
 
 interface AuthState {
@@ -21,10 +22,14 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  pendingTenants: TenantInfo[] | null;
+  pendingCredentials: { userName: string; password: string } | null;
 }
 
 interface AuthActions {
-  login: (payload: LoginPayload) => Promise<void>;
+  login: (payload: MobileLoginPayload) => Promise<void>;
+  selectTenant: (tenantId: string) => Promise<void>;
+  clearPendingTenants: () => void;
   googleLogin: (payload: GoogleSignInPayload, domain: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
@@ -45,76 +50,98 @@ interface AuthActions {
 
 type AuthStore = AuthState & AuthActions;
 
+function processAuthResponse(response: LoginResponse): { user: User; domain: string | null } {
+  const jwtNumericId = extractNumericId(response.token);
+  const _resp: any = response;
+  const numericId =
+    jwtNumericId ??
+    _resp.student?.id ??
+    _resp.staff?.id ??
+    (typeof response.userId === 'number'
+      ? response.userId
+      : typeof response.userId === 'string' && /^\d+$/.test(response.userId)
+      ? Number(response.userId)
+      : undefined) ??
+    response.id;
+
+  const domain =
+    _resp.domain ||
+    _resp.tenantDomain ||
+    extractTenantDomain(response.token) ||
+    null;
+
+  return {
+    user: {
+      userId: response.userId,
+      userName: response.userName,
+      email: response.email,
+      firstName: response.firstName,
+      lastName: response.lastName,
+      roles: response.roles,
+      isEmailConfirmed: response.isEmailConfirmed,
+      tenantActive: response.tenantActive,
+      token: response.token,
+      studentId: numericId,
+    },
+    domain,
+  };
+}
+
+async function persistAndSetAuth(
+  set: (state: Partial<AuthState>) => void,
+  user: User,
+  token: string,
+  domain?: string
+) {
+  await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+  await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+  await AsyncStorage.setItem(STORAGE_KEYS.USER_ROLES, JSON.stringify(user.roles));
+  if (domain) {
+    await AsyncStorage.setItem(STORAGE_KEYS.DOMAIN, domain);
+  }
+  setInMemoryToken(token);
+  set({
+    user,
+    token,
+    domain: domain || null,
+    isAuthenticated: true,
+    isLoading: false,
+    pendingTenants: null,
+    pendingCredentials: null,
+  });
+  signalRService.startConnection().catch(() => {});
+}
+
 export const useAuthStore = create<AuthStore>((set, get) => ({
-  // State
   user: null,
   token: null,
   domain: null,
   isAuthenticated: false,
   isLoading: true,
   error: null,
+  pendingTenants: null,
+  pendingCredentials: null,
 
-  // Actions
-  login: async (payload: LoginPayload) => {
+  login: async (payload: MobileLoginPayload) => {
     try {
       set({ isLoading: true, error: null });
-      const response = await authApi.login(payload);
+      const response = await authApi.mobileLogin(payload);
 
-      // Extract numeric ID from JWT token claims, then fallback to response fields
-      const jwtNumericId = extractNumericId(response.token);
-      // Backend returns nested objects: response.student?.id and response.staff?.id
-      const _resp: any = response;
-      const numericId =
-        jwtNumericId ??
-        _resp.student?.id ??
-        _resp.staff?.id ??
-        (typeof response.userId === 'number'
-          ? response.userId
-          : typeof response.userId === 'string' && /^\d+$/.test(response.userId)
-          ? Number(response.userId)
-          : undefined) ??
-        response.id;
-
-      const user: User = {
-        userId: response.userId,
-        userName: response.userName,
-        email: response.email,
-        firstName: response.firstName,
-        lastName: response.lastName,
-        roles: response.roles,
-        isEmailConfirmed: response.isEmailConfirmed,
-        tenantActive: response.tenantActive,
-        token: response.token,
-        studentId: numericId,
-      };
-
-      console.log('[Auth] Login OK: studentId from student.id =', _resp.student?.id, ', staffId =', _resp.staff?.id, ', extracted numericId =', numericId);
-      if (!numericId && response.roles?.includes('Student')) {
-        console.warn('[Auth] student logged in but no numeric ID found');
+      if (!response.requiresTenantSelection && response.authResponse) {
+        const { user, domain } = processAuthResponse(response.authResponse);
+        await persistAndSetAuth(set, user, response.authResponse.token, domain || undefined);
+      } else if (response.requiresTenantSelection && response.tenants) {
+        set({
+          isLoading: false,
+          pendingTenants: response.tenants,
+          pendingCredentials: { userName: payload.userName, password: payload.password },
+        });
+      } else {
+        set({
+          error: response.message || 'Login failed.',
+          isLoading: false,
+        });
       }
-
-      // Save to storage
-      await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.token);
-      await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.USER_ROLES,
-        JSON.stringify(response.roles)
-      );
-      await AsyncStorage.setItem(STORAGE_KEYS.DOMAIN, payload.domain);
-
-      // Set in-memory token for interceptor
-      setInMemoryToken(response.token);
-
-      set({
-        user,
-        token: response.token,
-        domain: payload.domain,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-
-      // Start SignalR connection for real-time notifications
-      signalRService.startConnection().catch(() => {});
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
@@ -125,60 +152,47 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     }
   },
 
+  selectTenant: async (tenantId: string) => {
+    const { pendingCredentials } = get();
+    if (!pendingCredentials) return;
+
+    try {
+      set({ isLoading: true, error: null });
+      const response = await authApi.mobileSelectTenant({
+        userName: pendingCredentials.userName,
+        password: pendingCredentials.password,
+        tenantId,
+      });
+
+      if (response.authResponse) {
+        const { user, domain } = processAuthResponse(response.authResponse);
+        await persistAndSetAuth(set, user, response.authResponse.token, domain || undefined);
+      } else {
+        set({
+          error: response.message || 'Tenant selection failed.',
+          isLoading: false,
+        });
+      }
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.userMessage ||
+        'Tenant selection failed.';
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+
+  clearPendingTenants: () => {
+    set({ pendingTenants: null, pendingCredentials: null, error: null });
+  },
+
   googleLogin: async (payload: GoogleSignInPayload, domain: string) => {
     try {
       set({ isLoading: true, error: null });
       const response = await authApi.googleSignIn(payload);
-
-      const gJwtId = extractNumericId(response.token);
-      const _gresp: any = response;
-      const gNumericId =
-        gJwtId ??
-        _gresp.student?.id ??
-        _gresp.staff?.id ??
-        (typeof response.userId === 'number'
-          ? response.userId
-          : typeof response.userId === 'string' && /^\d+$/.test(response.userId)
-          ? Number(response.userId)
-          : undefined) ??
-        response.id;
-
-      const user: User = {
-        userId: response.userId,
-        userName: response.userName,
-        email: response.email,
-        firstName: response.firstName,
-        lastName: response.lastName,
-        roles: response.roles,
-        isEmailConfirmed: response.isEmailConfirmed,
-        tenantActive: response.tenantActive,
-        token: response.token,
-        studentId: gNumericId,
-      };
-      console.log('[Auth] Google login OK: studentId from student.id =', _gresp.student?.id, ', staffId =', _gresp.staff?.id, ', extracted numericId =', gNumericId);
-      if (!gNumericId && response.roles?.includes('Student')) {
-        console.warn('[Auth] student google login without numeric id');
-      }
-
-      await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.token);
-      await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.USER_ROLES,
-        JSON.stringify(response.roles)
-      );
-      await AsyncStorage.setItem(STORAGE_KEYS.DOMAIN, domain);
-
-      setInMemoryToken(response.token);
-
-      set({
-        user,
-        token: response.token,
-        domain,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-
-      signalRService.startConnection().catch(() => {});
+      const { user, domain: resDomain } = processAuthResponse(response);
+      await persistAndSetAuth(set, user, response.token, resDomain || domain);
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
@@ -205,7 +219,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   logout: async () => {
-    // Stop SignalR connection
     signalRService.stopConnection().catch(() => {});
     await AsyncStorage.multiRemove([
       STORAGE_KEYS.AUTH_TOKEN,
@@ -221,6 +234,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      pendingTenants: null,
+      pendingCredentials: null,
     });
   },
 
@@ -264,11 +279,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     }
   },
 
-  resetPassword: async (
-    password: string,
-    confirmPassword: string,
-    token: string
-  ) => {
+  resetPassword: async (password: string, confirmPassword: string, token: string) => {
     try {
       set({ isLoading: true, error: null });
       await authApi.resetPassword({ password, confirmPassword }, token);
@@ -295,22 +306,16 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
       if (token && userData) {
         let user: User = JSON.parse(userData);
-        // Ensure we have a numeric studentId from session restore. Check nested objects first.
         if (!user.studentId) {
           const _u: any = user;
-          const nestedStudentId = _u.student?.id;
-          const nestedStaffId = _u.staff?.id;
-          const maybeUserId =
-            typeof user.userId === 'number'
-              ? user.userId
-              : typeof user.userId === 'string' && /^\d+$/.test(user.userId)
+          const resolved =
+            _u.student?.id ??
+            _u.staff?.id ??
+            (typeof user.userId === 'string' && /^\d+$/.test(user.userId)
               ? Number(user.userId)
-              : undefined;
-
-          const resolved = nestedStudentId ?? nestedStaffId ?? maybeUserId;
+              : undefined);
           if (resolved) {
             user = { ...user, studentId: resolved };
-            console.log('[Auth] restored session with studentId:', resolved);
           }
         }
         setInMemoryToken(token);
@@ -321,7 +326,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           isAuthenticated: true,
           isLoading: false,
         });
-        // Start SignalR on session restore
         signalRService.startConnection().catch(() => {});
       } else {
         set({ isLoading: false });
@@ -335,7 +339,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   setLoading: (loading: boolean) => set({ isLoading: loading }),
 }));
 
-// Register 401 callback so expired tokens force logout to login screen
 setOnUnauthorized(() => {
   useAuthStore.setState({
     user: null,
@@ -344,5 +347,7 @@ setOnUnauthorized(() => {
     isAuthenticated: false,
     isLoading: false,
     error: null,
+    pendingTenants: null,
+    pendingCredentials: null,
   });
 });

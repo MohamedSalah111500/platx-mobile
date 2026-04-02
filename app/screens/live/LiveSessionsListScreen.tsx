@@ -4,13 +4,11 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
   RefreshControl,
-  Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { CommonActions, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
@@ -128,20 +126,6 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
       flex: 1,
       backgroundColor: theme.colors.background,
     },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: spacing.xl,
-      paddingVertical: spacing.lg,
-    },
-    headerLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    backButton: { marginRight: spacing.md },
-    backText: { ...typography.h4, color: theme.colors.text },
-    headerTitle: { ...typography.h4, color: theme.colors.text },
     sessionCard: {
       marginHorizontal: spacing.xl,
       marginBottom: spacing.md,
@@ -203,26 +187,21 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
   });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('live.title')}</Text>
-        </View>
-        {can('LIVE_CREATE') && (
-          <Button
-            title={t('live.create')}
-            onPress={() => navigation.navigate('CreateLive')}
-            size="small"
-            variant="primary"
-          />
-        )}
-      </View>
+    <View style={styles.container}>
+      <ScreenHeader
+        title={t('live.title')}
+        onBack={() => navigation.goBack()}
+        rightElement={
+          can('LIVE_CREATE') ? (
+            <Button
+              title={t('live.create')}
+              onPress={() => navigation.navigate('CreateLive')}
+              size="small"
+              variant="primary"
+            />
+          ) : undefined
+        }
+      />
 
       <FlatList
         data={sessions}
@@ -235,16 +214,7 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
           loading ? (
             <Spinner />
           ) : error ? (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing['3xl'] }}>
-              <Ionicons name="alert-circle-outline" size={48} color={theme.colors.danger} />
-              <Text style={{ ...typography.body, color: theme.colors.danger, textAlign: 'center', marginTop: spacing.md, marginBottom: spacing.lg }}>{error}</Text>
-              <TouchableOpacity
-                style={{ backgroundColor: theme.colors.primary, paddingHorizontal: spacing.xl, paddingVertical: spacing.md, borderRadius: borderRadius.lg }}
-                onPress={() => { setLoading(true); loadSessions(); }}
-              >
-                <Text style={{ ...typography.button, color: '#fff' }}>{t('common.retry')}</Text>
-              </TouchableOpacity>
-            </View>
+            <ErrorRetry message={error} onRetry={loadSessions} />
           ) : (
             <EmptyState
               title={t('live.noLiveSessions')}
@@ -254,6 +224,6 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
         }
         contentContainerStyle={{ paddingBottom: spacing['3xl'] }}
       />
-    </SafeAreaView>
+    </View>
   );
 }

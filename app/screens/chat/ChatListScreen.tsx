@@ -7,11 +7,11 @@ import {
   TouchableOpacity,
   RefreshControl,
   Platform,
-  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { SearchBar } from '../../components/ui/SearchBar';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { useRTL } from '../../i18n/RTLProvider';
@@ -28,11 +28,8 @@ import type { StaffChatContact } from '../../types/chat.types';
 
 type Props = NativeStackScreenProps<ChatStackParamList, 'ChatList'>;
 
-const ACCENT = '#7c63fd';
-const BG = '#FFFFFF';
-
 const AVATAR_COLORS = [
-  { bg: '#F0EDFF', color: ACCENT },
+  { bg: '#F0EDFF', color: '#7c63fd' },
   { bg: '#E8F8F0', color: '#34C38F' },
   { bg: '#E8F4FD', color: '#3B82F6' },
   { bg: '#FFF4E5', color: '#F5A623' },
@@ -80,7 +77,7 @@ export default function ChatListScreen({ navigation }: Props) {
     loadData();
   }, []);
 
-  const bgColor = theme.dark ? theme.colors.background : BG;
+  const bgColor = theme.colors.background;
   const searchTerm = search.toLowerCase().trim();
 
   // Filter by search
@@ -131,7 +128,7 @@ export default function ChatListScreen({ navigation }: Props) {
           </Text>
         </View>
         <View style={[styles.arrowCircle, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
-          <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={16} color={ACCENT} />
+          <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={16} color={theme.colors.primary} />
         </View>
       </TouchableOpacity>
     );
@@ -168,7 +165,7 @@ export default function ChatListScreen({ navigation }: Props) {
           </Text>
         </View>
         <View style={[styles.arrowCircle, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
-          <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={16} color={ACCENT} />
+          <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={16} color={theme.colors.primary} />
         </View>
       </TouchableOpacity>
     );
@@ -183,28 +180,13 @@ export default function ChatListScreen({ navigation }: Props) {
             {t('chat.title')}
           </Text>
           {totalCount > 0 && (
-            <View style={[styles.countBadge, { backgroundColor: ACCENT }]}>
+            <View style={[styles.countBadge, { backgroundColor: theme.colors.primary }]}>
               <Text style={styles.countBadgeText}>{totalCount}</Text>
             </View>
           )}
         </View>
 
-        {/* Search Bar */}
-        <View style={[styles.searchBar, { backgroundColor: theme.colors.surface }]}>
-          <Ionicons name="search" size={18} color={theme.colors.textMuted} />
-          <TextInput
-            style={[styles.searchInput, { color: theme.colors.text }]}
-            placeholder={t('common.search')}
-            placeholderTextColor={theme.colors.inputPlaceholder}
-            value={search}
-            onChangeText={setSearch}
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')}>
-              <Ionicons name="close-circle" size={18} color={theme.colors.textMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
+        <SearchBar value={search} onChangeText={setSearch} placeholder={t('common.search')} />
       </View>
 
       {/* List */}
@@ -213,7 +195,7 @@ export default function ChatListScreen({ navigation }: Props) {
         renderItem={isStudent ? renderStaffItem as any : renderGroupItem as any}
         keyExtractor={(item: any) => `${item.id}-${item.groupId || ''}`}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ACCENT} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
         }
         ListEmptyComponent={
           loading ? (
@@ -261,19 +243,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_700Bold',
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 14,
-    paddingHorizontal: spacing.md,
-    paddingVertical: Platform.OS === 'ios' ? spacing.sm + 2 : 0,
-    gap: spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: fontSize.sm,
-    paddingVertical: Platform.OS === 'ios' ? 4 : spacing.sm,
   },
   listContent: {
     paddingHorizontal: spacing.xl,

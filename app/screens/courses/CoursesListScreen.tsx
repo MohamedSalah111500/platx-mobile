@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   Image,
-  TextInput,
   Share,
   Platform,
 } from 'react-native';
@@ -18,6 +17,8 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Spinner } from '../../components/ui/Spinner';
+import { SearchBar } from '../../components/ui/SearchBar';
+import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import { coursesApi } from '../../services/api/courses.api';
@@ -26,9 +27,7 @@ import type { Course, Enrollment } from '../../types/course.types';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { useRTL } from '../../i18n/RTLProvider';
 
-const ACCENT = '#7c63fd';
-const BG = '#FFFFFF';
-const CARD_ACCENT = [ACCENT, '#F5A623', '#34C38F', '#F46A6A', '#9B59B6', '#1ABC9C'];
+const CARD_ACCENT = ['#7c63fd', '#F5A623', '#34C38F', '#F46A6A', '#9B59B6', '#1ABC9C'];
 
 type Props = NativeStackScreenProps<CoursesStackParamList, 'CoursesList'>;
 
@@ -76,7 +75,9 @@ export default function CoursesListScreen({ navigation, route }: Props) {
   const loadCourses = async (pageNum = 1, search?: string) => {
     try {
       setError(null);
-      const res: any = await coursesApi.getPublic(domain || '', pageNum, 10);
+      const res: any = domain
+        ? await coursesApi.getPublic(domain, pageNum, 10)
+        : await coursesApi.getAll(pageNum, 10, search);
       const items: Course[] = Array.isArray(res?.items)
         ? res.items
         : Array.isArray(res)
@@ -160,7 +161,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
     } catch {}
   };
 
-  const bgColor = theme.dark ? theme.colors.background : BG;
+  const bgColor = theme.colors.background;
 
   const renderCourse = ({ item, index }: { item: Course; index: number }) => {
     const accent = CARD_ACCENT[index % CARD_ACCENT.length];
@@ -184,7 +185,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
             </View>
           )}
           {/* Price badge on image */}
-          <View style={[styles.priceBadge, { backgroundColor: isFree ? '#34C38F' : ACCENT }]}>
+          <View style={[styles.priceBadge, { backgroundColor: isFree ? '#34C38F' : theme.colors.primary }]}>
             <Text style={styles.priceBadgeText}>
               {isFree ? t('courses.free') : `$${hasDiscount ? item.discountPrice : item.price || 0}`}
             </Text>
@@ -209,8 +210,8 @@ export default function CoursesListScreen({ navigation, route }: Props) {
           <View style={styles.metaRow}>
             {item.totalLessons != null && (
               <View style={[styles.metaChip, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
-                <Ionicons name="play-circle" size={12} color={ACCENT} />
-                <Text style={[styles.metaChipText, { color: ACCENT }]}>{item.totalLessons} {t('courses.lessons')}</Text>
+                <Ionicons name="play-circle" size={12} color={theme.colors.primary} />
+                <Text style={[styles.metaChipText, { color: theme.colors.primary }]}>{item.totalLessons} {t('courses.lessons')}</Text>
               </View>
             )}
             {item.totalHours != null && (
@@ -287,7 +288,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
         {isStudent && (
           <View style={styles.tabRow}>
             <TouchableOpacity
-              style={[styles.tab, activeTab === 'enrolled' && styles.tabActive]}
+              style={[styles.tab, activeTab === 'enrolled' && styles.tabActive, activeTab === 'enrolled' && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }]}
               onPress={() => setActiveTab('enrolled')}
               activeOpacity={0.7}
             >
@@ -296,7 +297,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.tab, activeTab === 'browse' && styles.tabActive]}
+              style={[styles.tab, activeTab === 'browse' && styles.tabActive, activeTab === 'browse' && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }]}
               onPress={() => setActiveTab('browse')}
               activeOpacity={0.7}
             >
@@ -309,21 +310,13 @@ export default function CoursesListScreen({ navigation, route }: Props) {
 
         {/* Search */}
         {activeTab === 'browse' && (
-          <View style={[styles.searchContainer, { backgroundColor: theme.colors.card, marginTop: spacing.md }]}>
-            <Ionicons name="search" size={18} color={theme.colors.textMuted} />
-            <TextInput
-              style={[styles.searchInput, { color: theme.colors.text }]}
-              value={searchQuery}
-              onChangeText={onSearch}
-              placeholder={t('courses.searchCourses')}
-              placeholderTextColor={theme.colors.textMuted}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => onSearch('')}>
-                <Ionicons name="close-circle" size={18} color={theme.colors.textMuted} />
-              </TouchableOpacity>
-            )}
-          </View>
+          <SearchBar
+            value={searchQuery}
+            onChangeText={onSearch}
+            placeholder={t('courses.searchCourses')}
+            radius={16}
+            style={{ marginTop: spacing.md }}
+          />
         )}
       </View>
 
@@ -338,13 +331,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
             loading ? (
               <Spinner />
             ) : error ? (
-              <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle-outline" size={48} color={theme.colors.danger} />
-                <Text style={[styles.errorText, { color: theme.colors.danger }]}>{error}</Text>
-                <TouchableOpacity style={styles.retryButton} onPress={loadData}>
-                  <Text style={styles.retryText}>{t('common.retry')}</Text>
-                </TouchableOpacity>
-              </View>
+              <ErrorRetry message={error} onRetry={loadData} />
             ) : (
               <EmptyState title={t('courses.noEnrolledCourses')} message={t('courses.enrollToStart')} />
             )
@@ -365,13 +352,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
             loading ? (
               <Spinner />
             ) : error ? (
-              <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle-outline" size={48} color={theme.colors.danger} />
-                <Text style={[styles.errorText, { color: theme.colors.danger }]}>{error}</Text>
-                <TouchableOpacity style={styles.retryButton} onPress={() => { setLoading(true); loadCourses(1, searchQuery); }}>
-                  <Text style={styles.retryText}>{t('common.retry')}</Text>
-                </TouchableOpacity>
-              </View>
+              <ErrorRetry message={error} onRetry={() => { setLoading(true); loadCourses(1, searchQuery); }} />
             ) : (
               <EmptyState title={t('courses.noCourses')} message={t('courses.noCoursesAvailable')} />
             )
@@ -395,18 +376,6 @@ const styles = StyleSheet.create({
     ...typography.h2,
     fontFamily: 'Cairo_700Bold',
     marginBottom: spacing.xs,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 16,
-    paddingHorizontal: spacing.lg,
-  },
-  searchInput: {
-    flex: 1,
-    height: 44,
-    fontSize: fontSize.base,
-    marginLeft: spacing.sm,
   },
   listContent: {
     paddingHorizontal: spacing.xl,
@@ -491,25 +460,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: 'Cairo_600SemiBold',
   },
-  errorContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing['3xl'],
-  },
-  errorText: {
-    ...typography.body,
-    textAlign: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  retryButton: {
-    backgroundColor: ACCENT,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: 14,
-  },
-  retryText: { ...typography.button, color: '#fff' },
   tabRow: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -524,10 +474,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  tabActive: {
-    backgroundColor: ACCENT,
-    borderColor: ACCENT,
-  },
+  tabActive: {},
   tabText: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',

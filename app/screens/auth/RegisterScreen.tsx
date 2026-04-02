@@ -21,6 +21,7 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import type { AuthStackParamList } from '../../types/navigation.types';
 import { useRTL } from '../../i18n/RTLProvider';
+import { ErrorBanner } from '../../components/ui/ErrorBanner';
 
 const GOOGLE_WEB_CLIENT_ID = '997004801769-ni3d4vb3d1g551vrj4ku9fsr99k1mhr6.apps.googleusercontent.com';
 
@@ -164,19 +165,6 @@ export default function RegisterScreen({ navigation, route }: Props) {
       color: theme.colors.textSecondary,
       textAlign: 'center',
     },
-    errorBanner: {
-      backgroundColor: theme.colors.danger + '15',
-      borderRadius: borderRadius.lg,
-      padding: spacing.md,
-      marginBottom: spacing.lg,
-      borderLeftWidth: 3,
-      borderLeftColor: theme.colors.danger,
-    },
-    errorText: {
-      ...typography.bodySmall,
-      color: theme.colors.danger,
-      textAlign: 'left',
-    },
     row: {
       flexDirection: 'row',
       gap: spacing.md,
@@ -216,11 +204,7 @@ export default function RegisterScreen({ navigation, route }: Props) {
           <Text style={styles.subtitle}>{t('auth.registerAsStudent')}</Text>
         </View>
 
-        {error && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+        {error && <ErrorBanner message={error} />}
 
         <Input
           label={t('auth.domain')}

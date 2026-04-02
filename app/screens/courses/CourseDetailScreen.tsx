@@ -25,11 +25,10 @@ import type { Course, Section, Lesson } from '../../types/course.types';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { useRTL } from '../../i18n/RTLProvider';
 import { useSound } from '../../hooks/useSound';
+import { ErrorRetry } from '../../components/ui/ErrorRetry';
 
 type Props = NativeStackScreenProps<CoursesStackParamList, 'CourseDetail'>;
 
-const ACCENT = '#7c63fd';
-const BG = '#FFFFFF';
 
 export default function CourseDetailScreen({ navigation, route }: Props) {
   const { courseId } = route.params;
@@ -49,7 +48,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<number> | 'all'>('all');
 
-  const bgColor = theme.dark ? theme.colors.background : BG;
+  const bgColor = theme.colors.background;
 
   useEffect(() => {
     loadCourse();
@@ -279,15 +278,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{t('courses.courseDetails')}</Text>
           <View style={{ width: 40 }} />
         </View>
-        <View style={styles.errorContainer}>
-          <View style={[styles.errorIcon, { backgroundColor: theme.colors.danger + '15' }]}>
-            <Ionicons name="alert-circle" size={40} color={theme.colors.danger} />
-          </View>
-          <Text style={[styles.errorText, { color: theme.colors.danger }]}>{error || t('courses.courseNotFound')}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadCourse} activeOpacity={0.7}>
-            <Text style={styles.retryText}>{t('common.retry')}</Text>
-          </TouchableOpacity>
-        </View>
+        <ErrorRetry message={error || t('courses.courseNotFound')} onRetry={loadCourse} />
       </View>
     );
   }
@@ -309,13 +300,13 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
           {getFullImageUrl(course.previewImageUrl) ? (
             <Image source={{ uri: getFullImageUrl(course.previewImageUrl)! }} style={styles.heroImage} />
           ) : (
-            <View style={[styles.heroImage, styles.heroPlaceholder, { backgroundColor: ACCENT + '15' }]}>
-              <Ionicons name="book" size={48} color={ACCENT} />
+            <View style={[styles.heroImage, styles.heroPlaceholder, { backgroundColor: theme.colors.primary + '15' }]}>
+              <Ionicons name="book" size={48} color={theme.colors.primary} />
             </View>
           )}
           {hasLessons && (
             <View style={styles.playOverlay}>
-              <View style={styles.playBtn}>
+              <View style={[styles.playBtn, { backgroundColor: theme.colors.primary }]}>
                 <Ionicons name="play" size={30} color="#fff" />
               </View>
             </View>
@@ -346,7 +337,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
           {course.instructorName ? (
             <View style={styles.instructorRow}>
               <View style={[styles.instructorAvatar, { backgroundColor: '#F0EDFF' }]}>
-                <Ionicons name="person" size={16} color={ACCENT} />
+                <Ionicons name="person" size={16} color={theme.colors.primary} />
               </View>
               <Text style={[styles.instructorName, { color: theme.colors.textSecondary }]}>
                 {course.instructorName}
@@ -366,8 +357,8 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
             )}
             {course.totalLessons != null && (
               <View style={[styles.metaPill, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
-                <Ionicons name="layers" size={14} color={ACCENT} />
-                <Text style={[styles.metaPillText, { color: ACCENT }]}>
+                <Ionicons name="layers" size={14} color={theme.colors.primary} />
+                <Text style={[styles.metaPillText, { color: theme.colors.primary }]}>
                   {t('courses.nLessons', { count: course.totalLessons })}
                 </Text>
               </View>
@@ -390,7 +381,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
               </View>
             ) : (
               <View style={styles.priceWrap}>
-                <Text style={styles.priceMain}>
+                <Text style={[styles.priceMain, { color: theme.colors.primary }]}>
                   ${course.discountPrice || course.price || 0}
                 </Text>
                 {course.discountPrice != null &&
@@ -422,7 +413,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                   activeOpacity={0.7}
                 >
                   <View style={[styles.sectionIcon, { backgroundColor: '#F0EDFF' }]}>
-                    <Ionicons name="folder" size={16} color={ACCENT} />
+                    <Ionicons name="folder" size={16} color={theme.colors.primary} />
                   </View>
                   <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>{section.title}</Text>
                   <Ionicons
@@ -447,7 +438,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                         ? '#3B82F6'
                         : lesson.type === 3
                           ? '#F59E0B'
-                          : ACCENT;
+                          : theme.colors.primary;
                     const lessonIconBg = lesson.isCompleted
                       ? '#E8F8F0'
                       : lesson.type === 2
@@ -615,7 +606,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: ACCENT,
     justifyContent: 'center',
     alignItems: 'center',
     paddingLeft: 3,
@@ -699,7 +689,6 @@ const styles = StyleSheet.create({
   priceMain: {
     fontSize: fontSize['2xl'],
     fontFamily: 'Cairo_700Bold',
-    color: ACCENT,
   },
   priceOld: {
     fontSize: fontSize.base,
@@ -805,31 +794,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xl,
   },
-  // Error
-  errorContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing['3xl'],
-  },
-  errorIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  errorText: {
-    ...typography.body,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  retryButton: {
-    backgroundColor: ACCENT,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: 14,
-  },
-  retryText: { ...typography.button, color: '#fff' },
 });

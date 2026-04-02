@@ -6,11 +6,11 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
-  Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { useAuth } from '../../hooks/useAuth';
@@ -113,19 +113,6 @@ export default function GroupsListScreen({ navigation }: Props) {
       flex: 1,
       backgroundColor: theme.colors.background,
     },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: spacing.xl,
-      paddingVertical: spacing.lg,
-    },
-    backButton: {
-      marginRight: spacing.md,
-    },
-    headerTitle: {
-      ...typography.h4,
-      color: theme.colors.text,
-    },
     groupCard: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -172,39 +159,11 @@ export default function GroupsListScreen({ navigation }: Props) {
       ...typography.caption,
       color: theme.colors.textMuted,
     },
-    errorContainer: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: spacing['3xl'],
-    },
-    errorText: {
-      ...typography.body,
-      color: theme.colors.danger,
-      textAlign: 'center',
-      marginTop: spacing.md,
-      marginBottom: spacing.lg,
-    },
-    retryButton: {
-      backgroundColor: theme.colors.primary,
-      paddingHorizontal: spacing.xl,
-      paddingVertical: spacing.md,
-      borderRadius: borderRadius.lg,
-    },
-    retryText: { ...typography.button, color: '#fff' },
   });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{isStudent ? t('groups.myGroups') : t('groups.title')}</Text>
-      </View>
+    <View style={styles.container}>
+      <ScreenHeader title={isStudent ? t('groups.myGroups') : t('groups.title')} onBack={() => navigation.goBack()} />
 
       <FlatList
         data={groups}
@@ -217,19 +176,13 @@ export default function GroupsListScreen({ navigation }: Props) {
           loading ? (
             <Spinner />
           ) : error ? (
-            <View style={styles.errorContainer}>
-              <Ionicons name="alert-circle-outline" size={48} color={theme.colors.danger} />
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={() => { setLoading(true); loadGroups(); }}>
-                <Text style={styles.retryText}>{t('common.retry')}</Text>
-              </TouchableOpacity>
-            </View>
+            <ErrorRetry message={error} onRetry={loadGroups} />
           ) : (
             <EmptyState title={t('groups.noGroups')} message={t('groups.notAssigned')} />
           )
         }
         contentContainerStyle={{ paddingBottom: spacing['3xl'] }}
       />
-    </SafeAreaView>
+    </View>
   );
 }
