@@ -25,7 +25,6 @@ import { useSound } from '../../hooks/useSound';
 
 type Props = NativeStackScreenProps<CoursesStackParamList, 'LessonPlayer'>;
 
-
 export default function LessonPlayerScreen({ navigation, route }: Props) {
   const { lessonId, courseId } = route.params;
   const { theme } = useTheme();
@@ -45,12 +44,10 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
       setError(null);
       setLoading(true);
       const data = await coursesApi.getLessonVideo(lessonId);
-      console.log('[Lesson] Loaded:', data?.id, 'libraryId:', data?.libraryId, 'videoUrl:', data?.videoUrl);
       setLesson(data);
       setCompleted(data?.isCompleted ?? false);
     } catch (err: any) {
       const msg = err?.userMessage || err?.message || 'Failed to load lesson.';
-      console.log('[Lesson] Error:', msg);
       setError(msg);
     } finally {
       setLoading(false);
@@ -358,15 +355,7 @@ const styles = StyleSheet.create({
   infoCard: {
     borderRadius: 20,
     padding: spacing.xl,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-      },
-      android: { elevation: 2 },
-    }),
+    
   },
   infoCardHeader: {
     flexDirection: 'row',
@@ -433,15 +422,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     marginTop: spacing.md,
     gap: spacing.md,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.03,
-        shadowRadius: 4,
-      },
-      android: { elevation: 1 },
-    }),
+    
   },
   completeCardIcon: {
     width: 44,

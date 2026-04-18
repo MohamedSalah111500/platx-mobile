@@ -38,7 +38,6 @@ export function RTLProvider({ children }: RTLProviderProps) {
         await changeLocale(i18n.language, false);
       }
     } catch (error) {
-      console.error('Failed to load locale preference:', error);
     } finally {
       setIsLoaded(true);
     }
@@ -62,7 +61,6 @@ export function RTLProvider({ children }: RTLProviderProps) {
       if (shouldRestart) {
         // RTL changes require app restart to take effect
         // In development, user needs to manually reload
-        console.log('RTL changed. Please restart the app to apply layout changes.');
       }
     }
 

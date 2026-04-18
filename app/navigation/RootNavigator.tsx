@@ -4,110 +4,71 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as SplashScreen from 'expo-splash-screen';
 import { useAuthStore } from '../store/auth.store';
 import { useTheme } from '../theme/ThemeProvider';
-import { View, StyleSheet, Image } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withRepeat,
-  withSequence,
-} from 'react-native-reanimated';
+import { View, StyleSheet, Image, Dimensions } from 'react-native';
 import type { RootStackParamList } from '../types/navigation.types';
 
 import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
 import LiveClassroomScreen from '../screens/live/LiveClassroomScreen';
 
-// Prevent the native splash from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const { width: SCREEN_W } = Dimensions.get('window');
+const isTablet = SCREEN_W >= 768;
 
 function BrandedLoading() {
-  const logoOpacity = useSharedValue(0);
-  const glowOpacity = useSharedValue(0.3);
-
-  useEffect(() => {
-    logoOpacity.value = withTiming(1, { duration: 600 });
-    glowOpacity.value = withRepeat(
-      withSequence(
-        withTiming(0.8, { duration: 1000 }),
-        withTiming(0.3, { duration: 1000 }),
-      ),
-      -1,
-      true,
-    );
-  }, []);
-
-  const logoStyle = useAnimatedStyle(() => ({
-    opacity: logoOpacity.value,
-  }));
-
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-  }));
-
+  const logoSize = isTablet ? 260 : 200;
   return (
-    <View style={brandedStyles.container}>
-      <Animated.View style={[brandedStyles.glow, glowStyle]} />
-      <Animated.View style={logoStyle}>
-        <Image
-          source={require('../../assets/images/logo-white.png')}
-          style={brandedStyles.logo}
-          resizeMode="contain"
-        />
-      </Animated.View>
+    <View style={styles.splash}>
+      <Image
+        source={require('../../assets/images/logo-icon.png')}
+        style={styles.splashIcon}
+        resizeMode="contain"
+      />
+      <Image
+        source={require('../../assets/images/logo-white.png')}
+        style={[styles.splashWordmark, { width: logoSize }]}
+        resizeMode="contain"
+      />
     </View>
   );
 }
 
-const brandedStyles = StyleSheet.create({
-  container: {
-    flex: 1,
+const styles = StyleSheet.create({
+  splash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#121935',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#121935',
   },
-  logo: {
-    width: 200,
-    height: 80,
+  splashIcon: {
+    width: isTablet ? 100 : 76,
+    height: isTablet ? 100 : 76,
+    marginBottom: 20,
   },
-  glow: {
-    position: 'absolute',
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    backgroundColor: '#7c63fd',
+  splashWordmark: {
+    height: isTablet ? 48 : 36,
   },
 });
 
 export default function RootNavigator() {
   const { isAuthenticated, restoreSession } = useAuthStore();
   const { theme } = useTheme();
-  const [appReady, setAppReady] = useState(false);
+  const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
     async function prepare() {
       try {
         await restoreSession();
-      } catch {
-        // Session restore failed, proceed to login
-      } finally {
-        setAppReady(true);
+      } catch {}
+      finally {
+        SplashScreen.hideAsync();
+        setSplashDone(true);
       }
     }
     prepare();
   }, []);
-
-  useEffect(() => {
-    if (appReady) {
-      SplashScreen.hideAsync();
-    }
-  }, [appReady]);
-
-  if (!appReady) {
-    return <BrandedLoading />;
-  }
 
   const navigationTheme = {
     dark: theme.dark,
@@ -128,17 +89,21 @@ export default function RootNavigator() {
   };
 
   return (
-    <NavigationContainer theme={navigationTheme}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {!isAuthenticated ? (
-          <Stack.Screen name="Auth" component={AuthNavigator} />
-        ) : (
-          <>
-            <Stack.Screen name="Main" component={MainTabNavigator} />
-            <Stack.Screen name="LiveClassroom" component={LiveClassroomScreen} />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <View style={{ flex: 1 }}>
+      <NavigationContainer theme={navigationTheme}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {!isAuthenticated ? (
+            <Stack.Screen name="Auth" component={AuthNavigator} />
+          ) : (
+            <>
+              <Stack.Screen name="Main" component={MainTabNavigator} />
+              <Stack.Screen name="LiveClassroom" component={LiveClassroomScreen} />
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+
+      {!splashDone && <BrandedLoading />}
+    </View>
   );
 }

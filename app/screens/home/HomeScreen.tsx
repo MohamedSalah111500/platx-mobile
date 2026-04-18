@@ -323,15 +323,7 @@ export default function HomeScreen({ navigation }: Props) {
       borderRadius: borderRadius['2xl'],
       padding: spacing.sm,
       alignItems: 'center',
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.03,
-          shadowRadius: 3,
-        },
-        android: { elevation: 1 },
-      }),
+      
     },
     adminStatIconCircle: {
       width: 36,
@@ -397,15 +389,7 @@ export default function HomeScreen({ navigation }: Props) {
       borderRadius: borderRadius['3xl'],
       marginRight: spacing.md,
       overflow: 'hidden',
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.03,
-          shadowRadius: 3,
-        },
-        android: { elevation: 1 },
-      }),
+      
     },
     courseImageWrapper: {
       height: 120,
@@ -471,15 +455,7 @@ export default function HomeScreen({ navigation }: Props) {
       overflow: 'hidden',
       marginHorizontal: spacing.xl,
       marginBottom: spacing.md,
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.03,
-          shadowRadius: 3,
-        },
-        android: { elevation: 1 },
-      }),
+      
     },
     newsImageContainer: {
       width: 100,
@@ -526,15 +502,7 @@ export default function HomeScreen({ navigation }: Props) {
       padding: spacing.md,
       marginHorizontal: spacing.xl,
       marginBottom: spacing.sm,
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.03,
-          shadowRadius: 3,
-        },
-        android: { elevation: 1 },
-      }),
+      
     },
     eventDateBox: {
       width: 54,
@@ -599,15 +567,7 @@ export default function HomeScreen({ navigation }: Props) {
       paddingHorizontal: spacing.lg,
       borderRadius: 16,
       gap: spacing.sm,
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.03,
-          shadowRadius: 3,
-        },
-        android: { elevation: 1 },
-      }),
+      
     },
     honorRank: {
       width: 28,
@@ -788,12 +748,9 @@ export default function HomeScreen({ navigation }: Props) {
               onSubmitEditing={() => {
                 const q = searchText.trim();
                 if (q) {
-                  navigation.getParent()?.navigate('CoursesTab', {
-                    screen: 'CoursesList',
-                    params: { search: q },
-                  });
+                  navigation.navigate('CoursesList', { search: q });
                 } else {
-                  navigation.getParent()?.navigate('CoursesTab');
+                  navigation.navigate('CoursesList');
                 }
               }}
             />
@@ -933,7 +890,7 @@ export default function HomeScreen({ navigation }: Props) {
           <TouchableOpacity
             style={styles.quickActionPill}
             activeOpacity={0.7}
-            onPress={() => { play('pop'); navigation.getParent()?.navigate('CoursesTab'); }}
+            onPress={() => { play('pop'); navigation.navigate('CoursesList'); }}
           >
             <View style={[styles.quickActionIconSmall, { backgroundColor: ACCENT_COLORS[0].bg }]}>
               <Ionicons name="book-outline" size={16} color={ACCENT_COLORS[0].accent} />
@@ -988,7 +945,7 @@ export default function HomeScreen({ navigation }: Props) {
           <View style={styles.sectionSpacing}>
             <SectionHeader
               title={isTeacherOrAdmin ? t('home.recentCourses') : t('home.popularCourses')}
-              onSeeAll={() => navigation.getParent()?.navigate('CoursesTab')}
+              onSeeAll={() => navigation.navigate('CoursesList')}
             />
 
             <ScrollView
@@ -1006,10 +963,7 @@ export default function HomeScreen({ navigation }: Props) {
                     activeOpacity={0.85}
                     onPress={() => {
                       play('tap');
-                      navigation.getParent()?.navigate('CoursesTab', {
-                        screen: 'CourseDetail',
-                        params: { courseId: course.id },
-                      });
+                      navigation.navigate('CourseDetail', { courseId: course.id });
                     }}
                   >
                     <View style={[styles.courseImageWrapper, { backgroundColor: palette.bg }]}>
@@ -1077,7 +1031,7 @@ export default function HomeScreen({ navigation }: Props) {
           <View style={[styles.sectionSpacing, { marginTop: spacing['2xl'] }]}>
             <SectionHeader
               title={t('home.enrolledCourses')}
-              onSeeAll={() => navigation.getParent()?.navigate('CoursesTab')}
+              onSeeAll={() => navigation.navigate('CoursesList')}
             />
 
             {courses.slice(0, 3).map((course, idx) => {
@@ -1089,10 +1043,7 @@ export default function HomeScreen({ navigation }: Props) {
                   activeOpacity={0.85}
                   onPress={() => {
                     play('tap');
-                    navigation.getParent()?.navigate('CoursesTab', {
-                      screen: 'CourseDetail',
-                      params: { courseId: course.id },
-                    });
+                    navigation.navigate('CourseDetail', { courseId: course.id });
                   }}
                   style={{
                     flexDirection: 'row',
@@ -1101,15 +1052,7 @@ export default function HomeScreen({ navigation }: Props) {
                     overflow: 'hidden',
                     marginHorizontal: spacing.xl,
                     marginBottom: spacing.md,
-                    ...Platform.select({
-                      ios: {
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: 0.03,
-                        shadowRadius: 3,
-                      },
-                      android: { elevation: 1 },
-                    }),
+                    
                   }}
                 >
                   {/* Left image */}

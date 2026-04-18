@@ -50,17 +50,7 @@ export function Button({
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0,
-          shadowRadius: 0,
-        },
-        android: {
-          elevation: 0,
-        },
-      }),
+      
     };
 
     const sizeStyles: Record<ButtonSize, ViewStyle> = {

@@ -270,7 +270,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
           <TouchableOpacity
             style={[
               styles.sendBtn,
-              { backgroundColor: theme.colors.primary, shadowColor: theme.colors.primary },
+              { backgroundColor: theme.colors.primary },
               (!newMessage.trim() || sending) && styles.sendBtnDisabled,
             ]}
             onPress={handleSend}
@@ -413,20 +413,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Platform.OS === 'ios' ? 2 : 0,
-    ...Platform.select({
-      ios: {
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-      },
-      android: { elevation: 4 },
-    }),
+    
   },
   sendBtnDisabled: {
     opacity: 0.4,
-    ...Platform.select({
-      ios: { shadowOpacity: 0 },
-      android: { elevation: 0 },
-    }),
+    
   },
 });

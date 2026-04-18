@@ -330,10 +330,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     borderRadius: 14,
     gap: 4,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4 },
-      android: { elevation: 1 },
-    }),
+    
   },
   statValue: {
     fontSize: fontSize.base,
@@ -357,10 +354,7 @@ const styles = StyleSheet.create({
   qrCard: {
     borderRadius: 14,
     overflow: 'hidden',
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4 },
-      android: { elevation: 1 },
-    }),
+    
   },
   qrHeader: {
     flexDirection: 'row',

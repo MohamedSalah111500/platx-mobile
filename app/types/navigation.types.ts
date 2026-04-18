@@ -32,6 +32,9 @@ export type HomeStackParamList = {
   Home: undefined;
   NewsDetail: { newsId: number; newsItem?: import('./news.types').NewsItem };
   EventDetail: { eventId: number };
+  CoursesList: { search?: string } | undefined;
+  CourseDetail: { courseId: number };
+  LessonPlayer: { lessonId: number; courseId: number };
 };
 
 export type CoursesStackParamList = {

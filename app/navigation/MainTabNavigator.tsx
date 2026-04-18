@@ -1,5 +1,8 @@
 import React from 'react';
-import { View, Platform, StyleSheet } from 'react-native';
+import { View, Platform, StyleSheet, Dimensions } from 'react-native';
+
+const { width: SCREEN_W } = Dimensions.get('window');
+const isTablet = SCREEN_W >= 768;
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,6 +42,7 @@ const HIDE_TAB_BAR_SCREENS = [
   'ExamTaking',
   'ExamResult',
   'CreateLive',
+  'CourseDetail',
 ];
 
 function shouldHideTabBar(route: any): boolean {
@@ -46,7 +50,9 @@ function shouldHideTabBar(route: any): boolean {
   return HIDE_TAB_BAR_SCREENS.includes(routeName as string);
 }
 
-const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 85 : 65;
+const TAB_BAR_HEIGHT = isTablet
+  ? 80
+  : Platform.OS === 'ios' ? 85 : 65;
 
 export default function MainTabNavigator() {
   const { theme } = useTheme();
@@ -58,17 +64,13 @@ export default function MainTabNavigator() {
 
   const baseTabBarStyle = {
     backgroundColor: theme.colors.tabBarBackground,
-    borderTopWidth: 0,
-    elevation: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.divider,
     height: TAB_BAR_HEIGHT + (Platform.OS === 'android' ? insets.bottom : 0),
     paddingBottom: bottomInset,
     paddingTop: 8,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
     position: 'absolute' as const,
   };
 
@@ -86,7 +88,7 @@ export default function MainTabNavigator() {
           const iconName = focused ? filled : outlined;
           return (
             <View style={styles.iconContainer}>
-              <Ionicons name={iconName as any} size={22} color={color} />
+              <Ionicons name={iconName as any} size={isTablet ? 26 : 22} color={color} />
               {focused && <View style={[styles.activeDot, { backgroundColor: theme.colors.primary }]} />}
             </View>
           );
@@ -95,7 +97,7 @@ export default function MainTabNavigator() {
         tabBarInactiveTintColor: theme.colors.tabBarInactive,
         tabBarStyle: shouldHideTabBar(route) ? hiddenTabBarStyle : baseTabBarStyle,
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: isTablet ? 13 : 11,
           fontFamily: 'Cairo_600SemiBold',
           marginTop: 2,
         },

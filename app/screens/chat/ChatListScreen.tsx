@@ -52,14 +52,12 @@ export default function ChatListScreen({ navigation }: Props) {
     try {
       if (isStudent) {
         const staffList = await chatApi.getStaffHasMessages();
-        console.log('[ChatList] Staff contacts:', staffList?.length);
         setStaffContacts(Array.isArray(staffList) ? staffList : []);
       } else {
         const res = await groupsApi.getAll(1, 50);
         setGroups(Array.isArray(res?.items) ? res.items : []);
       }
     } catch (err) {
-      console.error('[ChatList] Load failed:', err);
       if (isStudent) setStaffContacts([]);
       else setGroups([]);
     } finally {
@@ -254,15 +252,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.md + 2,
     borderRadius: borderRadius.xl,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-      },
-      android: { elevation: 2 },
-    }),
+    
   },
   avatarWrap: {
     position: 'relative',

@@ -27,7 +27,6 @@ import type { OnlineExam, StudentExamQuestion } from '../../types/exam.types';
 
 type Props = NativeStackScreenProps<ExamsStackParamList, 'ExamTaking'>;
 
-
 export default function ExamTakingScreen({ navigation, route }: Props) {
   const { examId } = route.params;
   const { theme } = useTheme();
@@ -460,10 +459,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     gap: spacing.sm,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4 },
-      android: { elevation: 2 },
-    }),
+    
   },
   backBtn: {
     width: 38,
@@ -509,10 +505,7 @@ const styles = StyleSheet.create({
   questionCard: {
     borderRadius: 16,
     padding: spacing.lg,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8 },
-      android: { elevation: 2 },
-    }),
+    
   },
   questionHeader: {
     flexDirection: 'row',

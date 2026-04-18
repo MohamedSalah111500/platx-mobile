@@ -30,11 +30,6 @@ export function Card({
       borderWidth: 1,
       borderColor: theme.colors.border,
       ...(shadow && {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: theme.dark ? 0.3 : 0.1,
-        shadowRadius: 8,
-        elevation: 4,
       }),
     },
   });

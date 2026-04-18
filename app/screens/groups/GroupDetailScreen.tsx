@@ -855,10 +855,7 @@ const s = StyleSheet.create({
     borderRadius: 16,
     marginBottom: spacing.sm,
     gap: spacing.md,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4 },
-      android: { elevation: 1 },
-    }),
+    
   },
   avatar: {
     width: 42,
@@ -953,10 +950,7 @@ const s = StyleSheet.create({
     padding: spacing.xl,
     alignItems: 'center',
     marginBottom: spacing.lg,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8 },
-      android: { elevation: 2 },
-    }),
+    
   },
   infoIcon: {
     width: 64,
@@ -992,10 +986,7 @@ const s = StyleSheet.create({
     padding: spacing.md,
     alignItems: 'center',
     gap: spacing.xs,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4 },
-      android: { elevation: 1 },
-    }),
+    
   },
   statValue: {
     fontSize: 16,
@@ -1010,10 +1001,7 @@ const s = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: 16,
     marginBottom: spacing.sm,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4 },
-      android: { elevation: 1 },
-    }),
+    
   },
   infoRowLabel: {
     fontSize: 12,
@@ -1032,10 +1020,7 @@ const s = StyleSheet.create({
     borderRadius: 16,
     marginBottom: spacing.sm,
     gap: spacing.md,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4 },
-      android: { elevation: 1 },
-    }),
+    
   },
   fileIconWrap: {
     width: 42,

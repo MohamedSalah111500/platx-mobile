@@ -247,15 +247,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: spacing.md,
     gap: spacing.sm,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.03,
-        shadowRadius: 4,
-      },
-      android: { elevation: 1 },
-    }),
+    
   },
   examIconWrap: {
     width: 36,

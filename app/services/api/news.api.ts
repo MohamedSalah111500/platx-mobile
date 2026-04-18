@@ -44,7 +44,6 @@ export const newsApi = {
       return { items: [], totalCount: 0 };
     }
     const result = extractItems(data);
-    console.log('[News API] got', result.items.length, 'items total', result.totalCount);
     return { items: result.items, totalCount: result.totalCount };
   },
 

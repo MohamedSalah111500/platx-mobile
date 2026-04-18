@@ -5,6 +5,9 @@ import type { HomeStackParamList } from '../../types/navigation.types';
 import HomeScreen from '../../screens/home/HomeScreen';
 import NewsDetailScreen from '../../screens/news/NewsDetailScreen';
 import EventDetailScreen from '../../screens/events/EventDetailScreen';
+import CoursesListScreen from '../../screens/courses/CoursesListScreen';
+import CourseDetailScreen from '../../screens/courses/CourseDetailScreen';
+import LessonPlayerScreen from '../../screens/courses/LessonPlayerScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -14,6 +17,9 @@ export default function HomeStack() {
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="NewsDetail" component={NewsDetailScreen} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} />
+      <Stack.Screen name="CoursesList" component={CoursesListScreen} />
+      <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
+      <Stack.Screen name="LessonPlayer" component={LessonPlayerScreen} />
     </Stack.Navigator>
   );
 }

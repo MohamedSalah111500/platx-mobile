@@ -20,8 +20,6 @@ import type { ProfileStackParamList } from '../../types/navigation.types';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
 
-
-
 export default function ProfileScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { user, role: authRole, can, isStudent, logout } = useAuth();
@@ -106,7 +104,7 @@ export default function ProfileScreen({ navigation }: Props) {
           <TouchableOpacity
             style={[styles.statCard, { backgroundColor: theme.colors.card }]}
             activeOpacity={0.7}
-            onPress={() => navigation.getParent()?.navigate('CoursesTab')}
+            onPress={() => navigation.getParent()?.navigate('HomeTab', { screen: 'CoursesList' })}
           >
             <View style={[styles.statIcon, { backgroundColor: '#F0EDFF' }]}>
               <Ionicons name="book" size={18} color={theme.colors.primary} />
@@ -128,7 +126,7 @@ export default function ProfileScreen({ navigation }: Props) {
           <TouchableOpacity
             style={[styles.statCard, { backgroundColor: theme.colors.card }]}
             activeOpacity={0.7}
-            onPress={() => navigation.getParent()?.navigate('CoursesTab')}
+            onPress={() => navigation.getParent()?.navigate('HomeTab', { screen: 'CoursesList' })}
           >
             <View style={[styles.statIcon, { backgroundColor: '#FFF4E5' }]}>
               <Ionicons name="trophy" size={18} color="#F5A623" />
@@ -274,15 +272,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     borderRadius: 18,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.03,
-        shadowRadius: 4,
-      },
-      android: { elevation: 1 },
-    }),
+    
   },
   statIcon: {
     width: 36,
@@ -315,15 +305,7 @@ const styles = StyleSheet.create({
   menuCard: {
     borderRadius: 20,
     overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.03,
-        shadowRadius: 4,
-      },
-      android: { elevation: 1 },
-    }),
+    
   },
   menuRow: {
     flexDirection: 'row',

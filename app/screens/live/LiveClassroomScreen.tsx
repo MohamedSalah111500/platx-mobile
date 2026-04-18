@@ -198,7 +198,6 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
         results[PermissionsAndroid.PERMISSIONS.CAMERA] ===
         PermissionsAndroid.RESULTS.GRANTED;
       if (!audioGranted || !cameraGranted) {
-        console.warn('[Live] Permissions not granted:', results);
       }
       return audioGranted && cameraGranted;
     }
@@ -214,12 +213,9 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
     const setupAgora = async () => {
       try {
         if (!AgoraService.isAgoraAvailable()) {
-          console.warn('[Live] Agora not available in this build');
           return;
         }
         const granted = await requestPermissions();
-        console.log('[Live] Permissions granted:', granted);
-
         const tokenResp = await liveApi.getToken({
           channelName: room.channelName,
           uid: (user.studentId ?? 0),
@@ -227,44 +223,34 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
         });
 
         const { token, appId, uid } = tokenResp || ({} as any);
-        console.log('[Live] Token received, appId:', appId, 'uid:', uid, 'channel:', room.channelName);
-
         AgoraService.initEngine(appId);
-        console.log('[Live] Engine initialized');
-
         eventHandler = {
           onJoinChannelSuccess: (_connection: any, _elapsed: number) => {
-            console.log('[Agora] Joined channel successfully');
             if (!mounted) return;
             setAgoraJoined(true);
           },
           onUserJoined: (_connection: any, remoteUid: number) => {
-            console.log('[Agora] Remote user joined:', remoteUid);
             if (!mounted) return;
             setRemoteUids((prev) =>
               prev.includes(remoteUid) ? prev : [...prev, remoteUid],
             );
           },
           onUserOffline: (_connection: any, remoteUid: number) => {
-            console.log('[Agora] Remote user left:', remoteUid);
             if (!mounted) return;
             setRemoteUids((prev) => prev.filter((id) => id !== remoteUid));
           },
           onError: (errCode: number, msg: string) => {
-            console.warn('[Agora] Error code:', errCode, 'msg:', msg);
           },
         };
         AgoraService.registerEvents(eventHandler);
 
         const effectiveUid = uid ?? (user.studentId ?? 0);
-        console.log('[Live] Joining as', isTeacher ? 'HOST' : 'AUDIENCE', 'uid:', effectiveUid);
         if (isTeacher) {
           AgoraService.joinAsHost(token, room.channelName, effectiveUid);
         } else {
           AgoraService.joinAsAudience(token, room.channelName, effectiveUid);
         }
       } catch (err) {
-        console.warn('[Live] Agora setup error', err);
       }
     };
 
@@ -374,7 +360,6 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           isTeacher,
         );
       } catch (err) {
-        console.warn('[Live] SignalR setup error', err);
       }
     };
 

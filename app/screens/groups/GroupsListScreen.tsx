@@ -38,7 +38,6 @@ export default function GroupsListScreen({ navigation }: Props) {
       setError(null);
       if (isStudent && user?.studentId) {
         // Student: get their group IDs using numeric studentId, then fetch each group's details
-        console.log('[Groups] Fetching groups for studentId:', user.studentId);
         const res = await groupsApi.getStudentGroups(user.studentId);
         const groupIds = Array.isArray(res?.groupIds) ? res.groupIds : [];
         if (groupIds.length === 0) {

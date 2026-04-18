@@ -22,7 +22,6 @@ import type { ProfileStackParamList } from '../../types/navigation.types';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Settings'>;
 
-
 export default function SettingsScreen({ navigation }: Props) {
   const { theme, setTheme, themeMode } = useTheme();
   const { logout } = useAuth();
@@ -205,15 +204,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     padding: spacing.lg,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.03,
-        shadowRadius: 3,
-      },
-      android: { elevation: 1 },
-    }),
+    
   },
   cardRow: {
     flexDirection: 'row',

@@ -576,20 +576,10 @@ const styles = StyleSheet.create({
     minWidth: 80,
     flex: 1,
     maxWidth: 110,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
-      android: { elevation: 2 },
-    }),
+    
   },
   rankCardTop: {
     backgroundColor: 'transparent',
-    elevation: 0,
-    shadowOpacity: 0,
   },
 
   // Top 3 styles

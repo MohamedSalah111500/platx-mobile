@@ -216,15 +216,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xl,
     borderRadius: 22,
     padding: spacing.xl,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.03,
-        shadowRadius: 4,
-      },
-      android: { elevation: 1 },
-    }),
+    
   },
   label: {
     fontSize: fontSize.sm,
