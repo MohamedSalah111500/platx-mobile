@@ -2,7 +2,7 @@
   "expo": {
     "name": "PlatX",
     "slug": "platx",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -14,11 +14,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.platx.app"
+      "bundleIdentifier": "com.platx.platform"
     },
     "android": {
-      "package": "com.platx.app",
-      "versionCode": 1,
+      "package": "com.platx.platform",
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#121935"
@@ -44,9 +44,9 @@
         {
           "android": {
             "enableHermes": true,
-            "enableProguardInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true,
-            "enableMinifyInReleaseBuilds": true
+            "enableProguardInReleaseBuilds": false,
+            "enableShrinkResourcesInReleaseBuilds": false,
+            "enableMinifyInReleaseBuilds": false
           },
           "ios": {
             "enableHermes": true
