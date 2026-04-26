@@ -11,25 +11,33 @@ const resources = {
   ar: { translation: ar },
 };
 
-// Get device locale (expo-localization v16+ API)
-const deviceLocale = getLocales()[0]?.languageCode || 'en';
+// Get device locale (expo-localization v16+ API) — wrapped in try/catch to avoid module-level crash
+let deviceLocale = 'en';
+try {
+  deviceLocale = getLocales()[0]?.languageCode || 'en';
+} catch {}
+
 const supportedLocales = ['en', 'ar'];
 const defaultLocale = 'ar';
 
-// Force RTL immediately for Arabic default (before any component renders)
-if (defaultLocale === 'ar' && !I18nManager.isRTL) {
-  I18nManager.allowRTL(true);
-  I18nManager.forceRTL(true);
-}
+// Force RTL immediately — wrapped because I18nManager calls can crash on some Android OEMs
+try {
+  if (defaultLocale === 'ar' && !I18nManager.isRTL) {
+    I18nManager.allowRTL(true);
+    I18nManager.forceRTL(true);
+  }
+} catch {}
 
-i18n.use(initReactI18next).init({
-  resources,
-  lng: defaultLocale,
-  fallbackLng: 'en',
-  interpolation: {
-    escapeValue: false,
-  },
-  compatibilityJSON: 'v3',
-});
+try {
+  i18n.use(initReactI18next).init({
+    resources,
+    lng: defaultLocale,
+    fallbackLng: 'en',
+    interpolation: {
+      escapeValue: false,
+    },
+    compatibilityJSON: 'v3',
+  });
+} catch {}
 
 export default i18n;

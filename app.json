@@ -18,7 +18,8 @@
     },
     "android": {
       "package": "com.platx.platform",
-      "versionCode": 2,
+      "versionCode": 13,
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#121935"
@@ -61,7 +62,10 @@
           "defaultChannel": "default"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "./plugins/removePermissions",
+      "@react-native-firebase/app",
+      "@react-native-firebase/crashlytics"
     ],
     "extra": {
       "eas": {

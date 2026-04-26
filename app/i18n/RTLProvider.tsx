@@ -25,7 +25,9 @@ export function RTLProvider({ children }: RTLProviderProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    loadLocalePreference();
+    // Safety timeout — render anyway after 2s if AsyncStorage hangs
+    const timeout = setTimeout(() => setIsLoaded(true), 2000);
+    loadLocalePreference().finally(() => clearTimeout(timeout));
   }, []);
 
   const loadLocalePreference = async () => {
@@ -34,11 +36,10 @@ export function RTLProvider({ children }: RTLProviderProps) {
       if (saved) {
         await changeLocale(saved, false);
       } else {
-        // No saved preference — apply default locale RTL setting
         await changeLocale(i18n.language, false);
       }
-    } catch (error) {
-    } finally {
+    } catch {}
+    finally {
       setIsLoaded(true);
     }
   };

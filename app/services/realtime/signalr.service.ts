@@ -13,18 +13,20 @@ LogBox.ignoreLogs([
   'Network request failed',
 ]);
 
-// Configure foreground notification display
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Configure foreground notification display — wrapped in try/catch
+// because module-level errors crash the JS bundle on some Android devices
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+} catch {}
 
-// Android notification channel
 if (Platform.OS === 'android') {
   Notifications.setNotificationChannelAsync('default', {
     name: 'Default',
@@ -33,7 +35,7 @@ if (Platform.OS === 'android') {
     sound: 'default',
     enableVibrate: true,
     showBadge: true,
-  });
+  }).catch(() => {});
 }
 
 async function ensureNotificationPermissions(): Promise<boolean> {

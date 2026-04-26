@@ -11,7 +11,12 @@ import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
 import LiveClassroomScreen from '../screens/live/LiveClassroomScreen';
 
-SplashScreen.preventAutoHideAsync();
+// Don't prevent native splash auto-hide — let it disappear naturally so the app
+// never gets stuck if JS fails. We show BrandedLoading as a React-controlled
+// overlay during session restore.
+try {
+  SplashScreen.preventAutoHideAsync();
+} catch {}
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -58,11 +63,18 @@ export default function RootNavigator() {
   const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
+    // Safety timeout — always hide splash after 5s no matter what
+    const timeout = setTimeout(() => {
+      SplashScreen.hideAsync();
+      setSplashDone(true);
+    }, 5000);
+
     async function prepare() {
       try {
         await restoreSession();
       } catch {}
       finally {
+        clearTimeout(timeout);
         SplashScreen.hideAsync();
         setSplashDone(true);
       }

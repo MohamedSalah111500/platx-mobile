@@ -26,7 +26,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    loadThemePreference();
+    // Safety timeout — if AsyncStorage hangs, render anyway after 2s
+    const timeout = setTimeout(() => setIsLoaded(true), 2000);
+    loadThemePreference().finally(() => clearTimeout(timeout));
   }, []);
 
   const loadThemePreference = async () => {
@@ -35,9 +37,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       if (saved && (saved === 'light' || saved === 'dark' || saved === 'system')) {
         setThemeMode(saved as ThemeMode);
       }
-    } catch (error) {
-      console.error('Failed to load theme preference:', error);
-    } finally {
+    } catch {}
+    finally {
       setIsLoaded(true);
     }
   };

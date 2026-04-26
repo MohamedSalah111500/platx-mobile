@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "158958333192",
+    "project_id": "platx-7e28f",
+    "storage_bucket": "platx-7e28f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:158958333192:android:4d577defbe6d8fb092d0bd",
+        "android_client_info": {
+          "package_name": "com.platx.platform"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCw3Bv4BAEPK0ewDj-lzuW6FTAQecr40No"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
