@@ -5,6 +5,7 @@ import { authApi } from '../services/api/auth.api';
 import { setInMemoryToken, setOnUnauthorized } from '../services/api/client';
 import { signalRService } from '../services/realtime/signalr.service';
 import { extractNumericId, extractTenantDomain } from '../utils/jwt';
+import { logger } from '../services/logger';
 import type {
   User,
   LoginResponse,
@@ -109,6 +110,13 @@ async function persistAndSetAuth(
     pendingTenants: null,
     pendingCredentials: null,
   });
+  // Tag user in Crashlytics for filtering crash reports
+  if (user.userId) {
+    logger.setUserId(String(user.userId));
+  }
+  if (domain) {
+    logger.setAttribute('domain', domain);
+  }
   signalRService.startConnection().catch(() => {});
 }
 
@@ -305,7 +313,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const domain = domainStr[1];
 
       if (token && userData) {
-        let user: User = JSON.parse(userData);
+        let user: User;
+        try {
+          user = JSON.parse(userData);
+        } catch {
+          // Corrupt user data — bail to logged-out state
+          set({ isLoading: false });
+          return;
+        }
+
         if (!user.studentId) {
           const _u: any = user;
           const resolved =
@@ -326,7 +342,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           isAuthenticated: true,
           isLoading: false,
         });
-        signalRService.startConnection().catch(() => {});
+        // Fire-and-forget: SignalR must NEVER block startup. Schedule it on the
+        // next tick so the auth state update flushes first.
+        setTimeout(() => {
+          try {
+            signalRService.startConnection().catch(() => {});
+          } catch {}
+        }, 0);
       } else {
         set({ isLoading: false });
       }

@@ -1,5 +1,13 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ScrollView,
+  Share,
+} from 'react-native';
 import { logger } from '../services/logger';
 
 interface Props {
@@ -24,62 +32,72 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ error, errorInfo });
-    console.error('ErrorBoundary caught:', error, errorInfo);
-    logger.log(`Component stack: ${errorInfo.componentStack || 'unknown'}`);
+    logger.log(
+      `[ErrorBoundary] caught: ${error.message} | stack: ${error.stack?.substring(0, 300)}`,
+    );
+    if (errorInfo.componentStack) {
+      logger.log(`[ErrorBoundary] componentStack: ${errorInfo.componentStack.substring(0, 300)}`);
+    }
     logger.recordError(error, 'ErrorBoundary');
   }
 
   handleRetry = () => {
+    logger.log('[ErrorBoundary] user pressed retry');
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
+  handleShare = async () => {
+    const lines = [
+      `Error: ${this.state.error?.message || 'unknown'}`,
+      '',
+      'Stack:',
+      this.state.error?.stack || 'n/a',
+      '',
+      'Component Stack:',
+      this.state.errorInfo?.componentStack || 'n/a',
+      '',
+      'Recent logs:',
+      ...logger.getBuffer(),
+    ].join('\n');
+
+    try {
+      await Share.share({ message: lines });
+    } catch {}
+  };
+
   render() {
-    if (this.state.hasError) {
-      const errorMessage = this.state.error?.message || 'Unknown error';
-      const errorStack = this.state.error?.stack || '';
-      const componentStack = this.state.errorInfo?.componentStack || '';
+    if (!this.state.hasError) return this.props.children;
 
-      return (
-        <View style={styles.container}>
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-            <Image
-              source={require('../../assets/images/logo-color.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <Text style={styles.title}>Something went wrong</Text>
-            <Text style={styles.message}>
-              An unexpected error occurred. Please try again.
+    const errMessage = this.state.error?.message || 'Unknown error';
+
+    return (
+      <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <Image
+            source={require('../../assets/images/logo-color.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.title}>Something went wrong</Text>
+          <Text style={styles.message}>An unexpected error occurred. Please try again.</Text>
+
+          <View style={styles.errorBox}>
+            <Text style={styles.errorLabel}>Error</Text>
+            <Text style={styles.errorText} selectable>
+              {errMessage}
             </Text>
+          </View>
 
-            <View style={styles.errorBox}>
-              <Text style={styles.errorLabel}>Error:</Text>
-              <Text style={styles.errorText} selectable>{errorMessage}</Text>
+          <TouchableOpacity style={styles.button} onPress={this.handleRetry}>
+            <Text style={styles.buttonText}>Try Again</Text>
+          </TouchableOpacity>
 
-              {errorStack ? (
-                <>
-                  <Text style={styles.errorLabel}>Stack:</Text>
-                  <Text style={styles.errorText} selectable>{errorStack.substring(0, 500)}</Text>
-                </>
-              ) : null}
-
-              {componentStack ? (
-                <>
-                  <Text style={styles.errorLabel}>Component Stack:</Text>
-                  <Text style={styles.errorText} selectable>{componentStack.substring(0, 500)}</Text>
-                </>
-              ) : null}
-            </View>
-
-            <TouchableOpacity style={styles.button} onPress={this.handleRetry}>
-              <Text style={styles.buttonText}>Try Again</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
-      );
-    }
-
-    return this.props.children;
+          <TouchableOpacity style={styles.linkButton} onPress={this.handleShare}>
+            <Text style={styles.linkText}>Share diagnostic report</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+    );
   }
 }
 
@@ -126,10 +144,9 @@ const styles = StyleSheet.create({
     color: '#7c63fd',
     fontWeight: '700',
     marginBottom: 4,
-    marginTop: 8,
   },
   errorText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#ffffff',
     fontFamily: 'monospace',
     lineHeight: 16,
@@ -139,13 +156,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 12,
-    marginBottom: 24,
+    marginBottom: 12,
   },
   buttonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
   },
+  linkButton: {
+    paddingVertical: 12,
+  },
+  linkText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+    textDecorationLine: 'underline',
+  },
 });
-
-export default ErrorBoundary;

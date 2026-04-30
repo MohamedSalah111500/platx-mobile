@@ -3,6 +3,7 @@ import { useColorScheme, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lightTheme, darkTheme, Theme } from './themes';
 import { STORAGE_KEYS } from '@config/constants';
+import { logger } from '../services/logger';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -22,56 +23,50 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const systemColorScheme = useColorScheme();
+  // Always start with a valid theme — never block render waiting for storage.
+  // We hydrate the preference asynchronously and update if it differs.
   const [themeMode, setThemeMode] = useState<ThemeMode>('dark');
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // Safety timeout — if AsyncStorage hangs, render anyway after 2s
-    const timeout = setTimeout(() => setIsLoaded(true), 2000);
-    loadThemePreference().finally(() => clearTimeout(timeout));
+    let cancelled = false;
+    (async () => {
+      try {
+        const saved = await AsyncStorage.getItem(STORAGE_KEYS.THEME_MODE);
+        if (cancelled) return;
+        if (saved === 'light' || saved === 'dark' || saved === 'system') {
+          setThemeMode(saved);
+        }
+      } catch (err) {
+        logger.recordError(err, 'ThemeProvider:load');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const loadThemePreference = async () => {
-    try {
-      const saved = await AsyncStorage.getItem(STORAGE_KEYS.THEME_MODE);
-      if (saved && (saved === 'light' || saved === 'dark' || saved === 'system')) {
-        setThemeMode(saved as ThemeMode);
-      }
-    } catch {}
-    finally {
-      setIsLoaded(true);
-    }
-  };
-
   const isDark =
-    themeMode === 'system'
-      ? systemColorScheme === 'dark'
-      : themeMode === 'dark';
-
+    themeMode === 'system' ? systemColorScheme === 'dark' : themeMode === 'dark';
   const theme = isDark ? darkTheme : lightTheme;
 
-  const toggleTheme = async () => {
-    const newMode = isDark ? 'light' : 'dark';
-    setThemeMode(newMode);
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.THEME_MODE, newMode);
-    } catch (error) {
-      console.error('Failed to save theme preference:', error);
-    }
-  };
-
-  const setTheme = async (mode: ThemeMode) => {
-    setThemeMode(mode);
+  const persist = async (mode: ThemeMode) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.THEME_MODE, mode);
-    } catch (error) {
-      console.error('Failed to save theme preference:', error);
+    } catch (err) {
+      logger.recordError(err, 'ThemeProvider:save');
     }
   };
 
-  if (!isLoaded) {
-    return null; // Or a loading indicator
-  }
+  const toggleTheme = () => {
+    const next: ThemeMode = isDark ? 'light' : 'dark';
+    setThemeMode(next);
+    persist(next);
+  };
+
+  const setTheme = (mode: ThemeMode) => {
+    setThemeMode(mode);
+    persist(mode);
+  };
 
   return (
     <ThemeContext.Provider value={{ theme, isDark, themeMode, toggleTheme, setTheme }}>

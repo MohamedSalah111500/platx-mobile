@@ -3,6 +3,7 @@ import { I18nManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from './i18n.config';
 import { STORAGE_KEYS, RTL_LANGUAGES } from '@config/constants';
+import { logger } from '../services/logger';
 
 interface RTLContextType {
   isRTL: boolean;
@@ -18,54 +19,49 @@ interface RTLProviderProps {
 }
 
 export function RTLProvider({ children }: RTLProviderProps) {
-  const [locale, setLocaleState] = useState(i18n.language || 'en');
+  // Always render with the i18n default — never block waiting for storage.
+  const [locale, setLocaleState] = useState(i18n.language || 'ar');
   const [isRTL, setIsRTL] = useState(
     RTL_LANGUAGES.includes(i18n.language) || I18nManager.isRTL,
   );
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // Safety timeout — render anyway after 2s if AsyncStorage hangs
-    const timeout = setTimeout(() => setIsLoaded(true), 2000);
-    loadLocalePreference().finally(() => clearTimeout(timeout));
-  }, []);
-
-  const loadLocalePreference = async () => {
-    try {
-      const saved = await AsyncStorage.getItem(STORAGE_KEYS.LOCALE);
-      if (saved) {
-        await changeLocale(saved, false);
-      } else {
-        await changeLocale(i18n.language, false);
+    let cancelled = false;
+    (async () => {
+      try {
+        const saved = await AsyncStorage.getItem(STORAGE_KEYS.LOCALE);
+        if (cancelled) return;
+        if (saved && saved !== i18n.language) {
+          await changeLocale(saved, false);
+        }
+      } catch (err) {
+        logger.recordError(err, 'RTLProvider:load');
       }
-    } catch {}
-    finally {
-      setIsLoaded(true);
-    }
-  };
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const changeLocale = async (newLocale: string, shouldRestart = true) => {
     const shouldBeRTL = RTL_LANGUAGES.includes(newLocale);
+    try {
+      await i18n.changeLanguage(newLocale);
+      setLocaleState(newLocale);
+      await AsyncStorage.setItem(STORAGE_KEYS.LOCALE, newLocale);
 
-    // Update i18n
-    await i18n.changeLanguage(newLocale);
-    setLocaleState(newLocale);
-
-    // Save preference
-    await AsyncStorage.setItem(STORAGE_KEYS.LOCALE, newLocale);
-
-    // Handle RTL change
-    if (shouldBeRTL !== isRTL) {
-      I18nManager.allowRTL(shouldBeRTL);
-      I18nManager.forceRTL(shouldBeRTL);
-
-      if (shouldRestart) {
-        // RTL changes require app restart to take effect
-        // In development, user needs to manually reload
+      if (shouldBeRTL !== isRTL) {
+        try {
+          I18nManager.allowRTL(shouldBeRTL);
+          I18nManager.forceRTL(shouldBeRTL);
+        } catch (err) {
+          logger.recordError(err, 'RTLProvider:forceRTL');
+        }
       }
+      setIsRTL(shouldBeRTL);
+    } catch (err) {
+      logger.recordError(err, 'RTLProvider:changeLocale');
     }
-
-    setIsRTL(shouldBeRTL);
   };
 
   const setLocale = async (newLocale: string) => {
@@ -73,12 +69,12 @@ export function RTLProvider({ children }: RTLProviderProps) {
   };
 
   const t = (key: string, options?: Record<string, unknown>) => {
-    return i18n.t(key, options);
+    try {
+      return i18n.t(key, options);
+    } catch {
+      return key;
+    }
   };
-
-  if (!isLoaded) {
-    return null;
-  }
 
   return (
     <RTLContext.Provider value={{ isRTL, locale, setLocale, t }}>

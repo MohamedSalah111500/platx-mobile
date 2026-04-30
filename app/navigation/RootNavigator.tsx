@@ -1,26 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import * as SplashScreen from 'expo-splash-screen';
+import { View, StyleSheet, Image, Dimensions } from 'react-native';
+
 import { useAuthStore } from '../store/auth.store';
 import { useTheme } from '../theme/ThemeProvider';
-import { View, StyleSheet, Image, Dimensions } from 'react-native';
+import { runStartup } from '../bootstrap/startup';
+import { logger } from '../services/logger';
 import type { RootStackParamList } from '../types/navigation.types';
 
 import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
 import LiveClassroomScreen from '../screens/live/LiveClassroomScreen';
 
-// Don't prevent native splash auto-hide — let it disappear naturally so the app
-// never gets stuck if JS fails. We show BrandedLoading as a React-controlled
-// overlay during session restore.
-try {
-  SplashScreen.preventAutoHideAsync();
-} catch {}
-
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const { width: SCREEN_W } = Dimensions.get('window');
 const isTablet = SCREEN_W >= 768;
+
+const STARTUP_HARD_TIMEOUT_MS = 6000;
 
 function BrandedLoading() {
   const logoSize = isTablet ? 260 : 200;
@@ -40,47 +37,39 @@ function BrandedLoading() {
   );
 }
 
-const styles = StyleSheet.create({
-  splash: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#121935',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  splashIcon: {
-    width: isTablet ? 100 : 76,
-    height: isTablet ? 100 : 76,
-    marginBottom: 20,
-  },
-  splashWordmark: {
-    height: isTablet ? 48 : 36,
-  },
-});
-
 export default function RootNavigator() {
-  const { isAuthenticated, restoreSession } = useAuthStore();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const restoreSession = useAuthStore((s) => s.restoreSession);
   const { theme } = useTheme();
-  const [splashDone, setSplashDone] = useState(false);
+  const [bootstrapped, setBootstrapped] = useState(false);
 
   useEffect(() => {
-    // Safety timeout — always hide splash after 5s no matter what
-    const timeout = setTimeout(() => {
-      SplashScreen.hideAsync();
-      setSplashDone(true);
-    }, 5000);
+    let mounted = true;
 
-    async function prepare() {
-      try {
-        await restoreSession();
-      } catch {}
-      finally {
-        clearTimeout(timeout);
-        SplashScreen.hideAsync();
-        setSplashDone(true);
+    // Hard ceiling — even if startup hangs, we render the UI shell.
+    const ceiling = setTimeout(() => {
+      if (mounted) {
+        logger.log('[RootNavigator] startup ceiling reached, forcing render');
+        setBootstrapped(true);
       }
-    }
-    prepare();
-  }, []);
+    }, STARTUP_HARD_TIMEOUT_MS);
+
+    runStartup([
+      {
+        name: 'restoreSession',
+        run: () => restoreSession(),
+      },
+    ], 4000)
+      .finally(() => {
+        clearTimeout(ceiling);
+        if (mounted) setBootstrapped(true);
+      });
+
+    return () => {
+      mounted = false;
+      clearTimeout(ceiling);
+    };
+  }, [restoreSession]);
 
   const navigationTheme = {
     dark: theme.dark,
@@ -115,7 +104,24 @@ export default function RootNavigator() {
         </Stack.Navigator>
       </NavigationContainer>
 
-      {!splashDone && <BrandedLoading />}
+      {!bootstrapped && <BrandedLoading />}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  splash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#121935',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  splashIcon: {
+    width: isTablet ? 100 : 76,
+    height: isTablet ? 100 : 76,
+    marginBottom: 20,
+  },
+  splashWordmark: {
+    height: isTablet ? 48 : 36,
+  },
+});
