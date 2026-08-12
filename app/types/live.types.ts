@@ -66,6 +66,8 @@ export interface CreateLivePayload {
 export interface JoinLivePayload {
   liveClassroomId: number;
   studentId: number;
+  paymentTransactionId?: string;
+  paymentTransactionImg?: { uri: string; name: string; type: string };
 }
 
 export interface AgoraTokenResponse {

@@ -19,8 +19,12 @@ export const liveApi = {
     const formData = new FormData();
     formData.append('liveClassroomId', String(payload.liveClassroomId));
     formData.append('studentId', String(payload.studentId));
-    formData.append('paymentTransactionId', '');
-    formData.append('paymentTransactionImg', '');
+    formData.append('paymentTransactionId', payload.paymentTransactionId ?? '');
+    if (payload.paymentTransactionImg) {
+      formData.append('paymentTransactionImg', payload.paymentTransactionImg as unknown as Blob);
+    } else {
+      formData.append('paymentTransactionImg', '');
+    }
     // In React Native, set multipart/form-data explicitly so the networking
     // layer adds the boundary automatically. Using `undefined` (browser trick)
     // does NOT work in RN and leaves the default application/json header.

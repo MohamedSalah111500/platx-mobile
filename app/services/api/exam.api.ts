@@ -16,6 +16,13 @@ export const examApi = {
     return { items, totalCount };
   },
 
+  getMyExamsPaged: async (page: number, size: number, search = ''): Promise<{ items: OnlineExamListItem[]; totalCount: number }> => {
+    const { data } = await apiClient.get<any>(EXAM_URLS.GET_MY_EXAMS_PAGED(page, size, search));
+    const items = Array.isArray(data) ? data : data?.items || data?.data || [];
+    const totalCount = data?.totalCount ?? data?.total ?? items.length;
+    return { items, totalCount };
+  },
+
   // Student-side list = the student's own exam history (Admin/Staff use getExamsPaged).
   getExamHistory: async (
     studentId: number,

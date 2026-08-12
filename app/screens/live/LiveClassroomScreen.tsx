@@ -8,6 +8,7 @@ import {
   FlatList,
   TextInput,
   Modal,
+  Image,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
@@ -17,6 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../hooks/useAuth';
 import { useRTL } from '../../i18n/RTLProvider';
@@ -91,6 +93,12 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   // Participants panel
   const [participantsVisible, setParticipantsVisible] = useState(false);
 
+  // Payment (paid session) state
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [paymentTransactionId, setPaymentTransactionId] = useState('');
+  const [paymentProof, setPaymentProof] = useState<{ uri: string; name: string; type: string } | null>(null);
+  const [submittingPayment, setSubmittingPayment] = useState(false);
+
   const chatListRef = useRef<FlatList>(null);
 
   // ─── Load Room ───────────────────────────────
@@ -112,7 +120,10 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   };
 
   // ─── Join Session ────────────────────────────
-  const joinSession = async (roomData?: LiveSession | null) => {
+  const joinSession = async (
+    roomData?: LiveSession | null,
+    payment?: { paymentTransactionId: string; paymentTransactionImg: { uri: string; name: string; type: string } }
+  ) => {
     if (!user) return;
     const currentRoom = roomData || room;
 
@@ -135,6 +146,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
         response = await liveApi.join({
           liveClassroomId: roomId,
           studentId: userId,
+          ...payment,
         });
       } else {
         response = await liveApi.joinStaff({
@@ -145,14 +157,18 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
       const status = response?.status;
       if (status === 1) {
         setPendingApproval(true);
+        setPaymentModalVisible(false);
         Alert.alert(t('live.pending'), t('live.joinRequestPending'));
       } else if (status === 2) {
-        Alert.alert(t('live.paymentRequired'), t('live.sessionRequiresPayment'));
+        setPaymentModalVisible(true);
       } else if (status === 3) {
+        setPaymentModalVisible(false);
         Alert.alert(t('live.denied'), t('live.joinRequestDenied'));
       } else if (status === 4) {
+        setPaymentModalVisible(false);
         Alert.alert(t('live.closed'), t('live.sessionClosed'));
       } else {
+        setPaymentModalVisible(false);
         setJoined(true);
       }
       loadParticipants();
@@ -172,7 +188,41 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
       }
     } finally {
       setJoining(false);
+      setSubmittingPayment(false);
     }
+  };
+
+  const pickPaymentProof = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(t('common.error'), t('checkout.permissionDenied'));
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets?.length) return;
+    const asset = result.assets[0];
+    const name = asset.fileName || `live-payment-${Date.now()}.jpg`;
+    const type = asset.mimeType || 'image/jpeg';
+    setPaymentProof({ uri: asset.uri, name, type });
+  };
+
+  const submitPayment = () => {
+    if (!paymentTransactionId.trim()) {
+      Alert.alert(t('common.validation'), t('live.transactionIdRequired'));
+      return;
+    }
+    if (!paymentProof) {
+      Alert.alert(t('common.validation'), t('live.receiptImageRequired'));
+      return;
+    }
+    setSubmittingPayment(true);
+    joinSession(room, {
+      paymentTransactionId: paymentTransactionId.trim(),
+      paymentTransactionImg: paymentProof,
+    });
   };
 
   const loadParticipants = async () => {
@@ -936,6 +986,71 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           </View>
         </View>
       </Modal>
+
+      {/* ── Payment Required Modal ── */}
+      <Modal
+        visible={paymentModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setPaymentModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.participantsPanel}>
+            <View style={styles.panelHeader}>
+              <Text style={styles.panelTitle}>{t('live.paymentProofRequired')}</Text>
+              <TouchableOpacity onPress={() => setPaymentModalVisible(false)}>
+                <Ionicons name="close" size={24} color={DARK.text} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.emptyPanelText}>{t('live.sessionRequiresPayment')}</Text>
+
+            <TouchableOpacity
+              style={styles.proofPicker}
+              onPress={pickPaymentProof}
+              activeOpacity={0.8}
+            >
+              {paymentProof ? (
+                <Image source={{ uri: paymentProof.uri }} style={styles.proofPreview} resizeMode="cover" />
+              ) : (
+                <View style={styles.proofEmpty}>
+                  <Ionicons name="cloud-upload-outline" size={28} color={DARK.accent} />
+                  <Text style={styles.proofEmptyText}>{t('live.attachReceipt')}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            {paymentProof && (
+              <TouchableOpacity onPress={pickPaymentProof}>
+                <Text style={styles.changeProofText}>{t('live.changeReceipt')}</Text>
+              </TouchableOpacity>
+            )}
+
+            <Text style={[styles.emptyPanelText, { marginTop: spacing.md, marginBottom: spacing.xs }]}>
+              {t('live.paymentTransactionId')}
+            </Text>
+            <TextInput
+              style={styles.paymentInput}
+              placeholder={t('live.enterPaymentTransactionId')}
+              placeholderTextColor={DARK.textSecondary}
+              value={paymentTransactionId}
+              onChangeText={setPaymentTransactionId}
+            />
+
+            <TouchableOpacity
+              style={[styles.submitPaymentBtn, submittingPayment && { opacity: 0.6 }]}
+              onPress={submitPayment}
+              disabled={submittingPayment}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.submitPaymentText}>
+                {submittingPayment ? t('live.joining') : t('live.submitPayment')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1187,5 +1302,57 @@ const styles = StyleSheet.create({
     color: DARK.textSecondary,
     textAlign: 'center',
     marginTop: 20,
+  },
+  proofPicker: {
+    height: 140,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: DARK.surfaceLight,
+    backgroundColor: DARK.surfaceLight,
+    overflow: 'hidden',
+    marginTop: spacing.md,
+  },
+  proofPreview: {
+    width: '100%',
+    height: '100%',
+  },
+  proofEmpty: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  proofEmptyText: {
+    ...typography.bodySmall,
+    color: DARK.textSecondary,
+  },
+  changeProofText: {
+    ...typography.bodySmall,
+    color: DARK.accent,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+  },
+  paymentInput: {
+    borderWidth: 1,
+    borderColor: DARK.surfaceLight,
+    backgroundColor: DARK.surfaceLight,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    color: DARK.text,
+    ...typography.body,
+  },
+  submitPaymentBtn: {
+    backgroundColor: DARK.accent,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  submitPaymentText: {
+    ...typography.body,
+    color: '#fff',
+    fontFamily: 'Cairo_600SemiBold',
   },
 });

@@ -209,6 +209,8 @@ export const HONOR_BOARD_URLS = {
 export const EXAM_URLS = {
   GET_PAGED: (page: number, size: number) =>
     `${BASE}api/OnlineExam/GetOnlineExamsPaged?page=${page}&size=${size}`,
+  GET_MY_EXAMS_PAGED: (page: number, size: number, search = '') =>
+    `${BASE}api/OnlineExam/GetMyOnlineExamsPaged?search=${encodeURIComponent(search)}&page=${page}&size=${size}`,
   GET_BY_ID: (id: number) =>
     `${BASE}api/OnlineExam/GetOnlineExamById/${id}`,
   GET_FOR_STUDENT: (id: number) =>

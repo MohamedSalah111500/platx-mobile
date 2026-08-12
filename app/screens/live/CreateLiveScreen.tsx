@@ -22,6 +22,7 @@ import { groupsApi } from '../../services/api/groups.api';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 import type { Group } from '../../types/group.types';
 import { LiveClassroomType } from '../../types/live.types';
+import type { CreateLivePayload } from '../../types/live.types';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'CreateLive'>;
 
@@ -40,6 +41,8 @@ export default function CreateLiveScreen({ navigation }: Props) {
   const [liveType, setLiveType] = useState<LiveClassroomType>(LiveClassroomType.Internal);
   const [externalLink, setExternalLink] = useState('');
   const [scheduleOffset, setScheduleOffset] = useState(0);
+  const [isPaid, setIsPaid] = useState(false);
+  const [price, setPrice] = useState('');
 
   const isExternal = liveType === LiveClassroomType.External;
 
@@ -72,18 +75,18 @@ export default function CreateLiveScreen({ navigation }: Props) {
         return;
       }
     }
+    if (isPaid && (!price.trim() || Number(price) <= 0)) {
+      Alert.alert(t('common.validation'), t('live.enterPrice'));
+      return;
+    }
 
     setSubmitting(true);
     try {
-      const payload: {
-        liveName: string;
-        groupId?: number;
-        liveType?: LiveClassroomType;
-        externalLink?: string;
-        scheduledAt?: string;
-      } = {
+      const payload: CreateLivePayload = {
         liveName: title.trim(),
         liveType,
+        isPaid,
+        price: isPaid ? Number(price) : null,
       };
       if (selectedGroupId) {
         payload.groupId = selectedGroupId;
@@ -92,7 +95,7 @@ export default function CreateLiveScreen({ navigation }: Props) {
         payload.externalLink = externalLink.trim();
         payload.scheduledAt = new Date(Date.now() + scheduleOffset * 60 * 1000).toISOString();
       }
-      await liveApi.create(payload as any);
+      await liveApi.create(payload);
       Alert.alert(t('common.success'), t('live.sessionCreatedSuccess'), [
         { text: t('common.ok'), onPress: () => navigation.goBack() },
       ]);
@@ -243,6 +246,47 @@ export default function CreateLiveScreen({ navigation }: Props) {
                   );
                 })}
               </View>
+            </View>
+          )}
+
+          <Text style={[styles.label, { marginTop: spacing.lg }]}>{t('live.sessionAccess')}</Text>
+          <View style={styles.typeRow}>
+            {[
+              { paid: false, icon: 'gift-outline', label: t('live.free') },
+              { paid: true, icon: 'cash-outline', label: t('live.paid') },
+            ].map((opt) => {
+              const active = isPaid === opt.paid;
+              return (
+                <TouchableOpacity
+                  key={String(opt.paid)}
+                  style={[
+                    styles.typeCard,
+                    {
+                      backgroundColor: active ? theme.colors.primary + '12' : theme.colors.card,
+                      borderColor: active ? theme.colors.primary : theme.colors.border,
+                    },
+                  ]}
+                  onPress={() => setIsPaid(opt.paid)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name={opt.icon as any} size={20} color={active ? theme.colors.primary : theme.colors.textMuted} />
+                  <Text style={[styles.typeText, { color: active ? theme.colors.primary : theme.colors.text }]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {isPaid && (
+            <View style={{ marginTop: spacing.lg }}>
+              <Text style={styles.label}>{t('live.price')}</Text>
+              <Input
+                value={price}
+                onChangeText={setPrice}
+                placeholder={t('live.enterPricePlaceholder')}
+                keyboardType="numeric"
+              />
             </View>
           )}
 

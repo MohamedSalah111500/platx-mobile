@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -35,6 +35,7 @@ export default function ExamsListScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { t, isRTL } = useRTL();
   const { isStudent, user } = useAuth();
+  const [studentTab, setStudentTab] = useState<'exams' | 'results'>('exams');
   const [exams, setExams] = useState<OnlineExamListItem[]>([]);
   const [history, setHistory] = useState<ExamHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,16 +49,22 @@ export default function ExamsListScreen({ navigation }: Props) {
       setError(null);
       if (p === 1 && !refresh) setLoading(true);
 
-      // Students can't list all exams (that endpoint is Admin/Staff only → 403).
-      // Their list is their own exam history instead.
       if (isStudent) {
-        if (!user?.studentId) {
-          setHistory([]);
-          setHasMore(false);
+        if (studentTab === 'results') {
+          if (!user?.studentId) {
+            setHistory([]);
+            setHasMore(false);
+            return;
+          }
+          const result = await examApi.getExamHistory(user.studentId, p, PAGE_SIZE);
+          setHistory(prev => (p === 1 ? result.items : [...prev, ...result.items]));
+          setHasMore(result.items.length >= PAGE_SIZE);
+          setPage(p);
           return;
         }
-        const result = await examApi.getExamHistory(user.studentId, p, PAGE_SIZE);
-        setHistory(prev => (p === 1 ? result.items : [...prev, ...result.items]));
+
+        const result = await examApi.getMyExamsPaged(p, PAGE_SIZE);
+        setExams(prev => (p === 1 ? result.items : [...prev, ...result.items]));
         setHasMore(result.items.length >= PAGE_SIZE);
         setPage(p);
         return;
@@ -73,13 +80,28 @@ export default function ExamsListScreen({ navigation }: Props) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [t, isStudent, user?.studentId]);
+  }, [t, isStudent, studentTab, user?.studentId]);
 
   useFocusEffect(
     useCallback(() => {
-      loadExams();
+      setPage(1);
+      loadExams(1);
     }, [loadExams])
   );
+
+  const isFirstRun = useRef(true);
+  useEffect(() => {
+    if (isFirstRun.current) {
+      isFirstRun.current = false;
+      return;
+    }
+    setPage(1);
+    loadExams(1);
+  }, [studentTab]);
+
+  const handleTabChange = (tab: 'exams' | 'results') => {
+    if (tab !== studentTab) setStudentTab(tab);
+  };
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -240,15 +262,55 @@ export default function ExamsListScreen({ navigation }: Props) {
     );
   };
 
-  const listEmpty = isStudent ? history.length === 0 : exams.length === 0;
+  const showResults = isStudent && studentTab === 'results';
+  const listEmpty = showResults ? history.length === 0 : exams.length === 0;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-          {isStudent ? t('exams.myResults') : t('exams.title')}
+          {t('exams.title')}
         </Text>
       </View>
+
+      {isStudent && (
+        <View style={styles.tabRow}>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              { backgroundColor: studentTab === 'exams' ? theme.colors.primary : theme.colors.card },
+            ]}
+            onPress={() => handleTabChange('exams')}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={[
+                styles.tabButtonText,
+                { color: studentTab === 'exams' ? '#fff' : theme.colors.textMuted },
+              ]}
+            >
+              {t('exams.myExamsTab')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              { backgroundColor: studentTab === 'results' ? theme.colors.primary : theme.colors.card },
+            ]}
+            onPress={() => handleTabChange('results')}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={[
+                styles.tabButtonText,
+                { color: studentTab === 'results' ? '#fff' : theme.colors.textMuted },
+              ]}
+            >
+              {t('exams.resultsTab')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {loading && listEmpty ? (
         <Spinner />
@@ -257,10 +319,16 @@ export default function ExamsListScreen({ navigation }: Props) {
       ) : listEmpty ? (
         <EmptyState
           icon={<Ionicons name="clipboard-outline" size={48} color={theme.colors.textMuted} />}
-          title={isStudent ? t('exams.noResults') : t('exams.noExams')}
-          description={isStudent ? t('exams.noResultsMessage') : t('exams.noExamsMessage')}
+          title={showResults ? t('exams.noResults') : isStudent ? t('exams.noExamsAssigned') : t('exams.noExams')}
+          description={
+            showResults
+              ? t('exams.noResultsMessage')
+              : isStudent
+              ? t('exams.noExamsAssignedMessage')
+              : t('exams.noExamsMessage')
+          }
         />
-      ) : isStudent ? (
+      ) : showResults ? (
         <FlatList
           data={history}
           keyExtractor={item => String(item.studentExamId)}
@@ -307,6 +375,22 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: fontSize.xl,
     fontFamily: 'Cairo_700Bold',
+  },
+  tabRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.md,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  tabButtonText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Cairo_600SemiBold',
   },
   listContent: {
     paddingHorizontal: spacing.lg,
