@@ -12,6 +12,7 @@ import type { RootStackParamList } from '../types/navigation.types';
 import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
 import LiveClassroomScreen from '../screens/live/LiveClassroomScreen';
+import WelcomeSplash from '../components/WelcomeSplash';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -20,17 +21,13 @@ const isTablet = SCREEN_W >= 768;
 const STARTUP_HARD_TIMEOUT_MS = 6000;
 
 function BrandedLoading() {
-  const logoSize = isTablet ? 260 : 200;
+  // Prefer the tenant's logo once a session is restored; fall back to the app icon.
+  const tenantLogo = useAuthStore((s) => s.tenantLogo);
   return (
     <View style={styles.splash}>
       <Image
-        source={require('../../assets/images/logo-icon.png')}
+        source={tenantLogo ? { uri: tenantLogo } : require('../../assets/images/logo-icon.png')}
         style={styles.splashIcon}
-        resizeMode="contain"
-      />
-      <Image
-        source={require('../../assets/images/logo-white.png')}
-        style={[styles.splashWordmark, { width: logoSize }]}
         resizeMode="contain"
       />
     </View>
@@ -39,6 +36,7 @@ function BrandedLoading() {
 
 export default function RootNavigator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const showWelcome = useAuthStore((s) => s.showWelcome);
   const restoreSession = useAuthStore((s) => s.restoreSession);
   const { theme } = useTheme();
   const [bootstrapped, setBootstrapped] = useState(false);
@@ -104,6 +102,7 @@ export default function RootNavigator() {
         </Stack.Navigator>
       </NavigationContainer>
 
+      {isAuthenticated && showWelcome && <WelcomeSplash />}
       {!bootstrapped && <BrandedLoading />}
     </View>
   );
@@ -120,8 +119,5 @@ const styles = StyleSheet.create({
     width: isTablet ? 100 : 76,
     height: isTablet ? 100 : 76,
     marginBottom: 20,
-  },
-  splashWordmark: {
-    height: isTablet ? 48 : 36,
   },
 });

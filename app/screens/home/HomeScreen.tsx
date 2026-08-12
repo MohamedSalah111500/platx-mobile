@@ -142,6 +142,7 @@ export default function HomeScreen({ navigation }: Props) {
     : '?';
 
   const firstName = user?.firstName || '';
+  const photoUri = getFullImageUrl(user?.profileImage);
 
   // ------------------------------------------------------------------ palette
   const BG_COLOR = isDark ? theme.colors.background : '#FFFFFF';
@@ -191,6 +192,11 @@ export default function HomeScreen({ navigation }: Props) {
       color: '#FFFFFF',
       fontSize: fontSize.lg,
       fontFamily: 'Cairo_700Bold',
+    },
+    avatarImage: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 25,
     },
     headerTextBlock: {
       flex: 1,
@@ -700,7 +706,11 @@ export default function HomeScreen({ navigation }: Props) {
               onPress={() => navigation.getParent()?.navigate('ProfileTab')}
             >
               <View style={styles.avatarCircle}>
-                <Text style={styles.avatarText}>{initials}</Text>
+                {photoUri ? (
+                  <Image source={{ uri: photoUri }} style={styles.avatarImage} resizeMode="cover" />
+                ) : (
+                  <Text style={styles.avatarText}>{initials}</Text>
+                )}
               </View>
               <View style={styles.headerTextBlock}>
                 <Text style={styles.headerWelcome}>{getGreeting()}</Text>
@@ -712,7 +722,7 @@ export default function HomeScreen({ navigation }: Props) {
             <TouchableOpacity
               style={styles.bellButton}
               activeOpacity={0.7}
-              onPress={() => navigation.getParent()?.navigate('NotificationsTab')}
+              onPress={() => navigation.navigate('NotificationsList')}
             >
               <Ionicons
                 name="notifications-outline"
@@ -896,6 +906,17 @@ export default function HomeScreen({ navigation }: Props) {
               <Ionicons name="book-outline" size={16} color={ACCENT_COLORS[0].accent} />
             </View>
             <Text style={styles.quickActionText}>{t('courses.title')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickActionPill}
+            activeOpacity={0.7}
+            onPress={() => { play('pop'); navigation.navigate('Homework'); }}
+          >
+            <View style={[styles.quickActionIconSmall, { backgroundColor: ACCENT_COLORS[2].bg }]}>
+              <Ionicons name="document-text-outline" size={16} color={ACCENT_COLORS[2].accent} />
+            </View>
+            <Text style={styles.quickActionText}>{t('homework.title')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

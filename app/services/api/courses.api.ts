@@ -1,7 +1,15 @@
 import apiClient from './client';
-import { COURSES_URLS, ONLINE_COURSE_URLS, COURSE_SECTION_URLS, COURSE_LESSON_URLS, withPagination } from './endpoints';
-import type { Course, Enrollment, Lesson, Section } from '../../types/course.types';
+import { COURSES_URLS, ONLINE_COURSE_URLS, COURSE_SECTION_URLS, COURSE_LESSON_URLS, BUNNY_URLS, EXAM_ONLINE_URLS, withPagination } from './endpoints';
+import type { Course, Enrollment, Lesson, Section, Quiz } from '../../types/course.types';
 import type { PaginatedResponse } from '../../types/api.types';
+
+export interface BunnyPlaybackToken {
+  libraryId: string;
+  videoId: string;
+  token: string;
+  expires: number;
+  embedUrl: string;
+}
 
 export const coursesApi = {
   getAll: async (
@@ -56,6 +64,25 @@ export const coursesApi = {
     await apiClient.post(COURSES_URLS.COMPLETE_LESSON(lessonId));
   },
 
+  getEnrollment: async (studentId: number, courseId: number): Promise<Enrollment | null> => {
+    if (!studentId || !courseId) return null;
+    try {
+      const { data } = await apiClient.get<Enrollment>(
+        COURSES_URLS.GET_ENROLLMENT(studentId, courseId)
+      );
+      return data;
+    } catch {
+      return null;
+    }
+  },
+
+  getQuiz: async (examId: number): Promise<Quiz> => {
+    const { data } = await apiClient.get<Quiz>(
+      EXAM_ONLINE_URLS.GET_QUIZ_FOR_STUDENT(examId)
+    );
+    return data;
+  },
+
   // Online courses
   getOnlineCourses: async (
     page = 1,
@@ -77,13 +104,6 @@ export const coursesApi = {
     return data;
   },
 
-  getOnlineCourseLessons: async (courseId: number): Promise<Lesson[]> => {
-    const { data } = await apiClient.get<Lesson[]>(
-      ONLINE_COURSE_URLS.GET_LESSONS(courseId)
-    );
-    return data;
-  },
-
   getCourseSections: async (courseId: number): Promise<Section[]> => {
     const { data } = await apiClient.get<any>(COURSE_SECTION_URLS.GET_BY_COURSE(courseId));
     if (Array.isArray(data)) return data;
@@ -96,6 +116,15 @@ export const coursesApi = {
   getLessonVideo: async (lessonId: number): Promise<Lesson> => {
     const { data } = await apiClient.get<Lesson>(
       COURSE_LESSON_URLS.GET_LESSON_VIDEO(lessonId)
+    );
+    return data;
+  },
+
+  // Signed, short-lived embed URL for a Bunny video. The stream library has token
+  // authentication enabled, so the plain embed URL 403s without this.
+  getVideoPlaybackToken: async (videoId: string): Promise<BunnyPlaybackToken> => {
+    const { data } = await apiClient.get<BunnyPlaybackToken>(
+      BUNNY_URLS.PLAYBACK_TOKEN(videoId)
     );
     return data;
   },

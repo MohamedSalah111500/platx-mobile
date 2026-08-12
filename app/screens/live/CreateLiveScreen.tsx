@@ -21,8 +21,12 @@ import { liveApi } from '../../services/api/live.api';
 import { groupsApi } from '../../services/api/groups.api';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 import type { Group } from '../../types/group.types';
+import { LiveClassroomType } from '../../types/live.types';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'CreateLive'>;
+
+// Preset scheduling offsets (minutes from now) for External sessions.
+const SCHEDULE_PRESETS = [0, 30, 60, 24 * 60];
 
 export default function CreateLiveScreen({ navigation }: Props) {
   const { theme } = useTheme();
@@ -33,6 +37,11 @@ export default function CreateLiveScreen({ navigation }: Props) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [loadingGroups, setLoadingGroups] = useState(true);
+  const [liveType, setLiveType] = useState<LiveClassroomType>(LiveClassroomType.Internal);
+  const [externalLink, setExternalLink] = useState('');
+  const [scheduleOffset, setScheduleOffset] = useState(0);
+
+  const isExternal = liveType === LiveClassroomType.External;
 
   useEffect(() => {
     loadGroups();
@@ -56,14 +65,32 @@ export default function CreateLiveScreen({ navigation }: Props) {
       Alert.alert(t('common.validation'), t('live.enterSessionTitle'));
       return;
     }
+    if (isExternal) {
+      const link = externalLink.trim();
+      if (!link || !/^https?:\/\//i.test(link)) {
+        Alert.alert(t('common.validation'), t('live.enterValidLink'));
+        return;
+      }
+    }
 
     setSubmitting(true);
     try {
-      const payload: { liveName: string; groupId?: number } = {
+      const payload: {
+        liveName: string;
+        groupId?: number;
+        liveType?: LiveClassroomType;
+        externalLink?: string;
+        scheduledAt?: string;
+      } = {
         liveName: title.trim(),
+        liveType,
       };
       if (selectedGroupId) {
         payload.groupId = selectedGroupId;
+      }
+      if (isExternal) {
+        payload.externalLink = externalLink.trim();
+        payload.scheduledAt = new Date(Date.now() + scheduleOffset * 60 * 1000).toISOString();
       }
       await liveApi.create(payload as any);
       Alert.alert(t('common.success'), t('live.sessionCreatedSuccess'), [
@@ -75,6 +102,13 @@ export default function CreateLiveScreen({ navigation }: Props) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const presetLabel = (mins: number) => {
+    if (mins === 0) return t('live.now');
+    if (mins < 60) return t('live.inMinutes', { n: mins });
+    if (mins < 24 * 60) return t('live.inHours', { n: mins / 60 });
+    return t('live.tomorrow');
   };
 
   const styles = StyleSheet.create({
@@ -94,6 +128,26 @@ export default function CreateLiveScreen({ navigation }: Props) {
       marginBottom: spacing.xs,
       fontFamily: 'Cairo_600SemiBold',
     },
+    typeRow: { flexDirection: 'row', gap: spacing.md },
+    typeCard: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.sm,
+      paddingVertical: spacing.md,
+      borderRadius: borderRadius.lg,
+      borderWidth: 1.5,
+    },
+    typeText: { ...typography.body, fontFamily: 'Cairo_600SemiBold' },
+    presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+    presetChip: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: borderRadius.full,
+      borderWidth: 1,
+    },
+    presetText: { ...typography.caption, fontFamily: 'Cairo_600SemiBold' },
     groupsSection: { marginTop: spacing.md },
     groupOption: {
       flexDirection: 'row',
@@ -124,6 +178,73 @@ export default function CreateLiveScreen({ navigation }: Props) {
             onChangeText={setTitle}
             placeholder={t('live.enterSessionTitlePlaceholder')}
           />
+
+          {/* Session type: in-app (Agora) vs external link (Zoom/Meet) */}
+          <Text style={[styles.label, { marginTop: spacing.lg }]}>{t('live.sessionType')}</Text>
+          <View style={styles.typeRow}>
+            {[
+              { type: LiveClassroomType.Internal, icon: 'videocam', label: t('live.typeInApp') },
+              { type: LiveClassroomType.External, icon: 'link', label: t('live.typeExternal') },
+            ].map((opt) => {
+              const active = liveType === opt.type;
+              return (
+                <TouchableOpacity
+                  key={opt.type}
+                  style={[
+                    styles.typeCard,
+                    {
+                      backgroundColor: active ? theme.colors.primary + '12' : theme.colors.card,
+                      borderColor: active ? theme.colors.primary : theme.colors.border,
+                    },
+                  ]}
+                  onPress={() => setLiveType(opt.type)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name={opt.icon as any} size={20} color={active ? theme.colors.primary : theme.colors.textMuted} />
+                  <Text style={[styles.typeText, { color: active ? theme.colors.primary : theme.colors.text }]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {isExternal && (
+            <View style={{ marginTop: spacing.lg }}>
+              <Text style={styles.label}>{t('live.meetingLink')}</Text>
+              <Input
+                value={externalLink}
+                onChangeText={setExternalLink}
+                placeholder="https://zoom.us/j/... or https://meet.google.com/..."
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+              <Text style={[styles.label, { marginTop: spacing.lg }]}>{t('live.scheduledTime')}</Text>
+              <View style={styles.presetRow}>
+                {SCHEDULE_PRESETS.map((mins) => {
+                  const active = scheduleOffset === mins;
+                  return (
+                    <TouchableOpacity
+                      key={mins}
+                      style={[
+                        styles.presetChip,
+                        {
+                          backgroundColor: active ? theme.colors.primary : theme.colors.card,
+                          borderColor: active ? theme.colors.primary : theme.colors.border,
+                        },
+                      ]}
+                      onPress={() => setScheduleOffset(mins)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.presetText, { color: active ? '#fff' : theme.colors.text }]}>
+                        {presetLabel(mins)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
 
           <View style={styles.groupsSection}>
             <Text style={styles.label}>{t('live.selectGroupOptional')}</Text>

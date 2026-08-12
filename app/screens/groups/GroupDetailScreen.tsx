@@ -279,9 +279,29 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const handleOpenFile = (file: GroupFile) => {
+  const handleOpenFile = async (file: GroupFile) => {
     const url = file.url ? getFullImageUrl(file.url) : undefined;
-    if (url) Linking.openURL(url).catch(() => {});
+    if (!url) {
+      Alert.alert(t('common.error'), t('groups.fileUrlMissing') || 'File URL is missing');
+      return;
+    }
+    try {
+      // Try in-app browser first (better UX for previewing)
+      const WebBrowser = await import('expo-web-browser');
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
+      // Fallback to system browser
+      try {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+        } else {
+          Alert.alert(t('common.error'), t('groups.cannotOpenFile') || 'Cannot open this file type');
+        }
+      } catch (err: any) {
+        Alert.alert(t('common.error'), err?.message || 'Failed to open file');
+      }
+    }
   };
 
   // ─── Tab rendering ───
@@ -416,17 +436,19 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
   const renderChatTab = () => (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={insets.top + 120}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 120 : 0}
     >
       {chatLoading && messages.length === 0 ? (
         <Spinner />
       ) : messages.length === 0 ? (
-        <EmptyState
-          icon={<Ionicons name="chatbubbles-outline" size={40} color={theme.colors.textMuted} />}
-          title={t('groups.noMessages')}
-          message=""
-        />
+        <View style={{ flex: 1 }}>
+          <EmptyState
+            icon={<Ionicons name="chatbubbles-outline" size={40} color={theme.colors.textMuted} />}
+            title={t('groups.noMessages')}
+            message=""
+          />
+        </View>
       ) : (
         <FlatList
           ref={chatListRef}
@@ -436,11 +458,21 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
           contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.sm }}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => chatListRef.current?.scrollToEnd({ animated: false })}
+          style={{ flex: 1 }}
         />
       )}
 
       {/* Message input */}
-      <View style={[s.chatInputRow, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+      <View
+        style={[
+          s.chatInputRow,
+          {
+            backgroundColor: theme.colors.card,
+            borderColor: theme.colors.border,
+            paddingBottom: Math.max(insets.bottom, spacing.sm),
+          },
+        ]}
+      >
         <TextInput
           style={[s.chatInput, { color: theme.colors.text }]}
           placeholder={t('groups.typeMessage')}

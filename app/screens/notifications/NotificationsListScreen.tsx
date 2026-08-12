@@ -8,6 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
@@ -21,8 +22,9 @@ import type { NotificationItem } from '../../types/notification.types';
 export default function NotificationsListScreen() {
   const { theme, isDark } = useTheme();
   const { user, role, isStudent } = useAuth();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   const {
     notifications,
     unreadCount,
@@ -53,15 +55,15 @@ export default function NotificationsListScreen() {
     });
   }, [canFetch, role, studentId]);
 
-  const handleNotificationPress = async (item: NotificationItem) => {
+  const handleNotificationPress = useCallback(async (item: NotificationItem) => {
     if (!item.isReaded && isStudent) {
       await markAsRead(item.id);
     }
-  };
+  }, [isStudent, markAsRead]);
 
   const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  const renderItem = ({ item }: { item: NotificationItem }) => {
+  const renderItem = useCallback(({ item }: { item: NotificationItem }) => {
     const date = new Date(item.createdDate);
     const timeAgo = getTimeAgo(date, t);
     const isUnread = !item.isReaded;
@@ -101,13 +103,16 @@ export default function NotificationsListScreen() {
         {isUnread && <View style={styles.unreadDot} />}
       </TouchableOpacity>
     );
-  };
+  }, [styles, theme, t, handleNotificationPress]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7} hitSlop={8}>
+            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color={theme.colors.text} />
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('notifications.title')}</Text>
           {unreadCount > 0 && (
             <View style={styles.badge}>
@@ -132,6 +137,9 @@ export default function NotificationsListScreen() {
         }
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={9}
         ListEmptyComponent={
           isLoading ? (
             <Spinner />
@@ -183,6 +191,14 @@ function createStyles(theme: any, isDark: boolean) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 10,
+    },
+    backBtn: {
+      width: 34,
+      height: 34,
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginStart: -6,
     },
     headerTitle: {
       fontSize: 28,

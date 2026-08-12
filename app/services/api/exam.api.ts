@@ -5,11 +5,24 @@ import type {
   OnlineExamListItem,
   StudentExamSubmissionPayload,
   ExamResult,
+  ExamHistoryItem,
 } from '../../types/exam.types';
 
 export const examApi = {
   getExamsPaged: async (page: number, size: number): Promise<{ items: OnlineExamListItem[]; totalCount: number }> => {
     const { data } = await apiClient.get<any>(EXAM_URLS.GET_PAGED(page, size));
+    const items = Array.isArray(data) ? data : data?.items || data?.data || [];
+    const totalCount = data?.totalCount ?? data?.total ?? items.length;
+    return { items, totalCount };
+  },
+
+  // Student-side list = the student's own exam history (Admin/Staff use getExamsPaged).
+  getExamHistory: async (
+    studentId: number,
+    page: number,
+    size: number
+  ): Promise<{ items: ExamHistoryItem[]; totalCount: number }> => {
+    const { data } = await apiClient.get<any>(EXAM_URLS.GET_HISTORY(studentId, page, size));
     const items = Array.isArray(data) ? data : data?.items || data?.data || [];
     const totalCount = data?.totalCount ?? data?.total ?? items.length;
     return { items, totalCount };

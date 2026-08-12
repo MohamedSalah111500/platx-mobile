@@ -192,6 +192,9 @@ export default function ChatListScreen({ navigation }: Props) {
         data={listData}
         renderItem={isStudent ? renderStaffItem as any : renderGroupItem as any}
         keyExtractor={(item: any) => `${item.id}-${item.groupId || ''}`}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={9}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
         }

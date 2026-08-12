@@ -25,7 +25,7 @@ import { fontSize } from '../../theme/typography';
 import { examApi } from '../../services/api/exam.api';
 import { API_CONFIG } from '../../config';
 import type { ExamsStackParamList } from '../../types/navigation.types';
-import type { OnlineExamListItem } from '../../types/exam.types';
+import type { OnlineExamListItem, ExamHistoryItem } from '../../types/exam.types';
 
 type Props = NativeStackScreenProps<ExamsStackParamList, 'ExamsList'>;
 
@@ -34,8 +34,9 @@ const PAGE_SIZE = 20;
 export default function ExamsListScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { t, isRTL } = useRTL();
-  const { isStudent } = useAuth();
+  const { isStudent, user } = useAuth();
   const [exams, setExams] = useState<OnlineExamListItem[]>([]);
+  const [history, setHistory] = useState<ExamHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,12 +47,24 @@ export default function ExamsListScreen({ navigation }: Props) {
     try {
       setError(null);
       if (p === 1 && !refresh) setLoading(true);
-      const result = await examApi.getExamsPaged(p, PAGE_SIZE);
-      if (p === 1) {
-        setExams(result.items);
-      } else {
-        setExams(prev => [...prev, ...result.items]);
+
+      // Students can't list all exams (that endpoint is Admin/Staff only → 403).
+      // Their list is their own exam history instead.
+      if (isStudent) {
+        if (!user?.studentId) {
+          setHistory([]);
+          setHasMore(false);
+          return;
+        }
+        const result = await examApi.getExamHistory(user.studentId, p, PAGE_SIZE);
+        setHistory(prev => (p === 1 ? result.items : [...prev, ...result.items]));
+        setHasMore(result.items.length >= PAGE_SIZE);
+        setPage(p);
+        return;
       }
+
+      const result = await examApi.getExamsPaged(p, PAGE_SIZE);
+      setExams(prev => (p === 1 ? result.items : [...prev, ...result.items]));
       setHasMore(result.items.length >= PAGE_SIZE);
       setPage(p);
     } catch (err: any) {
@@ -60,7 +73,7 @@ export default function ExamsListScreen({ navigation }: Props) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [t]);
+  }, [t, isStudent, user?.studentId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -189,28 +202,87 @@ export default function ExamsListScreen({ navigation }: Props) {
     );
   };
 
+  const renderHistoryCard = ({ item }: { item: ExamHistoryItem }) => {
+    const passed = item.percentage >= 50;
+    const accent = passed ? '#34C38F' : '#EF4444';
+    return (
+      <View style={[styles.examCard, { backgroundColor: theme.colors.card }]}>
+        <View style={[styles.examIconWrap, { backgroundColor: accent + '15' }]}>
+          <Ionicons name="ribbon-outline" size={18} color={accent} />
+        </View>
+        <View style={styles.cardInfo}>
+          <Text style={[styles.examName, { color: theme.colors.text }]} numberOfLines={1}>
+            {item.examName}
+          </Text>
+          <View style={styles.metaRow}>
+            <Text style={[styles.metaText, { color: theme.colors.textMuted }]}>
+              {item.correctAnswersCount}/{item.numberOfQuestions} {t('exams.correct')}
+            </Text>
+            {item.courseName ? (
+              <>
+                <Text style={[styles.metaDot, { color: theme.colors.textMuted }]}>·</Text>
+                <Text style={[styles.metaText, { color: theme.colors.textMuted }]} numberOfLines={1}>
+                  {item.courseName}
+                </Text>
+              </>
+            ) : null}
+          </View>
+        </View>
+        <View style={styles.historyScore}>
+          <Text style={[styles.historyScoreText, { color: accent }]}>
+            {item.studentScore}/{item.totalMarks}
+          </Text>
+          <Text style={[styles.historyPercent, { color: theme.colors.textMuted }]}>
+            {Math.round(item.percentage)}%
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  const listEmpty = isStudent ? history.length === 0 : exams.length === 0;
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-          {t('exams.title')}
+          {isStudent ? t('exams.myResults') : t('exams.title')}
         </Text>
       </View>
 
-      {loading && exams.length === 0 ? (
+      {loading && listEmpty ? (
         <Spinner />
-      ) : error && exams.length === 0 ? (
+      ) : error && listEmpty ? (
         <ErrorRetry message={error} onRetry={() => loadExams()} />
-      ) : exams.length === 0 ? (
+      ) : listEmpty ? (
         <EmptyState
           icon={<Ionicons name="clipboard-outline" size={48} color={theme.colors.textMuted} />}
-          title={t('exams.noExams')}
-          description={t('exams.noExamsMessage')}
+          title={isStudent ? t('exams.noResults') : t('exams.noExams')}
+          description={isStudent ? t('exams.noResultsMessage') : t('exams.noExamsMessage')}
+        />
+      ) : isStudent ? (
+        <FlatList
+          data={history}
+          keyExtractor={item => String(item.studentExamId)}
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={9}
+          renderItem={renderHistoryCard}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.colors.primary} />
+          }
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.3}
         />
       ) : (
         <FlatList
           data={exams}
           keyExtractor={item => String(item.id)}
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={9}
           renderItem={renderExamCard}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -275,6 +347,17 @@ const styles = StyleSheet.create({
   },
   metaDot: {
     fontSize: 10,
+  },
+  historyScore: {
+    alignItems: 'flex-end',
+  },
+  historyScoreText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Cairo_700Bold',
+  },
+  historyPercent: {
+    fontSize: 10,
+    fontFamily: 'Cairo_500Medium',
   },
   actionsRow: {
     flexDirection: 'row',

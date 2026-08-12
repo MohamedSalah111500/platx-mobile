@@ -32,7 +32,7 @@ try {
         await Notifications.scheduleNotificationAsync({
           content: {
             title: String(newest.title || 'PlatX'),
-            body: String(newest.body || newest.message || 'You have a new notification'),
+            body: String(newest.body || (newest as any).message || 'You have a new notification'),
             sound: 'default',
             ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
           },

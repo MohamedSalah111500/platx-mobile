@@ -31,6 +31,20 @@ export interface OnlineExam {
   createdAt?: string;
 }
 
+export interface ExamHistoryItem {
+  studentExamId: number;
+  examName: string;
+  courseName?: string;
+  examDate: string;
+  studentScore: number;
+  totalMarks: number;
+  percentage: number;
+  resultStatus: string;
+  attemptNumber: number;
+  numberOfQuestions: number;
+  correctAnswersCount: number;
+}
+
 export interface OnlineExamListItem {
   id: number;
   name: string;

@@ -1,3 +1,9 @@
+// Internal = built-in Agora RTC room. External = a Zoom/Meet link students open.
+export enum LiveClassroomType {
+  Internal = 0,
+  External = 1,
+}
+
 export interface LiveSession {
   id: number;
   liveName?: string;
@@ -21,6 +27,10 @@ export interface LiveSession {
   maxParticipants?: number;
   joinLink?: string;
   isEnded?: boolean;
+  // External (Zoom/Meet) live sessions
+  liveType?: LiveClassroomType;
+  externalLink?: string | null;
+  scheduledAt?: string | null;
 }
 
 export interface LiveParticipant {
@@ -48,6 +58,9 @@ export interface CreateLivePayload {
   groupId?: number;
   isPaid?: boolean;
   price?: number | null;
+  liveType?: LiveClassroomType;
+  externalLink?: string;
+  scheduledAt?: string;
 }
 
 export interface JoinLivePayload {

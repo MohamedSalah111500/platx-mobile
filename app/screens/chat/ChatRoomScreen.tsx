@@ -234,8 +234,8 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {loading ? (
           <Spinner />
@@ -250,7 +250,10 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
             style={styles.messagesList}
             contentContainerStyle={{ paddingVertical: spacing.md, paddingHorizontal: spacing.lg }}
             inverted={false}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
+            keyboardShouldPersistTaps="handled"
+            removeClippedSubviews={Platform.OS === 'android'}
           />
         )}
 

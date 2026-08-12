@@ -7,6 +7,9 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "development"
+      },
       "android": {
         "buildType": "apk"
       },
@@ -16,6 +19,9 @@
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "development"
+      },
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=arm64-v8a"
@@ -25,6 +31,9 @@
       }
     },
     "production": {
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "production"
+      },
       "android": {
         "buildType": "app-bundle"
       },

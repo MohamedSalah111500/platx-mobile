@@ -11,7 +11,8 @@ export const ENV = {
   },
 };
 
-const isDev = __DEV__;
+const appEnv = process.env.EXPO_PUBLIC_APP_ENV;
+const isDev = appEnv ? appEnv === 'development' : __DEV__;
 
 export const API_CONFIG = {
   BASE_URL: isDev ? ENV.DEV.API_URL : ENV.PROD.API_URL,

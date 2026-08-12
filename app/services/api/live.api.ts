@@ -89,6 +89,13 @@ export const liveApi = {
     await apiClient.delete(LIVE_URLS.REMOVE_PARTICIPANT(roomId, studentId));
   },
 
+  // Fetches the Zoom/Meet link for an External live session. Throws (400) when the
+  // student still needs approval to access it.
+  getExternalLink: async (roomId: number): Promise<string> => {
+    const { data } = await apiClient.get<{ link: string }>(LIVE_URLS.EXTERNAL_LINK(roomId));
+    return data?.link ?? '';
+  },
+
   endLive: async (payload: {
     liveClassroomId: number;
     teacherId: number;

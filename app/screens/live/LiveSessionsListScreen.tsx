@@ -5,7 +5,10 @@ import {
   StyleSheet,
   FlatList,
   RefreshControl,
+  Linking,
+  Alert,
 } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
@@ -21,7 +24,7 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { liveApi } from '../../services/api/live.api';
 import type { ProfileStackParamList } from '../../types/navigation.types';
-import type { LiveSession } from '../../types/live.types';
+import { type LiveSession, LiveClassroomType } from '../../types/live.types';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'LiveSessions'>;
 
@@ -62,9 +65,40 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
     loadSessions();
   }, []);
 
+  const [joiningId, setJoiningId] = useState<number | null>(null);
+
+  const openExternal = async (session: LiveSession) => {
+    setJoiningId(session.id);
+    try {
+      // Prefer the gated endpoint (handles approval); fall back to the inline link.
+      let link = session.externalLink || '';
+      try {
+        const fetched = await liveApi.getExternalLink(session.id);
+        if (fetched) link = fetched;
+      } catch {
+        if (!link) {
+          Alert.alert(t('live.title'), t('live.approvalRequired'));
+          return;
+        }
+      }
+      if (link) {
+        const ok = await Linking.canOpenURL(link);
+        if (ok) await Linking.openURL(link);
+        else Alert.alert(t('common.error'), t('live.cannotOpenLink'));
+      } else {
+        Alert.alert(t('live.title'), t('live.approvalRequired'));
+      }
+    } finally {
+      setJoiningId(null);
+    }
+  };
+
   const handleJoin = (session: LiveSession) => {
-    // LiveClassroom is registered at the RootStack level, not in ProfileStack.
-    // Use CommonActions.navigate + dispatch to reliably reach it from nested navigators.
+    if (session.liveType === LiveClassroomType.External) {
+      openExternal(session);
+      return;
+    }
+    // Internal (Agora): LiveClassroom is registered at the RootStack level.
     navigation.dispatch(
       CommonActions.navigate({
         name: 'LiveClassroom',
@@ -94,26 +128,37 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
       {item.teacherName && (
         <Text style={styles.sessionTeacher}>{t('common.by')} {item.teacherName}</Text>
       )}
-      {item.groupName && (
-        <Badge
-          text={item.groupName}
-          color={theme.colors.info}
-          style={{ marginTop: spacing.sm }}
-        />
-      )}
+      <View style={styles.badgeRow}>
+        {item.liveType === LiveClassroomType.External && (
+          <View style={[styles.typeBadge, { backgroundColor: theme.colors.primary + '15' }]}>
+            <Ionicons name="videocam-outline" size={12} color={theme.colors.primary} />
+            <Text style={[styles.typeBadgeText, { color: theme.colors.primary }]}>{t('live.externalMeeting')}</Text>
+          </View>
+        )}
+        {item.groupName && (
+          <Badge text={item.groupName} color={theme.colors.info} />
+        )}
+      </View>
 
       <View style={styles.sessionFooter}>
-        {item.startedAt && (
+        {item.liveType === LiveClassroomType.External && item.scheduledAt ? (
+          <Text style={styles.sessionTime}>
+            {new Date(item.scheduledAt).toLocaleString('en', {
+              month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+            })}
+          </Text>
+        ) : item.startedAt ? (
           <Text style={styles.sessionTime}>
             {t('live.started')} {new Date(item.startedAt).toLocaleTimeString('en', {
               hour: '2-digit',
               minute: '2-digit',
             })}
           </Text>
-        )}
+        ) : <View />}
         <Button
-          title={t('live.join')}
+          title={item.liveType === LiveClassroomType.External ? t('live.openLink') : t('live.join')}
           onPress={() => handleJoin(item)}
+          loading={joiningId === item.id}
           size="small"
           variant="primary"
         />
@@ -173,6 +218,25 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
       ...typography.bodySmall,
       color: theme.colors.textSecondary,
       marginTop: spacing.xs,
+    },
+    badgeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginTop: spacing.sm,
+      flexWrap: 'wrap',
+    },
+    typeBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 3,
+      borderRadius: borderRadius.full,
+    },
+    typeBadgeText: {
+      ...typography.caption,
+      fontFamily: 'Cairo_600SemiBold',
     },
     sessionFooter: {
       flexDirection: 'row',

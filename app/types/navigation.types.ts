@@ -23,23 +23,34 @@ export type MainTabParamList = {
   HomeTab: undefined;
   ExamsTab: undefined;
   ChatTab: undefined;
-  NotificationsTab: undefined;
   ProfileTab: undefined;
 };
 
 // Stack param lists for each tab
+export type CheckoutParams = {
+  courseId: number;
+  title?: string;
+  price?: number;
+  discountPrice?: number;
+  image?: string;
+};
+
 export type HomeStackParamList = {
   Home: undefined;
   NewsDetail: { newsId: number; newsItem?: import('./news.types').NewsItem };
   EventDetail: { eventId: number };
   CoursesList: { search?: string } | undefined;
   CourseDetail: { courseId: number };
+  Checkout: CheckoutParams;
   LessonPlayer: { lessonId: number; courseId: number };
+  Homework: undefined;
+  NotificationsList: undefined;
 };
 
 export type CoursesStackParamList = {
   CoursesList: { search?: string } | undefined;
   CourseDetail: { courseId: number };
+  Checkout: CheckoutParams;
   MyCourses: undefined;
   LessonPlayer: { lessonId: number; courseId: number };
 };
@@ -67,6 +78,13 @@ export type ExamsStackParamList = {
   ExamResult: { examId: number };
 };
 
+export type HomeworkStackParamList = {
+  HomeworkList: undefined;
+  HomeworkDetail: { homeworkId: number };
+  HomeworkSubmissions: { homeworkId: number; homeworkName?: string };
+  HomeworkReview: { submissionId: number; studentName?: string };
+};
+
 export type ProfileStackParamList = {
   Profile: undefined;
   EditProfile: undefined;
@@ -77,4 +95,5 @@ export type ProfileStackParamList = {
   LiveSessions: undefined;
   CreateLive: undefined;
   HonorBoard: undefined;
+  Homework: undefined;
 };

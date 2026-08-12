@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -17,6 +18,7 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import type { ProfileStackParamList } from '../../types/navigation.types';
+import { getFullImageUrl } from '../../utils/imageUrl';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
 
@@ -45,10 +47,18 @@ export default function ProfileScreen({ navigation }: Props) {
   const firstName = user?.firstName || '';
   const lastName = user?.lastName || '';
   const initials = (firstName?.[0] || '') + (lastName?.[0] || '');
+  const photoUri = getFullImageUrl(user?.profileImage);
 
   const bgColor = theme.colors.background;
 
   const generalMenuItems: { iconName: string; iconBg: string; iconColor: string; label: string; onPress: () => void }[] = [];
+  generalMenuItems.push({
+    iconName: 'document-text',
+    iconBg: '#EDE8FF',
+    iconColor: '#7c63fd',
+    label: t('homework.title'),
+    onPress: () => navigation.navigate('Homework'),
+  });
   if (canManageGroups || canMyGroup) {
     generalMenuItems.push({
       iconName: 'people',
@@ -84,9 +94,13 @@ export default function ProfileScreen({ navigation }: Props) {
         {/* Purple header */}
         <View style={[styles.headerBg, { paddingTop: insets.top + spacing.lg, backgroundColor: theme.colors.primary }]}>
           <View style={[styles.avatar, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
-            <Text style={[styles.avatarText, { color: theme.colors.primary }]}>
-              {initials.toUpperCase() || '?'}
-            </Text>
+            {photoUri ? (
+              <Image source={{ uri: photoUri }} style={styles.avatarImage} resizeMode="cover" />
+            ) : (
+              <Text style={[styles.avatarText, { color: theme.colors.primary }]}>
+                {initials.toUpperCase() || '?'}
+              </Text>
+            )}
           </View>
           <Text style={styles.userName}>
             {firstName} {lastName}
@@ -232,6 +246,11 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.35)',
     marginBottom: spacing.md,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 25,
   },
   avatarText: {
     fontSize: 30,

@@ -10,6 +10,8 @@ export const STORAGE_KEYS = {
   THEME_MODE: 'theme_mode',
   LOCALE: 'app_locale',
   DOMAIN: 'user_domain',
+  TENANT_NAME: 'tenant_name',
+  TENANT_LOGO: 'tenant_logo',
 } as const;
 
 // API request timeout

@@ -26,6 +26,7 @@ import { typography } from '../../theme/typography';
 import { liveApi } from '../../services/api/live.api';
 import { signalRService } from '../../services/realtime/signalr.service';
 import * as AgoraService from '../../services/agora/agora.service';
+import { logger } from '../../services/logger';
 import type { IRtcEngineEventHandler } from '../../services/agora/agora.service';
 
 // Conditionally load RtcSurfaceView (only available in dev builds, not Expo Go)
@@ -213,44 +214,84 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
     const setupAgora = async () => {
       try {
         if (!AgoraService.isAgoraAvailable()) {
+          logger.log('[Live] Agora native module not available');
+          Alert.alert(
+            t('live.agoraNotAvailable') || 'Live not available',
+            'The live video module is not available on this build.',
+          );
           return;
         }
+
+        logger.log('[Live] requesting permissions');
         const granted = await requestPermissions();
+        if (!granted) {
+          logger.log('[Live] permissions denied');
+          Alert.alert(
+            t('live.permissionsRequired') || 'Permissions required',
+            t('live.permissionsExplanation') ||
+              'Camera and microphone access are required to join.',
+          );
+          return;
+        }
+
+        logger.log(`[Live] fetching Agora token for channel=${room.channelName}`);
         const tokenResp = await liveApi.getToken({
           channelName: room.channelName,
-          uid: (user.studentId ?? 0),
+          uid: user.studentId ?? 0,
           role: isTeacher ? 1 : 0,
         });
 
         const { token, appId, uid } = tokenResp || ({} as any);
+        if (!appId || !token) {
+          logger.log(`[Live] token response missing appId/token: ${JSON.stringify(tokenResp).substring(0, 200)}`);
+          Alert.alert(
+            t('common.error'),
+            t('live.invalidTokenResponse') || 'Failed to get live session token.',
+          );
+          return;
+        }
+
+        logger.log('[Live] initializing Agora engine');
         AgoraService.initEngine(appId);
+
         eventHandler = {
           onJoinChannelSuccess: (_connection: any, _elapsed: number) => {
             if (!mounted) return;
+            logger.log('[Live] Agora joined channel successfully');
             setAgoraJoined(true);
           },
           onUserJoined: (_connection: any, remoteUid: number) => {
             if (!mounted) return;
+            logger.log(`[Live] remote user joined uid=${remoteUid}`);
             setRemoteUids((prev) =>
               prev.includes(remoteUid) ? prev : [...prev, remoteUid],
             );
           },
           onUserOffline: (_connection: any, remoteUid: number) => {
             if (!mounted) return;
+            logger.log(`[Live] remote user left uid=${remoteUid}`);
             setRemoteUids((prev) => prev.filter((id) => id !== remoteUid));
           },
           onError: (errCode: number, msg: string) => {
+            logger.log(`[Live] Agora error code=${errCode} msg=${msg}`);
+            logger.recordError(new Error(`Agora error ${errCode}: ${msg}`), 'Live:Agora');
           },
         };
         AgoraService.registerEvents(eventHandler);
 
         const effectiveUid = uid ?? (user.studentId ?? 0);
+        logger.log(`[Live] joining as ${isTeacher ? 'host' : 'audience'} uid=${effectiveUid}`);
         if (isTeacher) {
           AgoraService.joinAsHost(token, room.channelName, effectiveUid);
         } else {
           AgoraService.joinAsAudience(token, room.channelName, effectiveUid);
         }
-      } catch (err) {
+      } catch (err: any) {
+        logger.recordError(err, 'Live:setupAgora');
+        Alert.alert(
+          t('common.error'),
+          err?.userMessage || err?.message || 'Failed to join live session.',
+        );
       }
     };
 

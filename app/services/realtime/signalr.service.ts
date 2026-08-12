@@ -5,6 +5,7 @@ import { HUB_URLS } from '../api/endpoints';
 import { useAuthStore } from '../../store/auth.store';
 import { useNotificationsStore } from '../../store/notifications.store';
 import { registerBackgroundNotifications } from './backgroundNotifications';
+import { logger } from '../logger';
 
 // Suppress known SignalR reconnection warnings in dev
 LogBox.ignoreLogs([
@@ -41,10 +42,13 @@ if (Platform.OS === 'android') {
 async function ensureNotificationPermissions(): Promise<boolean> {
   try {
     const { status: existing } = await Notifications.getPermissionsAsync();
+    logger.log(`[Notif] existing permission status=${existing}`);
     if (existing === 'granted') return true;
     const { status } = await Notifications.requestPermissionsAsync();
+    logger.log(`[Notif] requested permission status=${status}`);
     return status === 'granted';
-  } catch {
+  } catch (err) {
+    logger.recordError(err, 'Notif:ensurePermissions');
     return false;
   }
 }
@@ -127,7 +131,9 @@ class SignalRService {
 
     try {
       await this.notificationHub.start();
-    } catch {
+      logger.log('[SignalR] notification hub connected');
+    } catch (err) {
+      logger.recordError(err, 'SignalR:notificationStart');
       setTimeout(() => this.retryNotificationConnection(), 5000);
     }
   }

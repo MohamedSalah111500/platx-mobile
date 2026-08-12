@@ -34,7 +34,7 @@ type Props = NativeStackScreenProps<CoursesStackParamList, 'CoursesList'>;
 export default function CoursesListScreen({ navigation, route }: Props) {
   const { theme } = useTheme();
   const { user, domain, isStudent } = useAuth();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
 
   // if the logged‑in account is a student but we don't have an ID, things
   // like enrollments/notifications will not work. log a warning and show an
@@ -282,7 +282,14 @@ export default function CoursesListScreen({ navigation, route }: Props) {
     <View style={[styles.container, { backgroundColor: bgColor }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>{t('courses.title')}</Text>
+        <View style={styles.titleRow}>
+          {navigation.canGoBack() && (
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={8} activeOpacity={0.7}>
+              <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color={theme.colors.text} />
+            </TouchableOpacity>
+          )}
+          <Text style={[styles.title, { color: theme.colors.text }]}>{t('courses.title')}</Text>
+        </View>
 
         {/* Tab toggle */}
         {isStudent && (
@@ -325,6 +332,9 @@ export default function CoursesListScreen({ navigation, route }: Props) {
           data={enrollments}
           renderItem={renderEnrolled}
           keyExtractor={(item, idx) => item?.id != null ? item.id.toString() : `enroll-${idx}`}
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={9}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           ListHeaderComponent={<View style={{ height: spacing.sm }} />}
           ListEmptyComponent={
@@ -344,6 +354,9 @@ export default function CoursesListScreen({ navigation, route }: Props) {
           data={courses}
           renderItem={renderCourse}
           keyExtractor={(item, idx) => item?.id != null ? item.id.toString() : `course-${idx}`}
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={9}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           onEndReached={onLoadMore}
           onEndReachedThreshold={0.3}
@@ -372,10 +385,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.md,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  backBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginStart: -6,
+  },
   title: {
     ...typography.h2,
     fontFamily: 'Cairo_700Bold',
-    marginBottom: spacing.xs,
   },
   listContent: {
     paddingHorizontal: spacing.xl,

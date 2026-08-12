@@ -87,20 +87,41 @@ export const COURSES_URLS = {
   },
   GET_STUDENT_ENROLLMENTS: (studentId: number) =>
     `${BASE}api/Learning/student/${studentId}/enrollments`,
+  GET_ENROLLMENT: (studentId: number, courseId: number) =>
+    `${BASE}api/Learning/student/${studentId}/courses/${courseId}/enrollment`,
   ENROLL_FREE: (courseId: number, studentId: number) =>
     `${BASE}api/Course/EnrollFreeCourse?courseId=${courseId}&studentId=${studentId}`,
   COMPLETE_LESSON: (lessonId: number) =>
     `${BASE}api/Learning/lessons/${lessonId}/complete`,
 };
 
-// Online course endpoints
+export const EXAM_ONLINE_URLS = {
+  GET_QUIZ_FOR_STUDENT: (examId: number) =>
+    `${BASE}api/OnlineExam/GetQuizForStudent/${examId}`,
+};
+
+export const CERTIFICATE_URLS = {
+  VERIFY: (code: string) => `${BASE}api/certificates/verify/${code}`,
+  PDF: (code: string) => `${BASE}api/certificates/${code}/pdf`,
+  // Public web page for viewing/sharing a certificate.
+  WEB_VERIFY: (code: string) => `https://platx.net/verify/${code}`,
+};
+
+export const FILE_MANAGER_URLS = {
+  DOWNLOAD_FILE: (id: number) => `${BASE}api/FileManager/DownloadFile/${id}`,
+};
+
+// Online course endpoints.
+// NOTE: there is no `api/OnlineCourse` controller on the backend — online courses
+// are served by the Course/CourseSection/CourseLesson controllers (same as web).
 export const ONLINE_COURSE_URLS = {
-  GET_ALL: `${BASE}api/OnlineCourse`,
-  GET_SINGLE: (id: number) => `${BASE}api/OnlineCourse/${id}`,
-  CREATE: `${BASE}api/OnlineCourse`,
-  UPDATE: `${BASE}api/OnlineCourse`,
-  DELETE: (id: number) => `${BASE}api/OnlineCourse/${id}`,
-  GET_LESSONS: (courseId: number) => `${BASE}api/OnlineCourse/${courseId}/lessons`,
+  GET_ALL: `${BASE}api/Course`,
+  GET_SINGLE: (id: number) => `${BASE}api/Course/${id}`,
+  CREATE: `${BASE}api/Course`,
+  UPDATE: `${BASE}api/Course`,
+  DELETE: (id: number) => `${BASE}api/Course/${id}`,
+  // Lessons come nested inside sections (CourseSectionDto.Lessons) via COURSE_SECTION_URLS.
+  GET_LESSONS: (courseId: number) => `${BASE}api/CourseSection/course/${courseId}`,
 };
 
 // Course section endpoints (sections with lessons)
@@ -111,6 +132,29 @@ export const COURSE_SECTION_URLS = {
 // Course lesson endpoints
 export const COURSE_LESSON_URLS = {
   GET_LESSON_VIDEO: (lessonId: number) => `${BASE}api/CourseLesson/CheckForStudent/${lessonId}`,
+};
+
+// Bunny video streaming endpoints
+export const BUNNY_URLS = {
+  // Short-lived signed embed URL so token-protected videos don't 403.
+  PLAYBACK_TOKEN: (videoId: string) => `${BASE}api/Bunny/playback-token/${videoId}`,
+};
+
+// Homework endpoints
+export const HOMEWORK_URLS = {
+  // Student
+  GET_MY_PAGED: (search: string, page: number, size: number) =>
+    `${BASE}api/Homework/GetMyHomeworkPaged?search=${encodeURIComponent(search)}&page=${page}&size=${size}`,
+  GET_FOR_STUDENT: (id: number) => `${BASE}api/Homework/GetHomeworkForStudent/${id}`,
+  SAVE_SUBMISSION: `${BASE}api/Homework/SaveSubmission`,
+  // Teacher / Admin
+  GET_PAGED: (search: string, page: number, size: number) =>
+    `${BASE}api/Homework/GetHomeworkPaged?search=${encodeURIComponent(search)}&page=${page}&size=${size}`,
+  GET_SUBMISSIONS_FOR_REVIEW: (homeworkId: number) =>
+    `${BASE}api/Homework/GetSubmissionsForReview/${homeworkId}`,
+  GET_SUBMISSION_FOR_REVIEW: (submissionId: number) =>
+    `${BASE}api/Homework/GetSubmissionForReview/${submissionId}`,
+  GRADE_SUBMISSION: `${BASE}api/Homework/GradeSubmission`,
 };
 
 // Live classroom endpoints
@@ -126,6 +170,8 @@ export const LIVE_URLS = {
   REMOVE_PARTICIPANT: (id: number, studentId: number) =>
     `${BASE}api/liveclassroom/${id}/participant/${studentId}`,
   END_LIVE: `${BASE}api/liveclassroom/end`,
+  // Zoom/Meet link for External live sessions (gated by approval for students).
+  EXTERNAL_LINK: (id: number) => `${BASE}api/liveclassroom/${id}/external-link`,
 };
 
 // Events endpoints
@@ -173,6 +219,9 @@ export const EXAM_URLS = {
     `${BASE}api/OnlineExam/GetExamResultsForStudent?examId=${examId}&studentId=${studentId}`,
   GET_ALL_RESULTS: (examId: number) =>
     `${BASE}api/OnlineExam/GetExamResultsAllStudents/${examId}?studentName=&submissionDateFrom=&submissionDateTo=`,
+  // Student-accessible list: the student's own exam history (GetOnlineExamsPaged is Admin/Staff only).
+  GET_HISTORY: (studentId: number, page: number, size: number) =>
+    `${BASE}api/ExamHistory?studentId=${studentId}&page=${page}&size=${size}`,
 };
 
 // Staff endpoints
@@ -197,9 +246,16 @@ export const RESERVATIONS_URLS = {
   REJECT: (id: number | string) => `${BASE}api/admin/AdminReservations/${id}/reject`,
 };
 
+// Payment methods endpoints
+export const PAYMENT_METHODS_URLS = {
+  GET: `${BASE}api/PaymentDetails`,
+};
+
 // File upload
 export const FILE_URLS = {
   UPLOAD: `${BASE}api/Files/upload`,
+  // Backend FilesController is POST api/Files, returns { id, url }.
+  CREATE: `${BASE}api/Files`,
   GET: (fileName: string) => `${BASE}api/Files/${fileName}`,
 };
 

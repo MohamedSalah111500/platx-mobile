@@ -15,7 +15,6 @@ import type { MainTabParamList } from '../types/navigation.types';
 // Import stacks
 import HomeStack from './stacks/HomeStack';
 import ChatStack from './stacks/ChatStack';
-import NotificationsStack from './stacks/NotificationsStack';
 import ExamsStack from './stacks/ExamsStack';
 import ProfileStack from './stacks/ProfileStack';
 
@@ -25,7 +24,6 @@ const TAB_ICONS: Record<string, [string, string]> = {
   HomeTab: ['home', 'home-outline'],
   ExamsTab: ['clipboard', 'clipboard-outline'],
   ChatTab: ['chatbubbles', 'chatbubbles-outline'],
-  NotificationsTab: ['notifications', 'notifications-outline'],
   ProfileTab: ['person', 'person-outline'],
 };
 
@@ -41,8 +39,10 @@ const HIDE_TAB_BAR_SCREENS = [
   'HonorBoard',
   'ExamTaking',
   'ExamResult',
+  'Homework',
   'CreateLive',
   'CourseDetail',
+  'NotificationsList',
 ];
 
 function shouldHideTabBar(route: any): boolean {
@@ -120,11 +120,6 @@ export default function MainTabNavigator() {
         name="ChatTab"
         component={ChatStack}
         options={{ tabBarLabel: t('tabs.chat') }}
-      />
-      <Tab.Screen
-        name="NotificationsTab"
-        component={NotificationsStack}
-        options={{ tabBarLabel: t('tabs.alerts') }}
       />
       <Tab.Screen
         name="ProfileTab"

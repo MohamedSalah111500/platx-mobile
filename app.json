@@ -2,7 +2,8 @@
   "expo": {
     "name": "PlatX",
     "slug": "platx",
-    "version": "1.0.2",
+    "scheme": "platx",
+    "version": "1.0.5",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -18,7 +19,7 @@
     },
     "android": {
       "package": "com.platx.platform",
-      "versionCode": 14,
+      "versionCode": 21,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -66,12 +67,6 @@
       "./plugins/removePermissions",
       "@react-native-firebase/app",
       "@react-native-firebase/crashlytics"
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "498a52c9-b0a6-4bbb-b6e4-58901c4ce4af"
-      }
-    },
-    "owner": "mostafaalgamal"
+    ]
   }
 }

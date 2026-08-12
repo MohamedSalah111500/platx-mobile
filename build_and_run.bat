@@ -51,7 +51,7 @@ echo ✓ APK installed
 
 echo.
 echo [5/5] Launching app...
-adb shell am start -n com.platxmobile/.MainActivity
+adb shell am start -n com.platx.platform/.MainActivity
 
 echo.
 echo ╔════════════════════════════════════════════╗

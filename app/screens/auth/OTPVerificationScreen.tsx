@@ -12,6 +12,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuthStore } from '../../store/auth.store';
+import { authApi } from '../../services/api/auth.api';
 import { Button } from '../../components/ui/Button';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
@@ -20,15 +21,16 @@ import { useRTL } from '../../i18n/RTLProvider';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'OTPVerification'>;
 
-const OTP_LENGTH = 6;
+const OTP_LENGTH = 4;
 const RESEND_TIMER = 60;
 
 export default function OTPVerificationScreen({ navigation, route }: Props) {
   const { email, domain, type, password } = route.params;
   const { theme } = useTheme();
-  const { confirmEmail, verifyOtpResetPassword, login, isLoading, error, clearError } =
+  const { confirmEmail, verifyOtpResetPassword, forgotPassword, login, isLoading, error, clearError } =
     useAuthStore();
   const { t } = useRTL();
+  const [resending, setResending] = useState(false);
 
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [timer, setTimer] = useState(RESEND_TIMER);
@@ -94,10 +96,25 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
     }
   };
 
-  const handleResend = () => {
-    setTimer(RESEND_TIMER);
-    setOtp(Array(OTP_LENGTH).fill(''));
-    // TODO: Call resend API
+  const handleResend = async () => {
+    if (timer > 0 || resending) return;
+    clearError();
+    setResending(true);
+    try {
+      // Re-trigger the same OTP the backend sends on register / forgot-password.
+      if (type === 'email_confirm') {
+        await authApi.sendConfirmationEmail(email, domain);
+      } else {
+        await forgotPassword(email, domain);
+      }
+      setOtp(Array(OTP_LENGTH).fill(''));
+      setTimer(RESEND_TIMER);
+      inputRefs.current[0]?.focus();
+    } catch {
+      // Error is surfaced via the store / ignored; user can retry.
+    } finally {
+      setResending(false);
+    }
   };
 
   const styles = StyleSheet.create({
