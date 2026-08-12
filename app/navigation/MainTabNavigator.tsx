@@ -43,6 +43,9 @@ const HIDE_TAB_BAR_SCREENS = [
   'CreateLive',
   'CourseDetail',
   'NotificationsList',
+  'Reports',
+  'AttendanceDetail',
+  'ExamReportDetail',
 ];
 
 function shouldHideTabBar(route: any): boolean {

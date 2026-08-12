@@ -426,6 +426,27 @@
     "transactionIdRequired": "من فضلك أدخل رقم عملية التحويل.",
     "receiptImageRequired": "من فضلك أرفق صورة الإيصال."
   },
+  "reports": {
+    "title": "التقارير",
+    "attendanceTab": "الحضور",
+    "examsTab": "نتائج الامتحانات",
+    "failedToLoad": "فشل تحميل التقارير.",
+    "noAttendance": "لا توجد بيانات حضور",
+    "noAttendanceMessage": "ستظهر تقارير الحضور هنا بعد تسجيل الجلسات.",
+    "noExamReports": "لا توجد بيانات امتحانات",
+    "noExamReportsMessage": "ستظهر تقارير الامتحانات هنا بعد أداء الطلاب للامتحانات.",
+    "sessions": "جلسة",
+    "attendanceRate": "نسبة الحضور",
+    "successRate": "نسبة النجاح",
+    "averageScore": "متوسط الدرجات",
+    "attempts": "محاولة",
+    "present": "حاضر",
+    "absent": "غائب",
+    "passed": "ناجح",
+    "failed": "راسب",
+    "score": "الدرجة",
+    "noStudentsYet": "لا يوجد طلاب بعد"
+  },
   "notifications": {
     "title": "الإشعارات",
     "markAsRead": "تحديد كمقروء",

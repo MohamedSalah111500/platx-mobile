@@ -96,4 +96,7 @@ export type ProfileStackParamList = {
   CreateLive: undefined;
   HonorBoard: undefined;
   Homework: undefined;
+  Reports: undefined;
+  AttendanceDetail: { groupId: number; groupName: string };
+  ExamReportDetail: { examId: number; examName: string };
 };

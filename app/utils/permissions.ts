@@ -20,6 +20,7 @@ export const PERMISSIONS = {
   STUDENTS_MANAGE: ['SuperAdmin', 'Admin', 'Staff'] as TRole[],
   STAFF_MANAGE: ['SuperAdmin', 'Admin'] as TRole[],
   ADMIN_PANEL: ['SuperAdmin', 'Admin'] as TRole[],
+  REPORTS: ['SuperAdmin', 'Admin', 'Staff'] as TRole[],
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;

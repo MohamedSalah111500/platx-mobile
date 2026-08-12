@@ -426,6 +426,27 @@
     "transactionIdRequired": "Please enter the transaction ID.",
     "receiptImageRequired": "Please attach a receipt image."
   },
+  "reports": {
+    "title": "Reports",
+    "attendanceTab": "Attendance",
+    "examsTab": "Exam Results",
+    "failedToLoad": "Failed to load reports.",
+    "noAttendance": "No attendance data",
+    "noAttendanceMessage": "Attendance reports will appear here once sessions are recorded.",
+    "noExamReports": "No exam data",
+    "noExamReportsMessage": "Exam reports will appear here once students take exams.",
+    "sessions": "sessions",
+    "attendanceRate": "Attendance",
+    "successRate": "Success rate",
+    "averageScore": "Average score",
+    "attempts": "attempts",
+    "present": "Present",
+    "absent": "Absent",
+    "passed": "Passed",
+    "failed": "Failed",
+    "score": "Score",
+    "noStudentsYet": "No students yet"
+  },
   "notifications": {
     "title": "Notifications",
     "markAsRead": "Mark as Read",

@@ -11,6 +11,9 @@ import CreateLiveScreen from '../../screens/live/CreateLiveScreen';
 import ChangePasswordScreen from '../../screens/profile/ChangePasswordScreen';
 import HonorBoardScreen from '../../screens/profile/HonorBoardScreen';
 import HomeworkStack from './HomeworkStack';
+import ReportsListScreen from '../../screens/reports/ReportsListScreen';
+import AttendanceDetailScreen from '../../screens/reports/AttendanceDetailScreen';
+import ExamReportDetailScreen from '../../screens/reports/ExamReportDetailScreen';
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
 
@@ -26,6 +29,9 @@ export default function ProfileStack() {
       <Stack.Screen name="CreateLive" component={CreateLiveScreen} />
       <Stack.Screen name="HonorBoard" component={HonorBoardScreen} />
       <Stack.Screen name="Homework" component={HomeworkStack} />
+      <Stack.Screen name="Reports" component={ReportsListScreen} />
+      <Stack.Screen name="AttendanceDetail" component={AttendanceDetailScreen} />
+      <Stack.Screen name="ExamReportDetail" component={ExamReportDetailScreen} />
     </Stack.Navigator>
   );
 }

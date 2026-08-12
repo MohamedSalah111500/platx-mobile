@@ -267,6 +267,13 @@ export const HUB_URLS = {
   LIVE_CLASSROOM: `${BASE}hubs/live-classroom`,
 };
 
+export const REPORTS_URLS = {
+  ATTENDANCE: `${BASE}api/Reports/attendance`,
+  ATTENDANCE_STUDENTS: (groupId: number) => `${BASE}api/Reports/attendance/${groupId}/students`,
+  EXAMS: `${BASE}api/Reports/exams`,
+  EXAM_STUDENTS: (examId: number) => `${BASE}api/Reports/exams/${examId}/students`,
+};
+
 // Utility: append pagination params to URL
 export function withPagination(
   url: string,

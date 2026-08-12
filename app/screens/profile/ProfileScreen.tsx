@@ -32,6 +32,7 @@ export default function ProfileScreen({ navigation }: Props) {
   const canManageGroups = can('GROUPS');
   const canMyGroup = can('MY_GROUP');
   const canLive = can('LIVE_CLASSROOM');
+  const canReports = can('REPORTS');
 
   const handleLogout = () => {
     Alert.alert(t('auth.signOut'), t('auth.signOutConfirm'), [
@@ -84,6 +85,15 @@ export default function ProfileScreen({ navigation }: Props) {
     label: t('honorBoard.title'),
     onPress: () => navigation.navigate('HonorBoard'),
   });
+  if (canReports) {
+    generalMenuItems.push({
+      iconName: 'bar-chart',
+      iconBg: '#E8F4FD',
+      iconColor: '#3B82F6',
+      label: t('reports.title'),
+      onPress: () => navigation.navigate('Reports'),
+    });
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: bgColor }]}>
