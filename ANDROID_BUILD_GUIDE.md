@@ -27,7 +27,7 @@ cd c:\Users\moham\work\platx-mobile\android
 Then deploy using:
 ```bash
 adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n com.platxmobile/.MainActivity
+adb shell am start -n com.platx.platform/.MainActivity
 ```
 
 ## Starting Emulator (If needed)
