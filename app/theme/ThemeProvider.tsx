@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { useColorScheme, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { lightTheme, darkTheme, Theme } from './themes';
+import { buildTheme, Theme } from './themes';
 import { STORAGE_KEYS } from '@config/constants';
 import { logger } from '../services/logger';
+import { useAuthStore } from '../store/auth.store';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -47,7 +48,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   const isDark =
     themeMode === 'system' ? systemColorScheme === 'dark' : themeMode === 'dark';
-  const theme = isDark ? darkTheme : lightTheme;
+  const tenantColor = useAuthStore((s) => s.tenantColor);
+  const theme = useMemo(() => buildTheme(isDark, tenantColor), [isDark, tenantColor]);
 
   const persist = async (mode: ThemeMode) => {
     try {

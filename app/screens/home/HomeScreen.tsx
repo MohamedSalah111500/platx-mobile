@@ -148,9 +148,9 @@ export default function HomeScreen({ navigation }: Props) {
   const BG_COLOR = isDark ? theme.colors.background : '#FFFFFF';
   const CARD_BG = isDark ? theme.colors.card : '#FFFFFF';
   const SEARCH_BG = isDark ? theme.colors.surface : '#FFFFFF';
-  const PRIMARY = theme.colors.primary;       // #7c63fd
+  const PRIMARY = theme.colors.primary;
   const DARK_CARD = isDark ? '#3D2196' : '#1B1464';
-  const LIGHT_CARD = isDark ? theme.colors.surface : '#F0EDFF';
+  const LIGHT_CARD = isDark ? theme.colors.surface : theme.colors.primaryLight;
 
   const CARD_WIDTH = SCREEN_WIDTH * 0.55;
 
@@ -874,13 +874,13 @@ export default function HomeScreen({ navigation }: Props) {
             {/* Light card -- Learning Hours */}
             <View style={styles.statCardLight}>
               <View style={styles.statIconRow}>
-                <View style={[styles.statIconCircle, { backgroundColor: isDark ? 'rgba(124,99,253,0.2)' : '#EDE8FF' }]}>
+                <View style={[styles.statIconCircle, { backgroundColor: theme.colors.primaryLight }]}>
                   <Ionicons name="time" size={16} color={PRIMARY} />
                 </View>
-                <Ionicons name="trending-up" size={14} color={isDark ? theme.colors.textMuted : '#C4B5FD'} />
+                <Ionicons name="trending-up" size={14} color={isDark ? theme.colors.textMuted : theme.colors.primary} />
               </View>
               <View>
-                <Text style={[styles.statValue, { color: isDark ? theme.colors.text : '#1B1464' }]}>
+                <Text style={[styles.statValue, { color: isDark ? theme.colors.text : theme.colors.primaryDark }]}>
                   {courses.reduce((sum, c) => sum + (c.totalHours || 0), 0)}h
                 </Text>
                 <Text style={[styles.statLabel, { color: isDark ? theme.colors.textSecondary : '#74788D' }]}>

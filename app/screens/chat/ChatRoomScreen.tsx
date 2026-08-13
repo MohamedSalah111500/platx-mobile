@@ -159,7 +159,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
       return (
         <View style={styles.dateSeparator}>
           <View style={[styles.dateLine, { backgroundColor: theme.colors.divider }]} />
-          <View style={[styles.datePill, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
+          <View style={[styles.datePill, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
             <Text style={[styles.dateText, { color: theme.colors.textMuted }]}>{item.label}</Text>
           </View>
           <View style={[styles.dateLine, { backgroundColor: theme.colors.divider }]} />
@@ -215,7 +215,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color={theme.colors.text} />
         </TouchableOpacity>
-        <View style={[styles.headerAvatar, { backgroundColor: '#F0EDFF' }]}>
+        <View style={[styles.headerAvatar, { backgroundColor: theme.colors.primaryLight }]}>
           {isStaffChat ? (
             <Text style={[styles.headerAvatarText, { color: theme.colors.primary }]}>{headerInitial}</Text>
           ) : (

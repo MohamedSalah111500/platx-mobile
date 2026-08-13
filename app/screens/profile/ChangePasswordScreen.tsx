@@ -90,7 +90,7 @@ export default function ChangePasswordScreen({ navigation }: Props) {
         >
           {/* Lock icon */}
           <View style={styles.iconWrap}>
-            <View style={[styles.iconCircle, { backgroundColor: '#F0EDFF' }]}>
+            <View style={[styles.iconCircle, { backgroundColor: theme.colors.primaryLight }]}>
               <Ionicons name="lock-closed" size={32} color={theme.colors.primary} />
             </View>
           </View>

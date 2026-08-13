@@ -60,12 +60,12 @@ export function Button({
     };
 
     const variantStyles: Record<ButtonVariant, ViewStyle> = {
-      primary: { backgroundColor: '#7c63fd' },
+      primary: { backgroundColor: theme.colors.primary },
       secondary: { backgroundColor: theme.colors.surface },
       outline: {
         backgroundColor: 'transparent',
         borderWidth: 1.5,
-        borderColor: '#7c63fd',
+        borderColor: theme.colors.primary,
       },
       danger: { backgroundColor: theme.colors.danger },
       ghost: { backgroundColor: 'transparent' },
@@ -90,9 +90,9 @@ export function Button({
     const variantStyles: Record<ButtonVariant, TextStyle> = {
       primary: { color: '#ffffff' },
       secondary: { color: theme.colors.text },
-      outline: { color: '#7c63fd' },
+      outline: { color: theme.colors.primary },
       danger: { color: '#ffffff' },
-      ghost: { color: '#7c63fd' },
+      ghost: { color: theme.colors.primary },
     };
 
     return {
@@ -106,7 +106,7 @@ export function Button({
     if (loading) {
       return (
         <ActivityIndicator
-          color={variant === 'outline' || variant === 'ghost' ? '#7c63fd' : '#ffffff'}
+          color={variant === 'outline' || variant === 'ghost' ? theme.colors.primary : '#ffffff'}
         />
       );
     }

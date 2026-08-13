@@ -90,6 +90,7 @@ export interface TenantInfo {
   tenantName: string;
   logoUrl: string;
   roles: TRole[];
+  primaryColor?: string | null;
 }
 
 export interface MobileLoginResponse {

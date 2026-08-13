@@ -125,7 +125,7 @@ export default function ChatListScreen({ navigation }: Props) {
             {t('chat.staff')}
           </Text>
         </View>
-        <View style={[styles.arrowCircle, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
+        <View style={[styles.arrowCircle, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
           <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={16} color={theme.colors.primary} />
         </View>
       </TouchableOpacity>
@@ -162,7 +162,7 @@ export default function ChatListScreen({ navigation }: Props) {
             {item.studentsCount || 0} {t('chat.members')}
           </Text>
         </View>
-        <View style={[styles.arrowCircle, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
+        <View style={[styles.arrowCircle, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
           <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={16} color={theme.colors.primary} />
         </View>
       </TouchableOpacity>

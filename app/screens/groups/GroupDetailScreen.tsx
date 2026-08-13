@@ -320,7 +320,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
 
     return (
       <View style={[s.studentCard, { backgroundColor: theme.colors.card }]}>
-        <View style={[s.avatar, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
+        <View style={[s.avatar, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
           {imageUrl ? (
             <Image source={{ uri: imageUrl }} style={s.avatarImg} />
           ) : (
@@ -406,7 +406,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
           style={[
             s.messageBubble,
             {
-              backgroundColor: isMine ? theme.colors.primary : (theme.dark ? theme.colors.surface : '#F0EDFF'),
+              backgroundColor: isMine ? theme.colors.primary : (theme.dark ? theme.colors.surface : theme.colors.primaryLight),
               alignSelf: isMine ? 'flex-end' : 'flex-start',
             },
           ]}
@@ -503,7 +503,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
     <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}>
       {/* Group header card */}
       <View style={[s.infoCard, { backgroundColor: theme.colors.card }]}>
-        <View style={[s.infoIcon, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
+        <View style={[s.infoIcon, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
           <Ionicons name="people" size={32} color={theme.colors.primary} />
         </View>
         <Text style={[s.infoGroupName, { color: theme.colors.text }]}>{group?.name}</Text>
@@ -612,7 +612,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
             onPress={() => handleOpenFile(file)}
             activeOpacity={0.7}
           >
-            <View style={[s.fileIconWrap, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
+            <View style={[s.fileIconWrap, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
               <Ionicons name={getFileIcon(file) as any} size={22} color={theme.colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
@@ -742,7 +742,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
                       style={[ms.studentRow, { backgroundColor: isSelected ? theme.colors.primary + '15' : 'transparent' }]}
                       onPress={() => setSelectedInviteStudent(item)}
                     >
-                      <View style={[ms.studentAvatar, { backgroundColor: '#F0EDFF' }]}>
+                      <View style={[ms.studentAvatar, { backgroundColor: theme.colors.primaryLight }]}>
                         <Text style={{ color: theme.colors.primary, fontFamily: 'Cairo_700Bold', fontSize: 13 }}>
                           {(item.firstName?.[0] || '?').toUpperCase()}
                         </Text>

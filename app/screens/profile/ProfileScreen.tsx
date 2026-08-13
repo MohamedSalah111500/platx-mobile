@@ -55,8 +55,8 @@ export default function ProfileScreen({ navigation }: Props) {
   const generalMenuItems: { iconName: string; iconBg: string; iconColor: string; label: string; onPress: () => void }[] = [];
   generalMenuItems.push({
     iconName: 'document-text',
-    iconBg: '#EDE8FF',
-    iconColor: '#7c63fd',
+    iconBg: theme.colors.primaryLight,
+    iconColor: theme.colors.primary,
     label: t('homework.title'),
     onPress: () => navigation.navigate('Homework'),
   });
@@ -103,7 +103,7 @@ export default function ProfileScreen({ navigation }: Props) {
       >
         {/* Purple header */}
         <View style={[styles.headerBg, { paddingTop: insets.top + spacing.lg, backgroundColor: theme.colors.primary }]}>
-          <View style={[styles.avatar, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
+          <View style={[styles.avatar, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
             {photoUri ? (
               <Image source={{ uri: photoUri }} style={styles.avatarImage} resizeMode="cover" />
             ) : (
@@ -130,7 +130,7 @@ export default function ProfileScreen({ navigation }: Props) {
             activeOpacity={0.7}
             onPress={() => navigation.getParent()?.navigate('HomeTab', { screen: 'CoursesList' })}
           >
-            <View style={[styles.statIcon, { backgroundColor: '#F0EDFF' }]}>
+            <View style={[styles.statIcon, { backgroundColor: theme.colors.primaryLight }]}>
               <Ionicons name="book" size={18} color={theme.colors.primary} />
             </View>
             <Text style={[styles.statValue, { color: theme.colors.text }]}>-</Text>
@@ -199,7 +199,7 @@ export default function ProfileScreen({ navigation }: Props) {
               onPress={() => navigation.navigate('Settings')}
               activeOpacity={0.6}
             >
-              <View style={[styles.menuIcon, { backgroundColor: '#F0EDFF' }]}>
+              <View style={[styles.menuIcon, { backgroundColor: theme.colors.primaryLight }]}>
                 <Ionicons name="settings" size={20} color={theme.colors.primary} />
               </View>
               <Text style={[styles.menuLabel, { color: theme.colors.text }]}>{t('profile.settings')}</Text>

@@ -209,7 +209,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
 
           <View style={styles.metaRow}>
             {item.totalLessons != null && (
-              <View style={[styles.metaChip, { backgroundColor: theme.dark ? theme.colors.surface : '#F0EDFF' }]}>
+              <View style={[styles.metaChip, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
                 <Ionicons name="play-circle" size={12} color={theme.colors.primary} />
                 <Text style={[styles.metaChipText, { color: theme.colors.primary }]}>{item.totalLessons} {t('courses.lessons')}</Text>
               </View>

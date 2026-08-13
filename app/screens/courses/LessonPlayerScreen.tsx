@@ -168,7 +168,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
   }, [lesson]);
 
   const getLessonTypeInfo = () => {
-    if (!lesson) return { icon: 'play-circle', label: 'Video', color: theme.colors.primary, bg: '#F0EDFF' };
+    if (!lesson) return { icon: 'play-circle', label: 'Video', color: theme.colors.primary, bg: theme.colors.primaryLight };
     switch (lesson.type) {
       case 2:
         return { icon: 'document-text', label: t('courses.document'), color: '#3B82F6', bg: '#EFF6FF' };
@@ -179,7 +179,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
       case 5:
         return { icon: 'link', label: t('courses.link'), color: '#0EA5E9', bg: '#E8F6FE' };
       default:
-        return { icon: 'play-circle', label: 'Video', color: theme.colors.primary, bg: '#F0EDFF' };
+        return { icon: 'play-circle', label: 'Video', color: theme.colors.primary, bg: theme.colors.primaryLight };
     }
   };
 

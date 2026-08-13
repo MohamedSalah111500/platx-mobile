@@ -89,8 +89,8 @@ export default function HomeworkSubmissionsScreen({ navigation, route }: Props) 
               <>
                 <Text style={[styles.dot, { color: theme.colors.textMuted }]}>·</Text>
                 <View style={styles.aiChip}>
-                  <Ionicons name="sparkles" size={9} color="#7c63fd" />
-                  <Text style={styles.aiChipText}>{t('homework.aiSuggested')}</Text>
+                  <Ionicons name="sparkles" size={9} color={theme.colors.primary} />
+                  <Text style={[styles.aiChipText, { color: theme.colors.primary }]}>{t('homework.aiSuggested')}</Text>
                 </View>
               </>
             )}
@@ -152,5 +152,5 @@ const styles = StyleSheet.create({
   metaText: { fontSize: 11, fontFamily: 'Cairo_500Medium' },
   dot: { fontSize: 11 },
   aiChip: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  aiChipText: { fontSize: 10, fontFamily: 'Cairo_600SemiBold', color: '#7c63fd' },
+  aiChipText: { fontSize: 10, fontFamily: 'Cairo_600SemiBold' },
 });

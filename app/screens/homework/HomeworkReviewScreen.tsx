@@ -166,8 +166,8 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
         </View>
 
         {sub.aiScore != null && (
-          <View style={[styles.aiBanner, { backgroundColor: '#7c63fd12' }]}>
-            <Ionicons name="sparkles" size={16} color="#7c63fd" />
+          <View style={[styles.aiBanner, { backgroundColor: theme.colors.primary + '12' }]}>
+            <Ionicons name="sparkles" size={16} color={theme.colors.primary} />
             <Text style={[styles.aiText, { color: theme.colors.text }]}>
               {t('homework.aiSuggestion')}: {sub.aiScore}/{review.totalScore}
             </Text>

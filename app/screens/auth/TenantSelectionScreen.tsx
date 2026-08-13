@@ -18,6 +18,7 @@ import type { TenantInfo } from '../../types/auth.types';
 import { useRTL } from '../../i18n/RTLProvider';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { API_CONFIG } from '../../config';
+import { isValidHexColor } from '../../utils/color';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'TenantSelection'>;
 
@@ -47,6 +48,7 @@ export default function TenantSelectionScreen({ navigation }: Props) {
 
   const renderTenant = ({ item }: { item: TenantInfo }) => {
     const logoUri = getLogoUrl(item.logoUrl);
+    const accent = isValidHexColor(item.primaryColor) ? item.primaryColor : theme.colors.primary;
     return (
       <TouchableOpacity
         style={styles.tenantCard}
@@ -62,8 +64,8 @@ export default function TenantSelectionScreen({ navigation }: Props) {
               resizeMode="contain"
             />
           ) : (
-            <View style={[styles.tenantLogo, styles.tenantLogoPlaceholder]}>
-              <Ionicons name="school-outline" size={28} color="#7c63fd" />
+            <View style={[styles.tenantLogo, styles.tenantLogoPlaceholder, { backgroundColor: accent + '15' }]}>
+              <Ionicons name="school-outline" size={28} color={accent} />
             </View>
           )}
           <View style={styles.tenantInfo}>
@@ -129,7 +131,6 @@ export default function TenantSelectionScreen({ navigation }: Props) {
       borderRadius: borderRadius.lg,
     },
     tenantLogoPlaceholder: {
-      backgroundColor: '#7c63fd15',
       justifyContent: 'center',
       alignItems: 'center',
     },

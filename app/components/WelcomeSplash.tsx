@@ -4,6 +4,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { useAuthStore } from '../store/auth.store';
 import { useRTL } from '../i18n/RTLProvider';
+import { isValidHexColor, darken } from '../utils/color';
+
+const DEFAULT_ACCENT = '#7c63fd';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const isTablet = SCREEN_W >= 768;
@@ -16,7 +19,11 @@ export default function WelcomeSplash() {
   const user = useAuthStore((s) => s.user);
   const tenantName = useAuthStore((s) => s.tenantName);
   const tenantLogo = useAuthStore((s) => s.tenantLogo);
+  const tenantColor = useAuthStore((s) => s.tenantColor);
   const dismissWelcome = useAuthStore((s) => s.dismissWelcome);
+
+  const accent = isValidHexColor(tenantColor) ? tenantColor : DEFAULT_ACCENT;
+  const gradientColors = [darken(accent, 45), darken(accent, 72)] as const;
 
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.9)).current;
@@ -59,7 +66,7 @@ export default function WelcomeSplash() {
   return (
     <Animated.View style={[styles.overlay, { opacity }]}>
       <LinearGradient
-        colors={['#1b2350', '#121935']}
+        colors={gradientColors}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}

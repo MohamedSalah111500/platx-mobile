@@ -22,7 +22,11 @@ export function ErrorRetry({ message, onRetry, retryLabel, style }: ErrorRetryPr
     <View style={[styles.container, style]}>
       <Ionicons name="alert-circle-outline" size={48} color={theme.colors.danger} />
       <Text style={[styles.message, { color: theme.colors.danger }]}>{message}</Text>
-      <TouchableOpacity style={styles.retryButton} onPress={onRetry} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
+        onPress={onRetry}
+        activeOpacity={0.7}
+      >
         <Text style={styles.retryText}>{retryLabel || t('common.retry')}</Text>
       </TouchableOpacity>
     </View>
@@ -42,7 +46,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   retryButton: {
-    backgroundColor: '#7c63fd',
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderRadius: 14,

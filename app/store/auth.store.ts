@@ -27,6 +27,7 @@ interface AuthState {
   pendingCredentials: { userName: string; password: string } | null;
   tenantName: string | null;
   tenantLogo: string | null;
+  tenantColor: string | null;
   showWelcome: boolean;
 }
 
@@ -104,10 +105,11 @@ async function persistAndSetAuth(
   user: User,
   token: string,
   domain?: string,
-  branding?: { tenantName?: string | null; tenantLogo?: string | null }
+  branding?: { tenantName?: string | null; tenantLogo?: string | null; primaryColor?: string | null }
 ) {
   const tenantName = branding?.tenantName ?? null;
   const tenantLogo = resolveLogoUrl(branding?.tenantLogo);
+  const tenantColor = branding?.primaryColor ?? null;
 
   await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
   await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
@@ -125,6 +127,11 @@ async function persistAndSetAuth(
   } else {
     await AsyncStorage.removeItem(STORAGE_KEYS.TENANT_LOGO);
   }
+  if (tenantColor) {
+    await AsyncStorage.setItem(STORAGE_KEYS.TENANT_COLOR, tenantColor);
+  } else {
+    await AsyncStorage.removeItem(STORAGE_KEYS.TENANT_COLOR);
+  }
   setInMemoryToken(token);
   set({
     user,
@@ -136,6 +143,7 @@ async function persistAndSetAuth(
     pendingCredentials: null,
     tenantName,
     tenantLogo,
+    tenantColor,
     showWelcome: true,
   });
   // Tag user in Crashlytics for filtering crash reports
@@ -159,6 +167,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   pendingCredentials: null,
   tenantName: null,
   tenantLogo: null,
+  tenantColor: null,
   showWelcome: false,
 
   login: async (payload: MobileLoginPayload) => {
@@ -173,6 +182,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         await persistAndSetAuth(set, user, response.authResponse.token, domain || undefined, {
           tenantName: branding?.tenantName,
           tenantLogo: branding?.logoUrl,
+          primaryColor: branding?.primaryColor,
         });
       } else if (response.requiresTenantSelection && response.tenants) {
         set({
@@ -214,6 +224,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         await persistAndSetAuth(set, user, response.authResponse.token, domain || undefined, {
           tenantName: selected?.tenantName,
           tenantLogo: selected?.logoUrl,
+          primaryColor: selected?.primaryColor,
         });
       } else {
         set({
@@ -275,6 +286,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       STORAGE_KEYS.DOMAIN,
       STORAGE_KEYS.TENANT_NAME,
       STORAGE_KEYS.TENANT_LOGO,
+      STORAGE_KEYS.TENANT_COLOR,
     ]);
     setInMemoryToken(null);
     set({
@@ -288,6 +300,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       pendingCredentials: null,
       tenantName: null,
       tenantLogo: null,
+      tenantColor: null,
       showWelcome: false,
     });
   },
@@ -347,12 +360,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   restoreSession: async () => {
     try {
-      const [tokenStr, userStr, domainStr, tenantNameStr, tenantLogoStr] = await AsyncStorage.multiGet([
+      const [tokenStr, userStr, domainStr, tenantNameStr, tenantLogoStr, tenantColorStr] = await AsyncStorage.multiGet([
         STORAGE_KEYS.AUTH_TOKEN,
         STORAGE_KEYS.CURRENT_USER,
         STORAGE_KEYS.DOMAIN,
         STORAGE_KEYS.TENANT_NAME,
         STORAGE_KEYS.TENANT_LOGO,
+        STORAGE_KEYS.TENANT_COLOR,
       ]);
 
       const token = tokenStr[1];
@@ -360,6 +374,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const domain = domainStr[1];
       const tenantName = tenantNameStr[1];
       const tenantLogo = tenantLogoStr[1];
+      const tenantColor = tenantColorStr[1];
 
       if (token && userData) {
         let user: User;
@@ -392,6 +407,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           isLoading: false,
           tenantName: tenantName || null,
           tenantLogo: tenantLogo || null,
+          tenantColor: tenantColor || null,
           showWelcome: false,
         });
         // Fire-and-forget: SignalR must NEVER block startup. Schedule it on the

@@ -241,7 +241,7 @@ function createStyles(theme: any, isDark: boolean) {
       borderRadius: 22,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: isDark ? 'rgba(124,99,253,0.15)' : '#F0EDFF',
+      backgroundColor: isDark ? theme.colors.primary + '26' : theme.colors.primaryLight,
       marginEnd: 12,
     },
     iconCircleUnread: {

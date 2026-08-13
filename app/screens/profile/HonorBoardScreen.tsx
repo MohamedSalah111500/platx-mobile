@@ -451,7 +451,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
                       ]}
                       onPress={() => setSelectedStudent(item)}
                     >
-                      <View style={[modalStyles.studentAvatar, { backgroundColor: '#F0EDFF' }]}>
+                      <View style={[modalStyles.studentAvatar, { backgroundColor: theme.colors.primaryLight }]}>
                         <Text style={{ color: theme.colors.primary, fontFamily: 'Cairo_700Bold', fontSize: 13 }}>
                           {(item.firstName?.[0] || '?').toUpperCase()}
                         </Text>

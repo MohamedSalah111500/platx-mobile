@@ -47,7 +47,7 @@ export function Input({
   const borderColor = error
     ? theme.colors.danger
     : isFocused
-      ? '#7c63fd'
+      ? theme.colors.primary
       : theme.colors.inputBorder;
 
   return (

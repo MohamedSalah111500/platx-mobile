@@ -97,7 +97,7 @@ export default function SettingsScreen({ navigation }: Props) {
           </Text>
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
             <View style={styles.cardRow}>
-              <View style={[styles.settingIcon, { backgroundColor: '#F0EDFF' }]}>
+              <View style={[styles.settingIcon, { backgroundColor: theme.colors.primaryLight }]}>
                 <Ionicons name="color-palette" size={20} color={theme.colors.primary} />
               </View>
               <View style={styles.settingInfo}>

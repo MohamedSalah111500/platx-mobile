@@ -1,4 +1,5 @@
 import { colors } from './colors';
+import { isValidHexColor, lighten, darken } from '../utils/color';
 
 export interface ThemeColors {
   primary: string;
@@ -33,82 +34,102 @@ export interface Theme {
   colors: ThemeColors;
 }
 
-export const lightTheme: Theme = {
-  dark: false,
-  colors: {
-    primary: colors.primary[500],
-    primaryLight: colors.primary[100],
-    primaryDark: colors.primary[700],
+const DEFAULT_ACCENT = colors.primary[500];
 
-    background: colors.white,
-    surface: colors.secondary[50],
-    card: colors.white,
+/**
+ * Builds a theme from the app's fixed neutral gray palette plus a single
+ * dynamic accent color (a tenant's brand color, from HomeSetting.PrimaryColor
+ * on the backend). Falls back to the default accent when none is set/valid.
+ */
+export function buildTheme(dark: boolean, accentColor?: string | null): Theme {
+  const accent = isValidHexColor(accentColor) ? accentColor : DEFAULT_ACCENT;
+  // Dark backgrounds need a lighter tint of the accent to stay legible/AA-contrast.
+  const primary = dark ? lighten(accent, 18) : accent;
+  const primaryLight = dark ? darken(primary, 55) : lighten(primary, 38);
+  const primaryDark = dark ? lighten(primary, 25) : darken(primary, 15);
 
-    text: colors.secondary[900],
-    textSecondary: colors.secondary[500],
-    textMuted: colors.secondary[400],
+  if (dark) {
+    return {
+      dark: true,
+      colors: {
+        primary,
+        primaryLight,
+        primaryDark,
 
-    border: colors.secondary[200],
-    divider: colors.secondary[100],
+        background: colors.secondary[900],
+        surface: colors.secondary[800],
+        card: colors.secondary[800],
 
-    success: colors.success.main,
-    warning: colors.warning.main,
-    danger: colors.danger.main,
-    info: colors.info.main,
+        text: colors.secondary[50],
+        textSecondary: colors.secondary[300],
+        textMuted: colors.secondary[500],
 
-    inputBackground: colors.secondary[50],
-    inputBorder: colors.secondary[300],
-    inputText: colors.secondary[900],
-    inputPlaceholder: colors.secondary[400],
+        border: colors.secondary[700],
+        divider: colors.secondary[800],
 
-    tabBarBackground: colors.white,
-    tabBarActive: colors.primary[500],
-    tabBarInactive: colors.secondary[400],
+        success: colors.success.light,
+        warning: colors.warning.light,
+        danger: colors.danger.light,
+        info: colors.info.light,
 
-    headerBackground: colors.white,
-    headerText: colors.secondary[900],
+        inputBackground: colors.secondary[800],
+        inputBorder: colors.secondary[600],
+        inputText: colors.secondary[50],
+        inputPlaceholder: colors.secondary[500],
 
-    statusBar: 'dark-content',
-  },
-};
+        tabBarBackground: colors.secondary[900],
+        tabBarActive: primary,
+        tabBarInactive: colors.secondary[500],
 
-export const darkTheme: Theme = {
-  dark: true,
-  colors: {
-    primary: colors.primary[400],
-    primaryLight: colors.primary[800],
-    primaryDark: colors.primary[300],
+        headerBackground: colors.secondary[900],
+        headerText: colors.secondary[50],
 
-    background: colors.secondary[900],
-    surface: colors.secondary[800],
-    card: colors.secondary[800],
+        statusBar: 'light-content',
+      },
+    };
+  }
 
-    text: colors.secondary[50],
-    textSecondary: colors.secondary[300],
-    textMuted: colors.secondary[500],
+  return {
+    dark: false,
+    colors: {
+      primary,
+      primaryLight,
+      primaryDark,
 
-    border: colors.secondary[700],
-    divider: colors.secondary[800],
+      background: colors.white,
+      surface: colors.secondary[50],
+      card: colors.white,
 
-    success: colors.success.light,
-    warning: colors.warning.light,
-    danger: colors.danger.light,
-    info: colors.info.light,
+      text: colors.secondary[900],
+      textSecondary: colors.secondary[500],
+      textMuted: colors.secondary[400],
 
-    inputBackground: colors.secondary[800],
-    inputBorder: colors.secondary[600],
-    inputText: colors.secondary[50],
-    inputPlaceholder: colors.secondary[500],
+      border: colors.secondary[200],
+      divider: colors.secondary[100],
 
-    tabBarBackground: colors.secondary[900],
-    tabBarActive: colors.primary[400],
-    tabBarInactive: colors.secondary[500],
+      success: colors.success.main,
+      warning: colors.warning.main,
+      danger: colors.danger.main,
+      info: colors.info.main,
 
-    headerBackground: colors.secondary[900],
-    headerText: colors.secondary[50],
+      inputBackground: colors.secondary[50],
+      inputBorder: colors.secondary[300],
+      inputText: colors.secondary[900],
+      inputPlaceholder: colors.secondary[400],
 
-    statusBar: 'light-content',
-  },
-};
+      tabBarBackground: colors.white,
+      tabBarActive: primary,
+      tabBarInactive: colors.secondary[400],
 
-export default { lightTheme, darkTheme };
+      headerBackground: colors.white,
+      headerText: colors.secondary[900],
+
+      statusBar: 'dark-content',
+    },
+  };
+}
+
+export const lightTheme: Theme = buildTheme(false);
+export const darkTheme: Theme = buildTheme(true);
+
+export default { lightTheme, darkTheme, buildTheme };
