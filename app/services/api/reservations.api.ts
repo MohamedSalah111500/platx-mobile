@@ -20,4 +20,12 @@ export const reservationsApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+
+  enrollStudentDirectly: async (studentId: number, courseId: number, adminNotes?: string): Promise<void> => {
+    await apiClient.post(RESERVATIONS_URLS.ENROLL_STUDENT, {
+      studentId,
+      courseId,
+      adminNotes: adminNotes ?? '',
+    });
+  },
 };

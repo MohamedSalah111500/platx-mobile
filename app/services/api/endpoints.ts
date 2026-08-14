@@ -246,6 +246,7 @@ export const RESERVATIONS_URLS = {
   PENDING: `${BASE}api/admin/AdminReservations/pending`,
   APPROVE: (id: number | string) => `${BASE}api/admin/AdminReservations/${id}/approve`,
   REJECT: (id: number | string) => `${BASE}api/admin/AdminReservations/${id}/reject`,
+  ENROLL_STUDENT: `${BASE}api/admin/AdminReservations/enroll-student`,
 };
 
 // Payment methods endpoints

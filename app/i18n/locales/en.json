@@ -213,6 +213,20 @@
     "proofRequired": "Please upload a screenshot of your payment.",
     "permissionDenied": "Photo library permission is required to upload a screenshot."
   },
+  "enrollStudent": {
+    "title": "Enroll Student",
+    "searchPlaceholder": "Search students by name or email...",
+    "noStudents": "No students found.",
+    "noStudentsYet": "No students in this academy yet.",
+    "confirmTitle": "Confirm Enrollment",
+    "confirmMessage": "Enroll {{name}} in \"{{course}}\"? This unlocks the course immediately, as if their purchase request was approved.",
+    "confirm": "Enroll",
+    "cancel": "Cancel",
+    "success": "Student enrolled successfully.",
+    "alreadyEnrolled": "This student is already enrolled in this course.",
+    "failed": "Failed to enroll student. Please try again.",
+    "loadFailed": "Failed to load students."
+  },
   "home": {
     "welcome": "Welcome",
     "dashboard": "Dashboard",
@@ -538,7 +552,10 @@
     "messages": "Messages",
     "completed": "Completed",
     "general": "General",
-    "preferences": "Preferences"
+    "preferences": "Preferences",
+    "myProgress": "My Progress",
+    "overallCompletion": "Overall completion",
+    "continueLearning": "Continue learning"
   },
   "settings": {
     "title": "Settings",

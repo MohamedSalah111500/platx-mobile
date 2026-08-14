@@ -45,6 +45,7 @@ export type HomeStackParamList = {
   LessonPlayer: { lessonId: number; courseId: number };
   Homework: undefined;
   NotificationsList: undefined;
+  EnrollStudent: { courseId: number; courseName?: string };
 };
 
 export type CoursesStackParamList = {

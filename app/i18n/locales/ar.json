@@ -213,6 +213,20 @@
     "proofRequired": "يرجى رفع صورة إثبات الدفع.",
     "permissionDenied": "نحتاج إذن الوصول إلى الصور لرفع صورة الإيصال."
   },
+  "enrollStudent": {
+    "title": "تسجيل طالب",
+    "searchPlaceholder": "ابحث عن طالب بالاسم أو البريد الإلكتروني...",
+    "noStudents": "لا يوجد طلاب مطابقين للبحث.",
+    "noStudentsYet": "لا يوجد طلاب في هذه الأكاديمية بعد.",
+    "confirmTitle": "تأكيد التسجيل",
+    "confirmMessage": "هل تريد تسجيل {{name}} في \"{{course}}\"؟ سيتم فتح الكورس فورًا كما لو تمت الموافقة على طلب شرائه.",
+    "confirm": "تسجيل",
+    "cancel": "إلغاء",
+    "success": "تم تسجيل الطالب بنجاح.",
+    "alreadyEnrolled": "هذا الطالب مسجل بالفعل في هذا الكورس.",
+    "failed": "فشل تسجيل الطالب. حاول مرة أخرى.",
+    "loadFailed": "فشل تحميل قائمة الطلاب."
+  },
   "home": {
     "welcome": "مرحباً",
     "dashboard": "لوحة التحكم",
@@ -538,7 +552,10 @@
     "messages": "الرسائل",
     "completed": "مكتمل",
     "general": "عام",
-    "preferences": "التفضيلات"
+    "preferences": "التفضيلات",
+    "myProgress": "تقدمي",
+    "overallCompletion": "نسبة الإنجاز الكلية",
+    "continueLearning": "أكمل التعلم"
   },
   "settings": {
     "title": "الإعدادات",

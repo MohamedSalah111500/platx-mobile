@@ -507,14 +507,26 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
       {/* ── Sticky Action Bar ── */}
       <View style={[styles.stickyBar, { backgroundColor: theme.colors.card, paddingBottom: insets.bottom + spacing.md, borderTopColor: theme.colors.divider }]}>
         {isEnrolled || isOwner ? (
-          <Button
-            title={t('courses.watch')}
-            onPress={handleWatch}
-            fullWidth
-            size="large"
-            icon={<Ionicons name="play-circle" size={22} color="#fff" />}
-            style={{ borderRadius: 16 }}
-          />
+          <View style={styles.stickyActions}>
+            <Button
+              title={t('courses.watch')}
+              onPress={handleWatch}
+              size="large"
+              icon={<Ionicons name="play-circle" size={22} color="#fff" />}
+              style={{ borderRadius: 16, flex: isOwner && !isFree ? 1 : undefined }}
+              fullWidth={!(isOwner && !isFree)}
+            />
+            {isOwner && !isFree && (
+              <Button
+                title={t('enrollStudent.title')}
+                onPress={() => navigation.navigate('EnrollStudent', { courseId, courseName: course.title || course.name })}
+                size="large"
+                variant="outline"
+                icon={<Ionicons name="person-add-outline" size={20} color={theme.colors.primary} />}
+                style={{ borderRadius: 16, flex: 1 }}
+              />
+            )}
+          </View>
         ) : (
           <View style={styles.stickyActions}>
             {hasLessons && (
