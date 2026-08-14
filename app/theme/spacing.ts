@@ -12,15 +12,15 @@ export const spacing = {
   '6xl': 64,
 } as const;
 
-// Border radius scale
+// Border radius scale — generous/rounded by default (soft, modern card language)
 export const borderRadius = {
   none: 0,
-  sm: 4,
-  md: 8,
-  lg: 12,
-  xl: 16,
-  '2xl': 20,
-  '3xl': 24,
+  sm: 6,
+  md: 10,
+  lg: 16,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 28,
   full: 9999,
 } as const;
 

@@ -67,14 +67,18 @@ export default function MainTabNavigator() {
 
   const baseTabBarStyle = {
     backgroundColor: theme.colors.tabBarBackground,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.divider,
+    borderTopWidth: 0,
     height: TAB_BAR_HEIGHT + (Platform.OS === 'android' ? insets.bottom : 0),
     paddingBottom: bottomInset,
-    paddingTop: 8,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
+    paddingTop: 10,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     position: 'absolute' as const,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: theme.dark ? 0.3 : 0.08,
+    shadowRadius: 16,
+    elevation: 12,
   };
 
   const hiddenTabBarStyle = {
@@ -91,8 +95,14 @@ export default function MainTabNavigator() {
           const iconName = focused ? filled : outlined;
           return (
             <View style={styles.iconContainer}>
-              <Ionicons name={iconName as any} size={isTablet ? 26 : 22} color={color} />
-              {focused && <View style={[styles.activeDot, { backgroundColor: theme.colors.primary }]} />}
+              <View
+                style={[
+                  styles.iconPill,
+                  focused && { backgroundColor: theme.colors.primaryLight },
+                ]}
+              >
+                <Ionicons name={iconName as any} size={isTablet ? 24 : 20} color={color} />
+              </View>
             </View>
           );
         },
@@ -140,10 +150,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  activeDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    marginTop: 3,
+  iconPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 999,
   },
 });

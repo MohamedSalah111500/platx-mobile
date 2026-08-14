@@ -29,6 +29,7 @@ import type { EventItem } from '../../types/event.types';
 import type { Course } from '../../types/course.types';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { useSound } from '../../hooks/useSound';
+import { GradientBackground } from '../../components/ui/GradientBackground';
 import { studentsApi, type TopStudent } from '../../services/api/students.api';
 import { honorBoardApi, type HonorBoardEntry } from '../../services/api/honor-board.api';
 import SectionHeader from '../../components/ui/SectionHeader';
@@ -145,7 +146,6 @@ export default function HomeScreen({ navigation }: Props) {
   const photoUri = getFullImageUrl(user?.profileImage);
 
   // ------------------------------------------------------------------ palette
-  const BG_COLOR = isDark ? theme.colors.background : '#FFFFFF';
   const CARD_BG = isDark ? theme.colors.card : '#FFFFFF';
   const SEARCH_BG = isDark ? theme.colors.surface : '#FFFFFF';
   const PRIMARY = theme.colors.primary;
@@ -158,7 +158,6 @@ export default function HomeScreen({ navigation }: Props) {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: BG_COLOR,
     },
     scrollContent: {
       paddingBottom: insets.bottom + 100,
@@ -169,7 +168,6 @@ export default function HomeScreen({ navigation }: Props) {
       paddingTop: insets.top + spacing.lg,
       paddingHorizontal: spacing.xl,
       paddingBottom: spacing.md,
-      backgroundColor: BG_COLOR,
     },
     headerRow: {
       flexDirection: 'row',
@@ -283,6 +281,11 @@ export default function HomeScreen({ navigation }: Props) {
       padding: spacing.sm,
       minHeight: 80,
       justifyContent: 'space-between',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      elevation: 2,
     },
     statCardLight: {
       flex: 1,
@@ -291,6 +294,11 @@ export default function HomeScreen({ navigation }: Props) {
       padding: spacing.sm,
       minHeight: 80,
       justifyContent: 'space-between',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.06,
+      shadowRadius: 10,
+      elevation: 2,
     },
     statIconRow: {
       flexDirection: 'row',
@@ -684,7 +692,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   // ------------------------------------------------------------------ RENDER
   return (
-    <View style={styles.container}>
+    <GradientBackground style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -1303,6 +1311,6 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         )}
       </ScrollView>
-    </View>
+    </GradientBackground>
   );
 }

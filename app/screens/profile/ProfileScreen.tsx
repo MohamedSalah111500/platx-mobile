@@ -19,6 +19,7 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 import { getFullImageUrl } from '../../utils/imageUrl';
+import { GradientBackground } from '../../components/ui/GradientBackground';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
 
@@ -49,8 +50,6 @@ export default function ProfileScreen({ navigation }: Props) {
   const lastName = user?.lastName || '';
   const initials = (firstName?.[0] || '') + (lastName?.[0] || '');
   const photoUri = getFullImageUrl(user?.profileImage);
-
-  const bgColor = theme.colors.background;
 
   const generalMenuItems: { iconName: string; iconBg: string; iconColor: string; label: string; onPress: () => void }[] = [];
   generalMenuItems.push({
@@ -96,7 +95,7 @@ export default function ProfileScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: bgColor }]}>
+    <GradientBackground style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
@@ -233,7 +232,7 @@ export default function ProfileScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+    </GradientBackground>
   );
 }
 
@@ -301,7 +300,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     borderRadius: 18,
-    
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
   statIcon: {
     width: 36,

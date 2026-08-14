@@ -46,21 +46,27 @@ export function Button({
 
   const getButtonStyle = (): ViewStyle => {
     const baseStyle: ViewStyle = {
-      borderRadius: 16,
+      borderRadius: borderRadius.full,
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
-      
     };
 
     const sizeStyles: Record<ButtonSize, ViewStyle> = {
-      small: { paddingVertical: spacing.sm, paddingHorizontal: spacing.lg, borderRadius: 12 },
-      medium: { paddingVertical: 14, paddingHorizontal: spacing.xl },
+      small: { paddingVertical: spacing.sm, paddingHorizontal: spacing.lg },
+      medium: { paddingVertical: spacing.md + 2, paddingHorizontal: spacing.xl },
       large: { paddingVertical: spacing.lg, paddingHorizontal: spacing['2xl'] },
     };
 
     const variantStyles: Record<ButtonVariant, ViewStyle> = {
-      primary: { backgroundColor: theme.colors.primary },
+      primary: {
+        backgroundColor: theme.colors.primary,
+        shadowColor: theme.colors.primary,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: theme.dark ? 0.25 : 0.3,
+        shadowRadius: 12,
+        elevation: 4,
+      },
       secondary: { backgroundColor: theme.colors.surface },
       outline: {
         backgroundColor: 'transparent',

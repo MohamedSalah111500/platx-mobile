@@ -24,6 +24,7 @@ import { typography } from '../../theme/typography';
 import type { AuthStackParamList } from '../../types/navigation.types';
 import { useRTL } from '../../i18n/RTLProvider';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
+import { GradientBackground } from '../../components/ui/GradientBackground';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -151,6 +152,7 @@ export default function LoginScreen({ navigation }: Props) {
   const styles = createStyles(theme);
 
   return (
+    <GradientBackground>
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -296,6 +298,7 @@ export default function LoginScreen({ navigation }: Props) {
         </View>
       </Modal>
     </KeyboardAvoidingView>
+    </GradientBackground>
   );
 }
 
@@ -303,7 +306,6 @@ function createStyles(theme: any) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.colors.background,
     },
     scrollContent: {
       flexGrow: 1,
