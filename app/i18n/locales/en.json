@@ -6,6 +6,7 @@
     "cancel": "Cancel",
     "save": "Save",
     "delete": "Delete",
+    "teacher": "Teacher",
     "edit": "Edit",
     "search": "Search",
     "noResults": "No results found",
@@ -526,7 +527,16 @@
     "title": "News",
     "readMore": "Read More",
     "noNews": "No news available",
-    "newsNotFound": "News article not found."
+    "newsNotFound": "News article not found.",
+    "comments": "Comments",
+    "noComments": "No comments yet",
+    "beFirstToComment": "Be the first to comment",
+    "writeComment": "Write a comment...",
+    "loadCommentsFailed": "Failed to load comments.",
+    "addCommentFailed": "Failed to post comment. Please try again.",
+    "deleteComment": "Delete Comment",
+    "deleteCommentConfirm": "Delete this comment? This cannot be undone.",
+    "deleteCommentFailed": "Failed to delete comment."
   },
   "events": {
     "title": "Events",

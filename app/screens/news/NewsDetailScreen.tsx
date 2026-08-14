@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { Badge } from '../../components/ui/Badge';
+import NewsPhotoViewerModal from '../../components/news/NewsPhotoViewerModal';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { getFullImageUrl } from '../../utils/imageUrl';
@@ -24,6 +25,7 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
   const { newsItem } = route.params;
   const { theme } = useTheme();
   const { t, isRTL } = useRTL();
+  const [photoViewerVisible, setPhotoViewerVisible] = useState(false);
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -105,6 +107,20 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
       color: theme.colors.text,
       lineHeight: 24,
     },
+    commentsButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.sm,
+      marginTop: spacing.xl,
+      paddingVertical: spacing.md,
+      borderRadius: borderRadius.lg,
+      borderWidth: 1,
+    },
+    commentsButtonText: {
+      ...typography.body,
+      fontWeight: '700',
+    },
     emptyContainer: {
       flex: 1,
       alignItems: 'center',
@@ -142,7 +158,11 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Hero Image */}
-        <View style={styles.imageContainer}>
+        <TouchableOpacity
+          style={styles.imageContainer}
+          activeOpacity={imageUrl ? 0.85 : 1}
+          onPress={() => imageUrl && setPhotoViewerVisible(true)}
+        >
           {imageUrl ? (
             <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
           ) : (
@@ -150,7 +170,7 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
               <Ionicons name="newspaper-outline" size={48} color={theme.colors.primary} />
             </View>
           )}
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.body}>
           {/* Title */}
@@ -190,8 +210,24 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
           <Text style={styles.description}>
             {newsItem.description || t('common.noContent')}
           </Text>
+
+          <TouchableOpacity
+            style={[styles.commentsButton, { backgroundColor: theme.colors.primary + '12', borderColor: theme.colors.primary + '30' }]}
+            onPress={() => setPhotoViewerVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={18} color={theme.colors.primary} />
+            <Text style={[styles.commentsButtonText, { color: theme.colors.primary }]}>{t('news.comments')}</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <NewsPhotoViewerModal
+        visible={photoViewerVisible}
+        onClose={() => setPhotoViewerVisible(false)}
+        newsId={newsItem.id}
+        imageUrl={imageUrl}
+      />
     </SafeAreaView>
   );
 }

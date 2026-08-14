@@ -14,6 +14,17 @@ export interface NewsItem {
   updatedAt?: string;
 }
 
+export interface NewsComment {
+  id: number;
+  newsId: number;
+  content: string;
+  authorName: string;
+  authorAvatar?: string | null;
+  isStaff: boolean;
+  canDelete: boolean;
+  createdDate: string;
+}
+
 export interface CreateNewsPayload {
   title: string;
   subTitle?: string;

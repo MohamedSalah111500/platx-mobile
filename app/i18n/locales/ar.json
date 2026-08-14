@@ -6,6 +6,7 @@
     "cancel": "إلغاء",
     "save": "حفظ",
     "delete": "حذف",
+    "teacher": "المدرس",
     "edit": "تعديل",
     "search": "بحث",
     "noResults": "لا توجد نتائج",
@@ -526,7 +527,16 @@
     "title": "الأخبار",
     "readMore": "اقرأ المزيد",
     "noNews": "لا توجد أخبار",
-    "newsNotFound": "المقال غير موجود."
+    "newsNotFound": "المقال غير موجود.",
+    "comments": "التعليقات",
+    "noComments": "لا توجد تعليقات بعد",
+    "beFirstToComment": "كن أول من يعلق",
+    "writeComment": "اكتب تعليقًا...",
+    "loadCommentsFailed": "فشل تحميل التعليقات.",
+    "addCommentFailed": "فشل نشر التعليق. حاول مرة أخرى.",
+    "deleteComment": "حذف التعليق",
+    "deleteCommentConfirm": "هل تريد حذف هذا التعليق؟ لا يمكن التراجع عن هذا الإجراء.",
+    "deleteCommentFailed": "فشل حذف التعليق."
   },
   "events": {
     "title": "الأحداث",

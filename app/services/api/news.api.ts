@@ -1,6 +1,6 @@
 import apiClient from './client';
-import { NEWS_URLS, withPagination } from './endpoints';
-import type { NewsItem } from '../../types/news.types';
+import { NEWS_URLS, NEWS_COMMENTS_URLS, withPagination } from './endpoints';
+import type { NewsItem, NewsComment } from '../../types/news.types';
 import type { PaginatedResponse } from '../../types/api.types';
 
 export const newsApi = {
@@ -73,5 +73,19 @@ export const newsApi = {
 
   delete: async (id: number | string): Promise<void> => {
     await apiClient.delete(NEWS_URLS.DELETE(id));
+  },
+
+  getComments: async (newsId: number): Promise<NewsComment[]> => {
+    const { data } = await apiClient.get<NewsComment[]>(NEWS_COMMENTS_URLS.GET_ALL(newsId));
+    return Array.isArray(data) ? data : [];
+  },
+
+  addComment: async (newsId: number, content: string): Promise<NewsComment> => {
+    const { data } = await apiClient.post<NewsComment>(NEWS_COMMENTS_URLS.CREATE, { newsId, content });
+    return data;
+  },
+
+  deleteComment: async (commentId: number): Promise<void> => {
+    await apiClient.delete(NEWS_COMMENTS_URLS.DELETE(commentId));
   },
 };

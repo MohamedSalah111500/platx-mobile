@@ -48,6 +48,12 @@ export const NEWS_URLS = {
   DELETE: (id: number | string) => `${BASE}api/News/${id}`,
 };
 
+export const NEWS_COMMENTS_URLS = {
+  GET_ALL: (newsId: number | string) => `${BASE}api/NewsComments/news/${newsId}`,
+  CREATE: `${BASE}api/NewsComments`,
+  DELETE: (commentId: number | string) => `${BASE}api/NewsComments/${commentId}`,
+};
+
 // Notifications endpoints
 export const NOTIFICATIONS_URLS = {
   GET_ADMIN: `${BASE}api/Notification/GetNotificationListAsync`,
