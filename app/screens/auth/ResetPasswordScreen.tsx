@@ -33,7 +33,7 @@ export default function ResetPasswordScreen({ navigation, route }: Props) {
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
     if (!password.trim()) errors.password = t('auth.passwordRequired');
-    else if (password.length < 6)
+    else if (!/^[A-Za-z0-9]{8,}$/.test(password))
       errors.password = t('auth.passwordMinLength');
     if (password !== confirmPassword)
       errors.confirmPassword = t('auth.passwordsDoNotMatch');

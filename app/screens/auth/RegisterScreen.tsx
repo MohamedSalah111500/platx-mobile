@@ -59,7 +59,7 @@ export default function RegisterScreen({ navigation, route }: Props) {
     if (!email.trim()) errors.email = t('auth.emailRequired');
     else if (!/\S+@\S+\.\S+/.test(email)) errors.email = t('auth.invalidEmailFormat');
     if (!password.trim()) errors.password = t('auth.passwordRequired');
-    else if (password.length < 6) errors.password = t('auth.passwordMinLength');
+    else if (!/^[A-Za-z0-9]{8,}$/.test(password)) errors.password = t('auth.passwordMinLength');
     if (password !== confirmPassword) errors.confirmPassword = t('auth.passwordsDoNotMatch');
     if (!domain.trim()) errors.domain = t('auth.domainRequired');
     setFormErrors(errors);
