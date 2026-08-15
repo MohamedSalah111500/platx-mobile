@@ -106,6 +106,9 @@ export default function MainTabNavigator() {
             </View>
           );
         },
+        // react-navigation v7's default icon slot is a fixed 31x28 box, too
+        // small for the pill's own padding — widen it so the pill fits.
+        tabBarIconStyle: { width: 60, height: 36 },
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.tabBarInactive,
         tabBarStyle: shouldHideTabBar(route) ? hiddenTabBarStyle : baseTabBarStyle,

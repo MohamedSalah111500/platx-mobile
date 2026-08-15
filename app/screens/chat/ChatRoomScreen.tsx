@@ -160,7 +160,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
         <View style={styles.dateSeparator}>
           <View style={[styles.dateLine, { backgroundColor: theme.colors.divider }]} />
           <View style={[styles.datePill, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
-            <Text style={[styles.dateText, { color: theme.colors.textMuted }]}>{item.label}</Text>
+            <Text style={[styles.dateText, { color: theme.colors.primary }]}>{item.label}</Text>
           </View>
           <View style={[styles.dateLine, { backgroundColor: theme.colors.divider }]} />
         </View>
@@ -212,7 +212,11 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: theme.colors.divider }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
+          onPress={() => navigation.goBack()}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
           <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color={theme.colors.text} />
         </TouchableOpacity>
         <View style={[styles.headerAvatar, { backgroundColor: theme.colors.primaryLight }]}>

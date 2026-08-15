@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { WebView } from 'react-native-webview';
 import * as WebBrowser from 'expo-web-browser';
+import { usePreventScreenCapture } from 'expo-screen-capture';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { Spinner } from '../../components/ui/Spinner';
@@ -55,6 +56,10 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
   const [quizPolicy, setQuizPolicy] = useState(0);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [docViewerOpen, setDocViewerOpen] = useState(false);
+
+  // Block screenshots/screen recording while a lesson video is open, to protect
+  // paid course content from being captured.
+  usePreventScreenCapture('lesson-player');
 
   const isQuiz = lesson?.type === 3;
   const isDocOrFile = lesson?.type === 2 || lesson?.type === 4;

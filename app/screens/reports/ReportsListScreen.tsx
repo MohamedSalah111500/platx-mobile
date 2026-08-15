@@ -9,6 +9,7 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { spacing } from '../../theme/spacing';
 import { fontSize } from '../../theme/typography';
 import { reportsApi } from '../../services/api/reports.api';
@@ -125,9 +126,7 @@ export default function ReportsListScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{t('reports.title')}</Text>
-      </View>
+      <ScreenHeader title={t('reports.title')} onBack={() => navigation.goBack()} />
 
       <View style={styles.tabRow}>
         <TouchableOpacity
@@ -185,15 +184,6 @@ export default function ReportsListScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
-  },
-  headerTitle: {
-    fontSize: fontSize.xl,
-    fontFamily: 'Cairo_700Bold',
-  },
   tabRow: {
     flexDirection: 'row',
     gap: spacing.sm,

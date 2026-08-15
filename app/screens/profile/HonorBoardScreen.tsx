@@ -495,8 +495,6 @@ const styles = StyleSheet.create({
 
   // Header
   headerBg: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
     paddingBottom: spacing.xl,
   },
   headerRow: {

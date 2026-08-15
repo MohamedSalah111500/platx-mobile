@@ -787,8 +787,6 @@ const s = StyleSheet.create({
 
   // Header
   headerBg: {
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
     paddingBottom: spacing.md,
   },
   headerRow: {

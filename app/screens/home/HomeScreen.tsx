@@ -32,6 +32,7 @@ import { useSound } from '../../hooks/useSound';
 import { GradientBackground } from '../../components/ui/GradientBackground';
 import { studentsApi, type TopStudent } from '../../services/api/students.api';
 import { honorBoardApi, type HonorBoardEntry } from '../../services/api/honor-board.api';
+import { reportsApi } from '../../services/api/reports.api';
 import SectionHeader from '../../components/ui/SectionHeader';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -48,7 +49,7 @@ const ACCENT_COLORS = [
 
 export default function HomeScreen({ navigation }: Props) {
   const { theme, isDark } = useTheme();
-  const { user, role, domain, isStudent, isStaff, isAdmin } = useAuth();
+  const { user, role, domain, isStudent, isStaff, isAdmin, can } = useAuth();
   const { t, isRTL } = useRTL();
   const { play } = useSound();
   const insets = useSafeAreaInsets();
@@ -63,8 +64,10 @@ export default function HomeScreen({ navigation }: Props) {
   const [honorTop3, setHonorTop3] = useState<HonorBoardEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [reportsSummary, setReportsSummary] = useState<{ avgAttendance: number; avgExamScore: number; groupsCount: number; examsCount: number } | null>(null);
 
   const isTeacherOrAdmin = isStaff || isAdmin;
+  const canReports = can('REPORTS');
 
   // ------------------------------------------------------------------ data
   const loadData = async () => {
@@ -74,6 +77,28 @@ export default function HomeScreen({ navigation }: Props) {
         setStats(statsData);
       } catch {
         // stats may not be available
+      }
+    }
+    if (canReports) {
+      try {
+        const [attendance, exams] = await Promise.all([
+          reportsApi.getAttendanceReports(),
+          reportsApi.getExamReports(),
+        ]);
+        const avgAttendance = attendance.length
+          ? attendance.reduce((sum, r) => sum + r.attendancePercentage, 0) / attendance.length
+          : 0;
+        const avgExamScore = exams.length
+          ? exams.reduce((sum, r) => sum + r.successRate, 0) / exams.length
+          : 0;
+        setReportsSummary({
+          avgAttendance: Math.round(avgAttendance),
+          avgExamScore: Math.round(avgExamScore),
+          groupsCount: attendance.length,
+          examsCount: exams.length,
+        });
+      } catch {
+        // reports may not be available
       }
     }
     try {
@@ -152,7 +177,7 @@ export default function HomeScreen({ navigation }: Props) {
   const DARK_CARD = isDark ? '#3D2196' : '#1B1464';
   const LIGHT_CARD = isDark ? theme.colors.surface : theme.colors.primaryLight;
 
-  const CARD_WIDTH = SCREEN_WIDTH * 0.55;
+  const CARD_WIDTH = SCREEN_WIDTH * 0.42;
 
   // ------------------------------------------------------------------ styles
   const styles = StyleSheet.create({
@@ -358,6 +383,44 @@ export default function HomeScreen({ navigation }: Props) {
       color: theme.colors.textSecondary,
       marginTop: 2,
       textAlign: 'center',
+    },
+
+    /* ── Reports mini-widget (Staff/Admin) ───────────────────── */
+    reportsWidget: {
+      flexDirection: 'row',
+      backgroundColor: CARD_BG,
+      borderRadius: borderRadius['2xl'],
+      marginHorizontal: spacing.xl,
+      marginBottom: spacing['2xl'],
+      padding: spacing.lg,
+      alignItems: 'center',
+    },
+    reportsWidgetIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: 14,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: spacing.md,
+    },
+    reportsWidgetMetrics: {
+      flex: 1,
+      flexDirection: 'row',
+      gap: spacing.lg,
+    },
+    reportsWidgetMetric: {
+      alignItems: isRTL ? 'flex-end' : 'flex-start',
+    },
+    reportsWidgetValue: {
+      fontSize: fontSize.lg,
+      fontFamily: 'Cairo_700Bold',
+      color: theme.colors.text,
+    },
+    reportsWidgetLabel: {
+      fontSize: 10,
+      fontFamily: 'Cairo_500Medium',
+      color: theme.colors.textSecondary,
+      marginTop: 1,
     },
 
     /* ── Quick Actions (horizontal slider) ────────────────────── */
@@ -806,7 +869,36 @@ export default function HomeScreen({ navigation }: Props) {
               <Text style={styles.adminStatLabel}>{t('courses.title')}</Text>
             </View>
           </View>
-        ) : (
+        ) : null}
+
+        {/* ────────────── REPORTS WIDGET (Staff/Admin) ────────────── */}
+        {canReports && reportsSummary && (
+          <TouchableOpacity
+            style={styles.reportsWidget}
+            activeOpacity={0.8}
+            onPress={() => {
+              play('tap');
+              navigation.getParent()?.navigate('ProfileTab', { screen: 'Reports' });
+            }}
+          >
+            <View style={[styles.reportsWidgetIcon, { backgroundColor: theme.colors.primaryLight }]}>
+              <Ionicons name="bar-chart" size={22} color={PRIMARY} />
+            </View>
+            <View style={styles.reportsWidgetMetrics}>
+              <View style={styles.reportsWidgetMetric}>
+                <Text style={styles.reportsWidgetValue}>{reportsSummary.avgAttendance}%</Text>
+                <Text style={styles.reportsWidgetLabel}>{t('reports.attendanceTab')}</Text>
+              </View>
+              <View style={styles.reportsWidgetMetric}>
+                <Text style={styles.reportsWidgetValue}>{reportsSummary.avgExamScore}%</Text>
+                <Text style={styles.reportsWidgetLabel}>{t('reports.examsTab')}</Text>
+              </View>
+            </View>
+            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
+          </TouchableOpacity>
+        )}
+
+        {isStudent && (
           /* Student: 2 horizontal metric cards (dark + light) */
           <View style={styles.statCardsRow}>
             {/* Dark card -- Honor Board Top 3 */}
@@ -967,6 +1059,111 @@ export default function HomeScreen({ navigation }: Props) {
           </TouchableOpacity>
         </ScrollView>
 
+        {/* ────────────── ENROLLED COURSES (list) ────────────── */}
+        {courses.length > 0 && (
+          <View style={styles.sectionSpacing}>
+            <SectionHeader
+              title={t('home.enrolledCourses')}
+              onSeeAll={() => navigation.navigate('CoursesList')}
+            />
+
+            {courses.slice(0, 3).map((course, idx) => {
+              const palette = ACCENT_COLORS[idx % ACCENT_COLORS.length];
+              const imageUrl = getFullImageUrl(course.previewImageUrl);
+              return (
+                <TouchableOpacity
+                  key={course.id}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    play('tap');
+                    navigation.navigate('CourseDetail', { courseId: course.id });
+                  }}
+                  style={{
+                    flexDirection: 'row',
+                    backgroundColor: CARD_BG,
+                    borderRadius: borderRadius['3xl'],
+                    overflow: 'hidden',
+                    marginHorizontal: spacing.xl,
+                    marginBottom: spacing.md,
+                  }}
+                >
+                  {/* Left image */}
+                  <View
+                    style={{
+                      width: 100,
+                      height: 100,
+                      backgroundColor: palette.bg,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {imageUrl ? (
+                      <Image
+                        source={{ uri: imageUrl }}
+                        style={{ width: '100%', height: '100%' }}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Ionicons name="book" size={32} color={palette.accent} />
+                    )}
+                  </View>
+                  {/* Right info */}
+                  <View style={{ flex: 1, padding: spacing.md, justifyContent: 'center' }}>
+                    <Text
+                      style={{
+                        ...typography.bodySmall,
+                        fontFamily: 'Cairo_700Bold',
+                        color: theme.colors.text,
+                        marginBottom: 4,
+                      }}
+                      numberOfLines={2}
+                    >
+                      {course.title || course.name}
+                    </Text>
+                    {course.instructorName ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                        <Ionicons name="person-outline" size={12} color={theme.colors.textSecondary} />
+                        <Text
+                          style={{
+                            ...typography.caption,
+                            color: theme.colors.textSecondary,
+                            marginLeft: 4,
+                          }}
+                          numberOfLines={1}
+                        >
+                          {course.instructorName}
+                        </Text>
+                      </View>
+                    ) : null}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                      {course.totalLessons != null && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                          <Ionicons name="play-circle-outline" size={12} color={theme.colors.textMuted} />
+                          <Text style={{ ...typography.caption, color: theme.colors.textMuted }}>
+                            {course.totalLessons} {t('courses.lessons')}
+                          </Text>
+                        </View>
+                      )}
+                      {course.totalHours != null && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                          <Ionicons name="time-outline" size={12} color={theme.colors.textMuted} />
+                          <Text style={{ ...typography.caption, color: theme.colors.textMuted }}>
+                            {course.totalHours}h
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                  {/* Arrow */}
+                  <View style={{ justifyContent: 'center', paddingRight: spacing.md }}>
+                    <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
         {/* ────────────── POPULAR / RECENT COURSES (horizontal) ────────────── */}
         {coursesError ? (
           <Text style={[styles.errorText, { color: theme.colors.danger }]}>{coursesError}</Text>
@@ -1055,106 +1252,44 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         ) : null}
 
-        {/* ────────────── ENROLLED COURSES (list) ────────────── */}
-        {courses.length > 0 && (
-          <View style={[styles.sectionSpacing, { marginTop: spacing['2xl'] }]}>
-            <SectionHeader
-              title={t('home.enrolledCourses')}
-              onSeeAll={() => navigation.navigate('CoursesList')}
-            />
-
-            {courses.slice(0, 3).map((course, idx) => {
-              const palette = ACCENT_COLORS[idx % ACCENT_COLORS.length];
-              const imageUrl = getFullImageUrl(course.previewImageUrl);
+        {/* ────────────── UPCOMING EVENTS ────────────── */}
+        {events.length > 0 && (
+          <View style={styles.sectionSpacing}>
+            <SectionHeader title={t('home.upcomingEvents')} />
+            {events.map((event) => {
+              const date = new Date(event.startDate);
               return (
                 <TouchableOpacity
-                  key={course.id}
+                  key={event.id}
+                  style={styles.eventCard}
                   activeOpacity={0.85}
                   onPress={() => {
                     play('tap');
-                    navigation.navigate('CourseDetail', { courseId: course.id });
-                  }}
-                  style={{
-                    flexDirection: 'row',
-                    backgroundColor: CARD_BG,
-                    borderRadius: borderRadius['3xl'],
-                    overflow: 'hidden',
-                    marginHorizontal: spacing.xl,
-                    marginBottom: spacing.md,
-                    
+                    navigation.navigate('EventDetail', { eventId: event.id });
                   }}
                 >
-                  {/* Left image */}
-                  <View
-                    style={{
-                      width: 100,
-                      height: 100,
-                      backgroundColor: palette.bg,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                  >
-                    {imageUrl ? (
-                      <Image
-                        source={{ uri: imageUrl }}
-                        style={{ width: '100%', height: '100%' }}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <Ionicons name="book" size={32} color={palette.accent} />
-                    )}
-                  </View>
-                  {/* Right info */}
-                  <View style={{ flex: 1, padding: spacing.md, justifyContent: 'center' }}>
-                    <Text
-                      style={{
-                        ...typography.bodySmall,
-                        fontFamily: 'Cairo_700Bold',
-                        color: theme.colors.text,
-                        marginBottom: 4,
-                      }}
-                      numberOfLines={2}
-                    >
-                      {course.title || course.name}
+                  <View style={styles.eventDateBox}>
+                    <Text style={styles.eventDay}>{date.getDate()}</Text>
+                    <Text style={styles.eventMonth}>
+                      {date.toLocaleString('en', { month: 'short' })}
                     </Text>
-                    {course.instructorName ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                        <Ionicons name="person-outline" size={12} color={theme.colors.textSecondary} />
-                        <Text
-                          style={{
-                            ...typography.caption,
-                            color: theme.colors.textSecondary,
-                            marginLeft: 4,
-                          }}
-                          numberOfLines={1}
-                        >
-                          {course.instructorName}
-                        </Text>
-                      </View>
-                    ) : null}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-                      {course.totalLessons != null && (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                          <Ionicons name="play-circle-outline" size={12} color={theme.colors.textMuted} />
-                          <Text style={{ ...typography.caption, color: theme.colors.textMuted }}>
-                            {course.totalLessons} {t('courses.lessons')}
-                          </Text>
-                        </View>
-                      )}
-                      {course.totalHours != null && (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                          <Ionicons name="time-outline" size={12} color={theme.colors.textMuted} />
-                          <Text style={{ ...typography.caption, color: theme.colors.textMuted }}>
-                            {course.totalHours}h
-                          </Text>
-                        </View>
-                      )}
-                    </View>
                   </View>
-                  {/* Arrow */}
-                  <View style={{ justifyContent: 'center', paddingRight: spacing.md }}>
-                    <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
+                  <View style={styles.eventInfo}>
+                    <Text style={styles.eventTitle} numberOfLines={1}>
+                      {event.title}
+                    </Text>
+                    <Text style={styles.eventTime}>
+                      {date.toLocaleTimeString('en', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </Text>
                   </View>
+                  <Ionicons
+                    name={isRTL ? 'chevron-back' : 'chevron-forward'}
+                    size={18}
+                    color={theme.colors.textMuted}
+                  />
                 </TouchableOpacity>
               );
             })}
@@ -1266,50 +1401,6 @@ export default function HomeScreen({ navigation }: Props) {
             <Text style={styles.emptyText}>{t('home.noNewsAvailable')}</Text>
           )}
         </View>
-
-        {/* ────────────── UPCOMING EVENTS ────────────── */}
-        {events.length > 0 && (
-          <View style={[styles.sectionSpacing, { marginTop: spacing['2xl'] }]}>
-            <SectionHeader title={t('home.upcomingEvents')} />
-            {events.map((event) => {
-              const date = new Date(event.startDate);
-              return (
-                <TouchableOpacity
-                  key={event.id}
-                  style={styles.eventCard}
-                  activeOpacity={0.85}
-                  onPress={() => {
-                    play('tap');
-                    navigation.navigate('EventDetail', { eventId: event.id });
-                  }}
-                >
-                  <View style={styles.eventDateBox}>
-                    <Text style={styles.eventDay}>{date.getDate()}</Text>
-                    <Text style={styles.eventMonth}>
-                      {date.toLocaleString('en', { month: 'short' })}
-                    </Text>
-                  </View>
-                  <View style={styles.eventInfo}>
-                    <Text style={styles.eventTitle} numberOfLines={1}>
-                      {event.title}
-                    </Text>
-                    <Text style={styles.eventTime}>
-                      {date.toLocaleTimeString('en', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name={isRTL ? 'chevron-back' : 'chevron-forward'}
-                    size={18}
-                    color={theme.colors.textMuted}
-                  />
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
       </ScrollView>
     </GradientBackground>
   );

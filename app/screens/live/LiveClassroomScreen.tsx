@@ -29,6 +29,7 @@ import { liveApi } from '../../services/api/live.api';
 import { signalRService } from '../../services/realtime/signalr.service';
 import * as AgoraService from '../../services/agora/agora.service';
 import { logger } from '../../services/logger';
+import { usePreventScreenCapture } from 'expo-screen-capture';
 import type { IRtcEngineEventHandler } from '../../services/agora/agora.service';
 
 // Conditionally load RtcSurfaceView (only available in dev builds, not Expo Go)
@@ -67,6 +68,10 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   const { roomId, isTeacher } = route.params;
   const { user, isStudent } = useAuth();
   const { t, isRTL } = useRTL();
+
+  // Block screenshots/screen recording during live sessions, to protect the
+  // classroom feed from being captured.
+  usePreventScreenCapture('live-classroom');
 
   // Room & session state
   const [room, setRoom] = useState<LiveSession | null>(null);
