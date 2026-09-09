@@ -59,7 +59,7 @@ export function buildTheme(dark: boolean, accentColor?: string | null): Theme {
         primaryDark,
 
         background: colors.secondary[900],
-        backgroundGradientFrom: '#20212b',
+        backgroundGradientFrom: colors.secondary[800],
         backgroundGradientTo: colors.secondary[900],
         surface: colors.secondary[800],
         card: colors.secondary[800],
@@ -101,8 +101,8 @@ export function buildTheme(dark: boolean, accentColor?: string | null): Theme {
       primaryDark,
 
       background: colors.white,
-      backgroundGradientFrom: '#E4E8FC',
-      backgroundGradientTo: '#F8F7FA',
+      backgroundGradientFrom: colors.secondary[100],
+      backgroundGradientTo: colors.white,
       surface: colors.secondary[50],
       card: colors.white,
 

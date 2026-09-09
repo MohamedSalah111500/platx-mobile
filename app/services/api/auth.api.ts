@@ -7,6 +7,7 @@ import type {
   MobileLoginResponse,
   MobileSelectTenantPayload,
   RegisterPayload,
+  VoiceRegisterResult,
   EmailConfirmPayload,
   ResetPasswordPayload,
   ChangePasswordPayload,
@@ -31,6 +32,15 @@ export const authApi = {
 
   register: async (payload: RegisterPayload): Promise<void> => {
     await apiClient.post(AUTH_URLS.REGISTRATION, payload);
+  },
+
+  voiceRegisterExtract: async (form: FormData): Promise<VoiceRegisterResult> => {
+    const { data } = await apiClient.post<VoiceRegisterResult>(
+      AUTH_URLS.VOICE_REGISTER_EXTRACT,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return data;
   },
 
   forgotPassword: async (username: string, domain: string): Promise<void> => {

@@ -184,7 +184,15 @@
     "playServicesNotAvailable": "خدمات جوجل بلاي غير متوفرة",
     "changePasswordFailed": "فشل تغيير كلمة المرور.",
     "selectTenant": "اختر الأكاديمية",
-    "selectTenantSubtitle": "أنت مسجل في أكثر من أكاديمية. يرجى اختيار واحدة للمتابعة."
+    "selectTenantSubtitle": "أنت مسجل في أكثر من أكاديمية. يرجى اختيار واحدة للمتابعة.",
+    "voiceTitle": "املأ بياناتك بالصوت",
+    "voiceHint": "اضغط على الميكروفون وقل اسمك وبريدك الإلكتروني وكلمة المرور، ويمكنك تعديل الحقول أو قول ما تريد تغييره.",
+    "voiceListening": "جارٍ الاستماع... اضغط للإيقاف",
+    "voiceProcessing": "جارٍ فهم ما قلته...",
+    "voiceMicDenied": "يلزم إذن الميكروفون لملء بياناتك بالصوت.",
+    "voiceRecordFailed": "تعذر بدء التسجيل، حاول مرة أخرى.",
+    "voiceFailed": "تعذر معالجة صوتك، حاول مرة أخرى أو املأ الحقول يدويًا.",
+    "voiceDomainFirst": "من فضلك أدخل دومين الأكاديمية أولًا."
   },
   "welcome": {
     "greeting": "مرحباً 👋",
@@ -393,6 +401,10 @@
     "enterSessionTitle": "يرجى إدخال عنوان الجلسة.",
     "enterSessionTitlePlaceholder": "أدخل عنوان الجلسة...",
     "selectGroupOptional": "اختر مجموعة (اختياري)",
+    "audience": "الفئة المستهدفة",
+    "sendToEveryone": "الجميع",
+    "sendToSpecific": "مجموعات محددة",
+    "noSubGroups": "لا توجد مجموعات فرعية",
     "loadingGroups": "جاري تحميل المجموعات...",
     "noGroupsAvailable": "لا توجد مجموعات متاحة",
     "startLiveSession": "بدء الجلسة المباشرة",
@@ -521,7 +533,12 @@
     "createdAt": "تاريخ الإنشاء",
     "active": "نشط",
     "inactive": "غير نشط",
-    "status": "الحالة"
+    "status": "الحالة",
+    "subGroups": "المجموعات الفرعية",
+    "noSubGroups": "لا توجد مجموعات فرعية بعد",
+    "subGroupDetails": "تفاصيل المجموعة الفرعية",
+    "addToSubGroup": "إضافة طالب للمجموعة الفرعية",
+    "yourSubGroup": "مجموعتك الفرعية"
   },
   "news": {
     "title": "الأخبار",

@@ -92,4 +92,37 @@ export const chatApi = {
   deleteMessage: async (messageId: number): Promise<void> => {
     await apiClient.delete(CHAT_URLS.DELETE_MESSAGE(messageId));
   },
+
+  getMessagesForTeacherSubGroup: async (subGroupId: number): Promise<ChatMessage[]> => {
+    const { data } = await apiClient.get<ChatMessage[]>(
+      CHAT_URLS.GET_MESSAGES_FOR_TEACHER_SUBGROUP(subGroupId)
+    );
+    return data;
+  },
+
+  getMessagesForStudentSubGroup: async (subGroupId: number): Promise<ChatMessage[]> => {
+    const { data } = await apiClient.get<ChatMessage[]>(
+      CHAT_URLS.GET_MESSAGES_FOR_STUDENT_SUBGROUP(subGroupId)
+    );
+    return data;
+  },
+
+  sendToSubGroup: async (payload: {
+    content: string;
+    subGroupId: number;
+  }): Promise<ChatMessage> => {
+    const { data } = await apiClient.post<ChatMessage>(CHAT_URLS.SEND_TO_SUBGROUP, payload);
+    return data;
+  },
+
+  sendToSubGroupFromStudent: async (payload: {
+    content: string;
+    subGroupId: number;
+  }): Promise<ChatMessage> => {
+    const { data } = await apiClient.post<ChatMessage>(
+      CHAT_URLS.SEND_TO_SUBGROUP_FROM_STUDENT,
+      payload
+    );
+    return data;
+  },
 };

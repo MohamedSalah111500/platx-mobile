@@ -5,6 +5,7 @@ export interface ChatMessage {
   senderName: string;
   senderImage?: string;
   groupId: number;
+  subGroupId?: number;
   createdAt: string;
   isRead?: boolean;
   attachmentUrl?: string;

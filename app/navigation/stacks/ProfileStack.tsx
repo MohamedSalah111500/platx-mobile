@@ -6,6 +6,7 @@ import ProfileScreen from '../../screens/profile/ProfileScreen';
 import SettingsScreen from '../../screens/profile/SettingsScreen';
 import GroupsScreen from '../../screens/groups/GroupsListScreen';
 import GroupDetailScreen from '../../screens/groups/GroupDetailScreen';
+import SubGroupDetailScreen from '../../screens/groups/SubGroupDetailScreen';
 import LiveSessionsScreen from '../../screens/live/LiveSessionsListScreen';
 import CreateLiveScreen from '../../screens/live/CreateLiveScreen';
 import ChangePasswordScreen from '../../screens/profile/ChangePasswordScreen';
@@ -25,6 +26,7 @@ export default function ProfileStack() {
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="Groups" component={GroupsScreen} />
       <Stack.Screen name="GroupDetail" component={GroupDetailScreen} />
+      <Stack.Screen name="SubGroupDetail" component={SubGroupDetailScreen} />
       <Stack.Screen name="LiveSessions" component={LiveSessionsScreen} />
       <Stack.Screen name="CreateLive" component={CreateLiveScreen} />
       <Stack.Screen name="HonorBoard" component={HonorBoardScreen} />

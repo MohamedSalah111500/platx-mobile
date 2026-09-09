@@ -3,8 +3,6 @@ const { withAndroidManifest } = require('@expo/config-plugins');
 const REMOVE_PERMISSIONS = [
   'android.permission.SYSTEM_ALERT_WINDOW',
   'android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION',
-  'android.permission.READ_EXTERNAL_STORAGE',
-  'android.permission.WRITE_EXTERNAL_STORAGE',
 ];
 
 module.exports = (config) =>

@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
-  Image,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
@@ -163,13 +162,6 @@ export default function LoginScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.formSection}>
-          <View style={styles.logoWrap}>
-            <Image
-              source={require('../../../assets/images/logo-color.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-          </View>
           <Text style={styles.title}>{t('auth.loginTitle')}</Text>
           <Text style={styles.welcomeText}>{t('auth.signInToContinue')}</Text>
 
@@ -313,14 +305,6 @@ function createStyles(theme: any) {
     },
     formSection: {
       padding: spacing['2xl'],
-    },
-    logoWrap: {
-      alignItems: 'center',
-      marginBottom: spacing.xl,
-    },
-    logo: {
-      width: 140,
-      height: 56,
     },
     title: {
       ...typography.h3,

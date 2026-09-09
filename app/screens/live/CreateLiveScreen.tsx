@@ -19,8 +19,9 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { liveApi } from '../../services/api/live.api';
 import { groupsApi } from '../../services/api/groups.api';
+import { subGroupsApi } from '../../services/api/subgroups.api';
 import type { ProfileStackParamList } from '../../types/navigation.types';
-import type { Group } from '../../types/group.types';
+import type { Group, SubGroup } from '../../types/group.types';
 import { LiveClassroomType } from '../../types/live.types';
 import type { CreateLivePayload } from '../../types/live.types';
 
@@ -36,8 +37,13 @@ export default function CreateLiveScreen({ navigation }: Props) {
   const [title, setTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
-  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [loadingGroups, setLoadingGroups] = useState(true);
+  const [sendToAll, setSendToAll] = useState(true);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
+  const [selectedSubGroupIds, setSelectedSubGroupIds] = useState<number[]>([]);
+  const [expandedGroupIds, setExpandedGroupIds] = useState<number[]>([]);
+  const [subGroupsByGroup, setSubGroupsByGroup] = useState<Record<number, SubGroup[]>>({});
+  const [loadingSubGroupsFor, setLoadingSubGroupsFor] = useState<number | null>(null);
   const [liveType, setLiveType] = useState<LiveClassroomType>(LiveClassroomType.Internal);
   const [externalLink, setExternalLink] = useState('');
   const [scheduleOffset, setScheduleOffset] = useState(0);
@@ -61,6 +67,35 @@ export default function CreateLiveScreen({ navigation }: Props) {
     } finally {
       setLoadingGroups(false);
     }
+  };
+
+  const toggleGroupExpanded = async (groupId: number) => {
+    setExpandedGroupIds((prev) =>
+      prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]
+    );
+    if (!subGroupsByGroup[groupId]) {
+      setLoadingSubGroupsFor(groupId);
+      try {
+        const res = await subGroupsApi.getByGroup(groupId);
+        setSubGroupsByGroup((prev) => ({ ...prev, [groupId]: res.items || [] }));
+      } catch {
+        setSubGroupsByGroup((prev) => ({ ...prev, [groupId]: [] }));
+      } finally {
+        setLoadingSubGroupsFor(null);
+      }
+    }
+  };
+
+  const toggleGroupSelected = (groupId: number) => {
+    setSelectedGroupIds((prev) =>
+      prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]
+    );
+  };
+
+  const toggleSubGroupSelected = (subGroupId: number) => {
+    setSelectedSubGroupIds((prev) =>
+      prev.includes(subGroupId) ? prev.filter((id) => id !== subGroupId) : [...prev, subGroupId]
+    );
   };
 
   const handleCreate = async () => {
@@ -87,10 +122,10 @@ export default function CreateLiveScreen({ navigation }: Props) {
         liveType,
         isPaid,
         price: isPaid ? Number(price) : null,
+        sendToAll,
+        groupIds: sendToAll ? [] : selectedGroupIds,
+        subGroupIds: sendToAll ? [] : selectedSubGroupIds,
       };
-      if (selectedGroupId) {
-        payload.groupId = selectedGroupId;
-      }
       if (isExternal) {
         payload.externalLink = externalLink.trim();
         payload.scheduledAt = new Date(Date.now() + scheduleOffset * 60 * 1000).toISOString();
@@ -159,6 +194,28 @@ export default function CreateLiveScreen({ navigation }: Props) {
       borderRadius: borderRadius.lg,
       borderWidth: 1,
       marginBottom: spacing.sm,
+    },
+    groupOptionMain: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    expandBtn: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+    },
+    subGroupList: {
+      marginTop: spacing.xs,
+      marginLeft: spacing.xl,
+      gap: spacing.xs,
+    },
+    subGroupOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      padding: spacing.sm,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
     },
     groupOptionText: { ...typography.body, flex: 1, marginLeft: spacing.md },
     footer: { paddingHorizontal: spacing.xl, paddingVertical: spacing.xl },
@@ -291,42 +348,134 @@ export default function CreateLiveScreen({ navigation }: Props) {
           )}
 
           <View style={styles.groupsSection}>
-            <Text style={styles.label}>{t('live.selectGroupOptional')}</Text>
-            {loadingGroups ? (
-              <Text style={{ ...typography.caption, color: theme.colors.textMuted }}>{t('live.loadingGroups')}</Text>
-            ) : groups.length === 0 ? (
-              <Text style={{ ...typography.caption, color: theme.colors.textMuted }}>{t('live.noGroupsAvailable')}</Text>
-            ) : (
-              groups.map((group) => {
-                const isSelected = selectedGroupId === group.id;
+            <Text style={styles.label}>{t('live.audience')}</Text>
+            <View style={styles.typeRow}>
+              {[
+                { value: true, icon: 'globe-outline', label: t('live.sendToEveryone') },
+                { value: false, icon: 'people-outline', label: t('live.sendToSpecific') },
+              ].map((opt) => {
+                const active = sendToAll === opt.value;
                 return (
                   <TouchableOpacity
-                    key={group.id}
+                    key={String(opt.value)}
                     style={[
-                      styles.groupOption,
+                      styles.typeCard,
                       {
-                        backgroundColor: isSelected ? theme.colors.primary + '10' : 'transparent',
-                        borderColor: isSelected ? theme.colors.primary : theme.colors.border,
+                        backgroundColor: active ? theme.colors.primary + '12' : theme.colors.card,
+                        borderColor: active ? theme.colors.primary : theme.colors.border,
                       },
                     ]}
-                    onPress={() => setSelectedGroupId(isSelected ? null : group.id)}
+                    onPress={() => setSendToAll(opt.value)}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons
-                      name={isSelected ? 'radio-button-on' : 'radio-button-off'}
-                      size={20}
-                      color={isSelected ? theme.colors.primary : theme.colors.textMuted}
-                    />
-                    <Text style={[styles.groupOptionText, { color: theme.colors.text }]}>
-                      {group.name}
+                    <Ionicons name={opt.icon as any} size={20} color={active ? theme.colors.primary : theme.colors.textMuted} />
+                    <Text style={[styles.typeText, { color: active ? theme.colors.primary : theme.colors.text }]}>
+                      {opt.label}
                     </Text>
-                    {group.studentsCount != null && (
-                      <Text style={{ ...typography.caption, color: theme.colors.textMuted }}>
-                        {group.studentsCount} {t('live.students')}
-                      </Text>
-                    )}
                   </TouchableOpacity>
                 );
-              })
+              })}
+            </View>
+
+            {!sendToAll && (
+              <View style={{ marginTop: spacing.lg }}>
+                {loadingGroups ? (
+                  <Text style={{ ...typography.caption, color: theme.colors.textMuted }}>{t('live.loadingGroups')}</Text>
+                ) : groups.length === 0 ? (
+                  <Text style={{ ...typography.caption, color: theme.colors.textMuted }}>{t('live.noGroupsAvailable')}</Text>
+                ) : (
+                  groups.map((group) => {
+                    const isGroupSelected = selectedGroupIds.includes(group.id);
+                    const isExpanded = expandedGroupIds.includes(group.id);
+                    const subGroups = subGroupsByGroup[group.id];
+                    return (
+                      <View key={group.id} style={{ marginBottom: spacing.sm }}>
+                        <View
+                          style={[
+                            styles.groupOption,
+                            {
+                              backgroundColor: isGroupSelected ? theme.colors.primary + '10' : 'transparent',
+                              borderColor: isGroupSelected ? theme.colors.primary : theme.colors.border,
+                              marginBottom: 0,
+                            },
+                          ]}
+                        >
+                          <TouchableOpacity
+                            style={styles.groupOptionMain}
+                            onPress={() => toggleGroupSelected(group.id)}
+                          >
+                            <Ionicons
+                              name={isGroupSelected ? 'checkbox' : 'square-outline'}
+                              size={20}
+                              color={isGroupSelected ? theme.colors.primary : theme.colors.textMuted}
+                            />
+                            <Text style={[styles.groupOptionText, { color: theme.colors.text }]}>
+                              {group.name}
+                            </Text>
+                            {group.studentsCount != null && (
+                              <Text style={{ ...typography.caption, color: theme.colors.textMuted }}>
+                                {group.studentsCount} {t('live.students')}
+                              </Text>
+                            )}
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.expandBtn}
+                            onPress={() => toggleGroupExpanded(group.id)}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Ionicons
+                              name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                              size={18}
+                              color={theme.colors.textMuted}
+                            />
+                          </TouchableOpacity>
+                        </View>
+
+                        {isExpanded && (
+                          <View style={styles.subGroupList}>
+                            {loadingSubGroupsFor === group.id ? (
+                              <Text style={{ ...typography.caption, color: theme.colors.textMuted, padding: spacing.sm }}>
+                                {t('live.loadingGroups')}
+                              </Text>
+                            ) : !subGroups || subGroups.length === 0 ? (
+                              <Text style={{ ...typography.caption, color: theme.colors.textMuted, padding: spacing.sm }}>
+                                {t('live.noSubGroups')}
+                              </Text>
+                            ) : (
+                              subGroups.map((sg) => {
+                                const isSubSelected = selectedSubGroupIds.includes(sg.id);
+                                return (
+                                  <TouchableOpacity
+                                    key={sg.id}
+                                    style={[
+                                      styles.subGroupOption,
+                                      {
+                                        backgroundColor: isSubSelected ? theme.colors.primary + '10' : 'transparent',
+                                        borderColor: isSubSelected ? theme.colors.primary : theme.colors.border,
+                                      },
+                                    ]}
+                                    onPress={() => toggleSubGroupSelected(sg.id)}
+                                  >
+                                    <Ionicons
+                                      name={isSubSelected ? 'checkbox' : 'square-outline'}
+                                      size={18}
+                                      color={isSubSelected ? theme.colors.primary : theme.colors.textMuted}
+                                    />
+                                    <Ionicons name="git-branch-outline" size={14} color={theme.colors.textMuted} />
+                                    <Text style={[styles.groupOptionText, { color: theme.colors.text, fontSize: 13 }]}>
+                                      {sg.name}
+                                    </Text>
+                                  </TouchableOpacity>
+                                );
+                              })
+                            )}
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })
+                )}
+              </View>
             )}
           </View>
         </View>

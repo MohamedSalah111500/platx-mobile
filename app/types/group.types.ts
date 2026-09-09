@@ -46,3 +46,27 @@ export interface CreateGroupPayload {
   description?: string;
   gradeId?: number;
 }
+
+export interface SubGroup {
+  id: number;
+  name: string;
+  icon?: string;
+  groupId: number;
+  studentsCount?: number;
+  creationTime?: string;
+  nextDueDate?: string;
+  nextDueTime?: string;
+}
+
+export interface StudentSubGroupsResponse {
+  studentId: number;
+  subGroupIds: number[];
+  isAssigned: boolean;
+}
+
+export interface SubGroupLookup {
+  id: number;
+  name: string;
+  groupId: number;
+  groupName: string;
+}

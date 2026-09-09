@@ -13,7 +13,15 @@ release build to hand off for Play Store / App Store submission.
    - `android/app/build.gradle` → `versionName` / `versionCode` under
      `defaultConfig` (must match `app.json` exactly; the app already had one
      drift like this fixed this session).
-2. Decide which backend the build should hit — controlled by
+2. If `app.json` or anything under `plugins/` changed since the last build, regenerate
+   the native project first — `android/` is gitignored prebuild output, so Gradle
+   alone will not pick the change up:
+   ```bash
+   npx expo prebuild --platform android --no-install
+   ```
+   Never use `--clean`: it deletes `android/`, including `release.keystore`,
+   `gradle.properties` and `local.properties`, which have no other copy.
+3. Decide which backend the build should hit — controlled by
    `EXPO_PUBLIC_APP_ENV`, read in `app/config/env.ts`:
    - `production` → `https://platx-backend-prod.runasp.net/` (real data, real
      tenants — this is what a store build must use).
@@ -99,3 +107,11 @@ strings (camera/mic/photo library — required, this app uses all three via
 `GoogleService-Info.plist` (iOS Firebase/push is unconfigured). Needs both of
 those plus a confirmed Apple Developer Program membership before a first
 `eas build --profile production --platform ios` is worth attempting.
+
+## Release log
+
+| Date | Version | versionCode | Built via | Notes |
+|---|---|---|---|---|
+| 2026-08-13 | 1.0.5 | 21 | Path B (local Gradle) | First run of this runbook |
+| 2026-08-29 | 1.0.6 | 23 | Path B (local Gradle), `EXPO_PUBLIC_APP_ENV=production` | versionCode 22 was already consumed by the earlier upload, so this build is 23. Rebuilt same day after the Play Console "photo and video permissions" warning: `android.blockedPermissions` in `app.json` now strips `READ_MEDIA_IMAGES` (came from `expo-screen-capture`), `READ_EXTERNAL_STORAGE` / `WRITE_EXTERNAL_STORAGE` (came from `expo-image-picker`), and `READ_MEDIA_VIDEO` defensively. The picker uses the Android Photo Picker (`PickVisualMedia`), so `requestMediaLibraryPermissionsAsync` gates were dropped from Checkout / LiveClassroom. Merged manifest verified free of all four. |
+| 2026-08-29 (uploaded, still has media perms) | 1.0.6 | 22 | Path B (local Gradle), `EXPO_PUBLIC_APP_ENV=production` | Includes commits through `573b303` + uncommitted SubGroups chat/live/groups + push-token work. Verified: manifest `versionName 1.0.6`, signed with `release.keystore` (SHA256 `84:48:9B:C7…`), `EXPO_PUBLIC_APP_ENV` inlined (not left as `process.env`). Not yet uploaded to Play Console. |

@@ -22,6 +22,8 @@ import { typography } from '../../theme/typography';
 import type { AuthStackParamList } from '../../types/navigation.types';
 import { useRTL } from '../../i18n/RTLProvider';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
+import { VoiceRegisterAssistant } from '../../components/auth/VoiceRegisterAssistant';
+import type { VoiceRegisterFields } from '../../types/auth.types';
 
 const GOOGLE_WEB_CLIENT_ID = '997004801769-ni3d4vb3d1g551vrj4ku9fsr99k1mhr6.apps.googleusercontent.com';
 
@@ -64,6 +66,15 @@ export default function RegisterScreen({ navigation, route }: Props) {
     if (!domain.trim()) errors.domain = t('auth.domainRequired');
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  const applyVoiceFields = (fields: VoiceRegisterFields) => {
+    setFirstName(fields.firstName ?? '');
+    setLastName(fields.lastName ?? '');
+    setEmail(fields.email ?? '');
+    setPassword(fields.password ?? '');
+    setConfirmPassword(fields.password ?? '');
+    setFormErrors({});
   };
 
   const handleRegister = async () => {
@@ -216,6 +227,12 @@ export default function RegisterScreen({ navigation, route }: Props) {
           }}
           error={formErrors.domain}
           autoCapitalize="none"
+        />
+
+        <VoiceRegisterAssistant
+          domain={domain}
+          currentFields={{ firstName: firstName || null, lastName: lastName || null, email: email || null, password: password || null }}
+          onFieldsExtracted={applyVoiceFields}
         />
 
         <View style={styles.row}>

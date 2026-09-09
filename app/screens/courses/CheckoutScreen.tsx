@@ -75,11 +75,6 @@ export default function CheckoutScreen({ navigation, route }: Props) {
   };
 
   const pickProof = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert(t('common.error'), t('checkout.permissionDenied'));
-      return;
-    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.8,

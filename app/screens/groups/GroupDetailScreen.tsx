@@ -26,16 +26,17 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { fontSize } from '../../theme/typography';
 import { groupsApi } from '../../services/api/groups.api';
+import { subGroupsApi } from '../../services/api/subgroups.api';
 import { chatApi } from '../../services/api/chat.api';
 import { studentsApi, type TopStudent } from '../../services/api/students.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import type { ProfileStackParamList } from '../../types/navigation.types';
-import type { Group, GroupMember, GroupFile } from '../../types/group.types';
+import type { Group, GroupMember, GroupFile, SubGroup } from '../../types/group.types';
 import type { ChatMessage } from '../../types/chat.types';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'GroupDetail'>;
 
-type Tab = 'students' | 'chat' | 'info';
+type Tab = 'students' | 'subgroups' | 'chat' | 'info';
 
 export default function GroupDetailScreen({ navigation, route }: Props) {
   const { groupId } = route.params;
@@ -53,6 +54,10 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(true);
   const [files, setFiles] = useState<GroupFile[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Sub-groups
+  const [subGroups, setSubGroups] = useState<SubGroup[]>([]);
+  const [mySubGroup, setMySubGroup] = useState<SubGroup | null>(null);
 
   // Student search
   const [searchTerm, setSearchTerm] = useState('');
@@ -92,6 +97,37 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
     }
   }, [groupId]);
 
+  const loadSubGroups = useCallback(async () => {
+    if (isTeacher) {
+      try {
+        const res = await subGroupsApi.getByGroup(groupId);
+        setSubGroups(Array.isArray(res?.items) ? res.items : []);
+      } catch {
+        setSubGroups([]);
+      }
+      return;
+    }
+    if (isStudent && user?.studentId) {
+      try {
+        const res = await subGroupsApi.getStudentSubGroups(user.studentId);
+        const ids = Array.isArray(res?.subGroupIds) ? res.subGroupIds : [];
+        for (const id of ids) {
+          const sg = await subGroupsApi.getById(id).catch(() => null);
+          if (sg && sg.groupId === groupId) {
+            setMySubGroup(sg);
+            break;
+          }
+        }
+      } catch {
+        setMySubGroup(null);
+      }
+    }
+  }, [groupId, isTeacher, isStudent, user?.studentId]);
+
+  useEffect(() => {
+    loadSubGroups();
+  }, [loadSubGroups]);
+
   const loadMessages = useCallback(async () => {
     setChatLoading(true);
     try {
@@ -123,6 +159,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
   const onRefresh = () => {
     setRefreshing(true);
     loadGroupData();
+    loadSubGroups();
     if (activeTab === 'chat') loadMessages();
   };
 
@@ -308,6 +345,9 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
 
   const TABS: { key: Tab; label: string; icon: string }[] = [
     { key: 'students', label: t('groups.students'), icon: 'people-outline' },
+    ...(isTeacher
+      ? [{ key: 'subgroups' as Tab, label: t('groups.subGroups'), icon: 'git-branch-outline' }]
+      : []),
     { key: 'chat', label: t('groups.chats'), icon: 'chatbubbles-outline' },
     { key: 'info', label: t('groups.info'), icon: 'information-circle-outline' },
   ];
@@ -388,6 +428,47 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
           <View key={`student-${item.id}`}>
             {renderStudentItem({ item })}
           </View>
+        ))
+      )}
+    </View>
+  );
+
+  // ─── Sub-Groups Tab ───
+
+  const renderSubGroupsTab = () => (
+    <View style={{ flex: 1 }}>
+      <Text style={[s.sectionLabel, { color: theme.colors.textMuted }]}>
+        {t('groups.subGroups')} ({subGroups.length})
+      </Text>
+      {subGroups.length === 0 ? (
+        <EmptyState
+          icon={<Ionicons name="git-branch-outline" size={40} color={theme.colors.textMuted} />}
+          title={t('groups.noSubGroups')}
+          message=""
+        />
+      ) : (
+        subGroups.map((sg) => (
+          <TouchableOpacity
+            key={`subgroup-${sg.id}`}
+            style={[s.subGroupCard, { backgroundColor: theme.colors.card }]}
+            onPress={() =>
+              navigation.navigate('SubGroupDetail', { subGroupId: sg.id, subGroupName: sg.name, groupId })
+            }
+            activeOpacity={0.7}
+          >
+            <View style={[s.subGroupIcon, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
+              <Ionicons name="git-branch-outline" size={20} color={theme.colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[s.studentName, { color: theme.colors.text }]}>{sg.name}</Text>
+              {sg.studentsCount != null && (
+                <Text style={[s.studentMeta, { color: theme.colors.textMuted }]}>
+                  {sg.studentsCount} {t('groups.students')}
+                </Text>
+              )}
+            </View>
+            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
+          </TouchableOpacity>
         ))
       )}
     </View>
@@ -512,6 +593,25 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
         ) : null}
         {group?.description ? (
           <Text style={[s.infoDesc, { color: theme.colors.textMuted }]}>{group.description}</Text>
+        ) : null}
+        {isStudent && mySubGroup ? (
+          <TouchableOpacity
+            style={[s.mySubGroupBadge, { backgroundColor: theme.colors.primaryLight }]}
+            onPress={() =>
+              navigation.navigate('SubGroupDetail', {
+                subGroupId: mySubGroup.id,
+                subGroupName: mySubGroup.name,
+                groupId,
+              })
+            }
+            activeOpacity={0.7}
+          >
+            <Ionicons name="git-branch-outline" size={14} color={theme.colors.primary} />
+            <Text style={[s.mySubGroupText, { color: theme.colors.primary }]}>
+              {t('groups.yourSubGroup')}: {mySubGroup.name}
+            </Text>
+            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={14} color={theme.colors.primary} />
+          </TouchableOpacity>
         ) : null}
       </View>
 
@@ -672,13 +772,18 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
               key={tab.key}
               style={[s.tab, activeTab === tab.key && s.tabActive]}
               onPress={() => setActiveTab(tab.key)}
+              activeOpacity={0.7}
             >
               <Ionicons
                 name={tab.icon as any}
-                size={18}
+                size={16}
                 color={activeTab === tab.key ? '#fff' : 'rgba(255,255,255,0.5)'}
               />
-              <Text style={[s.tabLabel, activeTab === tab.key && s.tabLabelActive]}>
+              <Text
+                style={[s.tabLabel, activeTab === tab.key && s.tabLabelActive]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
                 {tab.label}
               </Text>
             </TouchableOpacity>
@@ -696,6 +801,18 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
           }
         >
           {renderStudentsTab()}
+        </ScrollView>
+      )}
+
+      {activeTab === 'subgroups' && (
+        <ScrollView
+          contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} colors={[theme.colors.primary]} />
+          }
+        >
+          {renderSubGroupsTab()}
         </ScrollView>
       )}
 
@@ -820,20 +937,21 @@ const s = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    flexDirection: 'row',
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.sm,
+    paddingHorizontal: 4,
     borderRadius: 14,
-    gap: spacing.xs,
+    gap: 3,
   },
   tabActive: {
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   tabLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Cairo_600SemiBold',
     color: 'rgba(255,255,255,0.5)',
+    textAlign: 'center',
   },
   tabLabelActive: {
     color: '#fff',
@@ -918,6 +1036,37 @@ const s = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  // Sub-group card
+  subGroupCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: 16,
+    marginBottom: spacing.sm,
+    gap: spacing.md,
+  },
+  subGroupIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mySubGroupBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: borderRadius.full,
+    gap: spacing.xs,
+  },
+  mySubGroupText: {
+    fontSize: 12,
+    fontFamily: 'Cairo_600SemiBold',
   },
 
   // Chat

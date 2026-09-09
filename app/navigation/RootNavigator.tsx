@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, StyleSheet, Image, Dimensions } from 'react-native';
+import * as Notifications from 'expo-notifications';
 
 import { useAuthStore } from '../store/auth.store';
 import { useTheme } from '../theme/ThemeProvider';
@@ -9,6 +10,7 @@ import { runStartup } from '../bootstrap/startup';
 import { logger } from '../services/logger';
 import type { RootStackParamList } from '../types/navigation.types';
 
+import { navigationRef, navigateToNotifications } from './navigationRef';
 import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
 import LiveClassroomScreen from '../screens/live/LiveClassroomScreen';
@@ -20,15 +22,19 @@ const isTablet = SCREEN_W >= 768;
 
 const STARTUP_HARD_TIMEOUT_MS = 6000;
 
+let coldStartHandled = false;
+
 function BrandedLoading() {
   // Prefer the tenant's logo once a session is restored; fall back to the app icon.
   const tenantLogo = useAuthStore((s) => s.tenantLogo);
+  const [logoFailed, setLogoFailed] = useState(false);
   return (
     <View style={styles.splash}>
       <Image
-        source={tenantLogo ? { uri: tenantLogo } : require('../../assets/images/logo-icon.png')}
+        source={tenantLogo && !logoFailed ? { uri: tenantLogo } : require('../../assets/images/logo-icon.png')}
         style={styles.splashIcon}
         resizeMode="contain"
+        onError={() => setLogoFailed(true)}
       />
     </View>
   );
@@ -69,6 +75,23 @@ export default function RootNavigator() {
     };
   }, [restoreSession]);
 
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(() => {
+      navigateToNotifications();
+    });
+    return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!bootstrapped || !isAuthenticated || coldStartHandled) return;
+    coldStartHandled = true;
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (response) navigateToNotifications();
+      })
+      .catch(() => {});
+  }, [bootstrapped, isAuthenticated]);
+
   const navigationTheme = {
     dark: theme.dark,
     colors: {
@@ -89,7 +112,7 @@ export default function RootNavigator() {
 
   return (
     <View style={{ flex: 1 }}>
-      <NavigationContainer theme={navigationTheme}>
+      <NavigationContainer ref={navigationRef} theme={navigationTheme}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           {!isAuthenticated ? (
             <Stack.Screen name="Auth" component={AuthNavigator} />

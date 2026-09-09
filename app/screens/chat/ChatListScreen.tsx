@@ -20,11 +20,16 @@ import { Spinner } from '../../components/ui/Spinner';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import { groupsApi } from '../../services/api/groups.api';
+import { subGroupsApi } from '../../services/api/subgroups.api';
 import { chatApi } from '../../services/api/chat.api';
 import type { ChatStackParamList } from '../../types/navigation.types';
 import { useSound } from '../../hooks/useSound';
-import type { Group } from '../../types/group.types';
+import type { Group, SubGroupLookup } from '../../types/group.types';
 import type { StaffChatContact } from '../../types/chat.types';
+
+type ChatEntry =
+  | { kind: 'group'; data: Group }
+  | { kind: 'subgroup'; data: SubGroupLookup };
 
 type Props = NativeStackScreenProps<ChatStackParamList, 'ChatList'>;
 
@@ -43,6 +48,7 @@ export default function ChatListScreen({ navigation }: Props) {
   const { play } = useSound();
   const insets = useSafeAreaInsets();
   const [groups, setGroups] = useState<Group[]>([]);
+  const [subGroups, setSubGroups] = useState<SubGroupLookup[]>([]);
   const [staffContacts, setStaffContacts] = useState<StaffChatContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -54,12 +60,19 @@ export default function ChatListScreen({ navigation }: Props) {
         const staffList = await chatApi.getStaffHasMessages();
         setStaffContacts(Array.isArray(staffList) ? staffList : []);
       } else {
-        const res = await groupsApi.getAll(1, 50);
-        setGroups(Array.isArray(res?.items) ? res.items : []);
+        const [groupsRes, subGroupsRes] = await Promise.allSettled([
+          groupsApi.getAll(1, 50),
+          subGroupsApi.getAllLookup(),
+        ]);
+        setGroups(groupsRes.status === 'fulfilled' ? groupsRes.value.items || [] : []);
+        setSubGroups(subGroupsRes.status === 'fulfilled' ? subGroupsRes.value : []);
       }
     } catch (err) {
       if (isStudent) setStaffContacts([]);
-      else setGroups([]);
+      else {
+        setGroups([]);
+        setSubGroups([]);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -84,12 +97,19 @@ export default function ChatListScreen({ navigation }: Props) {
     const name = `${s.firstName} ${s.lastName}`.toLowerCase();
     return name.includes(searchTerm);
   });
-  const filteredGroups = groups.filter((g) => {
-    if (!searchTerm) return true;
-    return g.name?.toLowerCase().includes(searchTerm);
+  const combinedEntries: ChatEntry[] = [];
+  groups.forEach((g) => {
+    combinedEntries.push({ kind: 'group', data: g });
+    subGroups
+      .filter((sg) => sg.groupId === g.id)
+      .forEach((sg) => combinedEntries.push({ kind: 'subgroup', data: sg }));
   });
-  const listData: any[] = isStudent ? filteredStaff : filteredGroups;
-  const totalCount = isStudent ? staffContacts.length : groups.length;
+  const filteredEntries = combinedEntries.filter((entry) => {
+    if (!searchTerm) return true;
+    return entry.data.name?.toLowerCase().includes(searchTerm);
+  });
+  const listData: any[] = isStudent ? filteredStaff : filteredEntries;
+  const totalCount = isStudent ? staffContacts.length : groups.length + subGroups.length;
 
   const renderStaffItem = ({ item, index }: { item: StaffChatContact; index: number }) => {
     const palette = AVATAR_COLORS[index % AVATAR_COLORS.length];
@@ -169,6 +189,44 @@ export default function ChatListScreen({ navigation }: Props) {
     );
   };
 
+  const renderSubGroupItem = ({ item }: { item: SubGroupLookup }) => (
+    <TouchableOpacity
+      style={[styles.card, styles.subGroupCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+      onPress={() => {
+        play('tap');
+        navigation.navigate('ChatRoom', {
+          groupId: item.groupId,
+          groupName: item.name,
+          subGroupId: item.id,
+          chatType: 'subgroup',
+        });
+      }}
+      activeOpacity={0.7}
+    >
+      <View style={styles.avatarWrap}>
+        <View style={[styles.avatarCircle, styles.subGroupAvatar, { backgroundColor: theme.colors.primaryLight }]}>
+          <Ionicons name="git-branch-outline" size={19} color={theme.colors.primary} />
+        </View>
+      </View>
+      <View style={styles.cardInfo}>
+        <Text style={[styles.cardName, { color: theme.colors.text }]} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <Text style={[styles.cardSub, { color: theme.colors.textMuted }]} numberOfLines={1}>
+          {t('groups.subGroups')} · {item.groupName}
+        </Text>
+      </View>
+      <View style={[styles.arrowCircle, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
+        <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={16} color={theme.colors.primary} />
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderChatEntry = ({ item, index }: { item: ChatEntry; index: number }) =>
+    item.kind === 'group'
+      ? renderGroupItem({ item: item.data, index })
+      : renderSubGroupItem({ item: item.data });
+
   return (
     <View style={[styles.container, { backgroundColor: bgColor }]}>
       {/* Header */}
@@ -190,8 +248,10 @@ export default function ChatListScreen({ navigation }: Props) {
       {/* List */}
       <FlatList
         data={listData}
-        renderItem={isStudent ? renderStaffItem as any : renderGroupItem as any}
-        keyExtractor={(item: any) => `${item.id}-${item.groupId || ''}`}
+        renderItem={isStudent ? renderStaffItem as any : renderChatEntry as any}
+        keyExtractor={(item: any) =>
+          isStudent ? `${item.id}-${item.groupId || ''}` : `${item.kind}-${item.data.id}`
+        }
         initialNumToRender={10}
         maxToRenderPerBatch={10}
         windowSize={9}
@@ -255,7 +315,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.md + 2,
     borderRadius: borderRadius.xl,
-    
+  },
+  subGroupCard: {
+    marginStart: spacing.xl,
+    borderWidth: 1,
+  },
+  subGroupAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
   },
   avatarWrap: {
     position: 'relative',

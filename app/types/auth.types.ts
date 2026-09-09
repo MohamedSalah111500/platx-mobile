@@ -40,6 +40,21 @@ export interface User {
   staffId?: number;
 }
 
+export interface VoiceRegisterFields {
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+  password?: string | null;
+}
+
+export interface VoiceRegisterResult {
+  transcript: string;
+  fields: VoiceRegisterFields;
+  missingFields: string[];
+  followUpQuestion: string;
+  isComplete: boolean;
+}
+
 export interface RegisterPayload {
   firstName: string;
   lastName: string;

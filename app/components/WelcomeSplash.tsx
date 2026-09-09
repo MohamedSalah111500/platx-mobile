@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Image, Animated, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -14,6 +14,9 @@ const isTablet = SCREEN_W >= 768;
 const VISIBLE_MS = 3000;
 const FADE_MS = 400;
 
+const CARD_SIZE = isTablet ? 180 : 148;
+const LOGO_SIZE = isTablet ? 126 : 102;
+
 export default function WelcomeSplash() {
   const { t } = useRTL();
   const user = useAuthStore((s) => s.user);
@@ -23,10 +26,12 @@ export default function WelcomeSplash() {
   const dismissWelcome = useAuthStore((s) => s.dismissWelcome);
 
   const accent = isValidHexColor(tenantColor) ? tenantColor : DEFAULT_ACCENT;
-  const gradientColors = [darken(accent, 45), darken(accent, 72)] as const;
+  const gradientColors = [darken(accent, 40), darken(accent, 70)] as const;
+
+  const [logoFailed, setLogoFailed] = useState(false);
 
   const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.9)).current;
+  const scale = useRef(new Animated.Value(0.92)).current;
 
   const firstName = user?.firstName?.trim();
   const greeting = firstName
@@ -59,7 +64,7 @@ export default function WelcomeSplash() {
     return () => clearTimeout(hold);
   }, [opacity, scale, dismissWelcome]);
 
-  const logoSource = tenantLogo
+  const logoSource = tenantLogo && !logoFailed
     ? { uri: tenantLogo }
     : require('../../assets/images/logo-icon.png');
 
@@ -72,11 +77,20 @@ export default function WelcomeSplash() {
         style={StyleSheet.absoluteFill}
       />
       <Animated.View style={[styles.content, { transform: [{ scale }] }]}>
-        <Image source={logoSource} style={styles.logo} resizeMode="contain" />
-        <View style={styles.logoSpacer} />
-        {tenantName ? <Text style={styles.tenantName}>{tenantName}</Text> : null}
+        <View style={styles.logoCard}>
+          <Image
+            source={logoSource}
+            style={styles.logo}
+            resizeMode="contain"
+            onError={() => setLogoFailed(true)}
+          />
+        </View>
+        {tenantName ? (
+          <Text style={styles.tenantName} numberOfLines={2}>
+            {tenantName}
+          </Text>
+        ) : null}
         <Text style={styles.greeting}>{greeting}</Text>
-        <Text style={styles.message}>{t('welcome.message')}</Text>
       </Animated.View>
     </Animated.View>
   );
@@ -93,31 +107,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
-  logo: {
-    width: isTablet ? 180 : 150,
-    height: isTablet ? 180 : 150,
+  logoCard: {
+    width: CARD_SIZE,
+    height: CARD_SIZE,
+    borderRadius: CARD_SIZE * 0.24,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: isTablet ? 32 : 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 12,
   },
-  logoSpacer: {
-    height: 24,
+  logo: {
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
   },
   tenantName: {
     fontFamily: 'Cairo_700Bold',
     fontSize: isTablet ? 26 : 22,
     color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 6,
+    paddingHorizontal: 8,
   },
   greeting: {
-    fontFamily: 'Cairo_700Bold',
-    fontSize: isTablet ? 22 : 18,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 6,
-  },
-  message: {
     fontFamily: 'Cairo_400Regular',
-    fontSize: isTablet ? 16 : 14,
-    color: 'rgba(255,255,255,0.75)',
+    fontSize: isTablet ? 17 : 15,
+    color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
   },
 });

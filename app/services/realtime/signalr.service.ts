@@ -5,6 +5,7 @@ import { HUB_URLS } from '../api/endpoints';
 import { useAuthStore } from '../../store/auth.store';
 import { useNotificationsStore } from '../../store/notifications.store';
 import { registerBackgroundNotifications } from './backgroundNotifications';
+import { registerForPushNotifications } from './pushNotifications';
 import { logger } from '../logger';
 
 // Suppress known SignalR reconnection warnings in dev
@@ -18,13 +19,17 @@ LogBox.ignoreLogs([
 // because module-level errors crash the JS bundle on some Android devices
 try {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
+    handleNotification: async (notification) => {
+      const isRemotePush = (notification?.request?.trigger as any)?.type === 'push';
+      const suppressBanner = isRemotePush && signalRService.isNotificationHubConnected();
+      return {
+        shouldShowAlert: !suppressBanner,
+        shouldPlaySound: !suppressBanner,
+        shouldSetBadge: true,
+        shouldShowBanner: !suppressBanner,
+        shouldShowList: true,
+      };
+    },
   });
 } catch {}
 
@@ -59,11 +64,28 @@ class SignalRService {
 
   // --- Notifications Hub ---
   async startNotificationConnection(): Promise<void> {
+    if (
+      this.notificationHub &&
+      (this.notificationHub.state === signalR.HubConnectionState.Connected ||
+        this.notificationHub.state === signalR.HubConnectionState.Connecting ||
+        this.notificationHub.state === signalR.HubConnectionState.Reconnecting)
+    ) {
+      return;
+    }
+
     const token = useAuthStore.getState().token;
     if (!token) return;
 
+    if (this.notificationHub) {
+      const stale = this.notificationHub;
+      this.notificationHub = null;
+      stale.stop().catch(() => {});
+    }
+
     await ensureNotificationPermissions();
-    registerBackgroundNotifications();
+    registerForPushNotifications().then((pushOk) => {
+      if (!pushOk) registerBackgroundNotifications();
+    });
 
     this.notificationHub = new signalR.HubConnectionBuilder()
       .withUrl(HUB_URLS.NOTIFICATIONS, {
@@ -257,6 +279,10 @@ class SignalRService {
 
   onHandRaised(callback: (data: any) => void) {
     this.liveClassroomHub?.on('HandRaised', callback);
+  }
+
+  isNotificationHubConnected(): boolean {
+    return this.notificationHub?.state === signalR.HubConnectionState.Connected;
   }
 
   // --- Connection Management ---

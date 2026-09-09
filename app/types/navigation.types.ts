@@ -64,7 +64,8 @@ export type ChatStackParamList = {
     studentId?: number;
     staffId?: number;
     staffName?: string;
-    chatType?: 'group' | 'staff';
+    subGroupId?: number;
+    chatType?: 'group' | 'staff' | 'subgroup';
   };
 };
 
@@ -93,6 +94,7 @@ export type ProfileStackParamList = {
   ChangePassword: undefined;
   Groups: undefined;
   GroupDetail: { groupId: number };
+  SubGroupDetail: { subGroupId: number; subGroupName?: string; groupId: number };
   LiveSessions: undefined;
   CreateLive: undefined;
   HonorBoard: undefined;

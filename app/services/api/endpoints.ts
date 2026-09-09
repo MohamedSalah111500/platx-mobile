@@ -6,6 +6,7 @@ const BASE = API_CONFIG.BASE_URL;
 export const AUTH_URLS = {
   LOGIN: `${BASE}api/Auth/login`,
   REGISTRATION: `${BASE}api/Auth/register-student`,
+  VOICE_REGISTER_EXTRACT: `${BASE}api/Auth/voice-register-extract`,
   FORGOT_PASSWORD: `${BASE}api/Auth/forgot-password`,
   RESET_PASSWORD: `${BASE}api/Auth/reset-password`,
   CONFIRM_EMAIL: `${BASE}api/Auth/confirm-email`,
@@ -80,6 +81,12 @@ export const CHAT_URLS = {
   GET_STAFF_HAS_MESSAGES: `${BASE}api/Messages/GetStaffHasMessages`,
   GET_MESSAGES_WITH_STAFF: (groupId: number, staffId: number) =>
     `${BASE}api/Messages/GetMessagesWithStaff?groupId=${groupId}&staffId=${staffId}`,
+  GET_MESSAGES_FOR_TEACHER_SUBGROUP: (subGroupId: number) =>
+    `${BASE}api/Messages/GetMessagesForTeacherInSubGroup?subGroupId=${subGroupId}`,
+  GET_MESSAGES_FOR_STUDENT_SUBGROUP: (subGroupId: number) =>
+    `${BASE}api/Messages/GetMessagesForStudentInSubGroup/${subGroupId}`,
+  SEND_TO_SUBGROUP: `${BASE}api/Messages/SendMessageToSubGroup`,
+  SEND_TO_SUBGROUP_FROM_STUDENT: `${BASE}api/Messages/SendMessageToSubGroupFromStudent`,
 };
 
 // Courses endpoints
@@ -266,6 +273,25 @@ export const FILE_URLS = {
   // Backend FilesController is POST api/Files, returns { id, url }.
   CREATE: `${BASE}api/Files`,
   GET: (fileName: string) => `${BASE}api/Files/${fileName}`,
+};
+
+// Sub-group endpoints
+export const SUBGROUPS_URLS = {
+  LIST: (groupId: number) => `${BASE}api/SubGroups?groupId=${groupId}`,
+  GET: (id: number) => `${BASE}api/SubGroups/${id}`,
+  GET_STUDENTS: (subGroupId: number) => `${BASE}api/SubGroups/${subGroupId}/students`,
+  ADD_STUDENT: (subGroupId: number, studentId: number) =>
+    `${BASE}api/SubGroups/add-student/${subGroupId}/${studentId}`,
+  REMOVE_STUDENT: (subGroupId: number, studentId: number) =>
+    `${BASE}api/SubGroups/remove-student/${subGroupId}/${studentId}`,
+  GET_STUDENT_SUBGROUPS: (studentId: number) =>
+    `${BASE}api/SubGroups/student/${studentId}/sub-groups`,
+  GET_ALL: `${BASE}api/SubGroups/all`,
+};
+
+export const DEVICE_TOKEN_URLS = {
+  REGISTER: `${BASE}api/DeviceToken/register`,
+  UNREGISTER: `${BASE}api/DeviceToken/unregister`,
 };
 
 // SignalR Hub URLs

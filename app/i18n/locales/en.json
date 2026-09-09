@@ -184,7 +184,15 @@
     "playServicesNotAvailable": "Google Play Services not available",
     "changePasswordFailed": "Failed to change password.",
     "selectTenant": "Select Your Academy",
-    "selectTenantSubtitle": "You are registered in multiple academies. Please select one to continue."
+    "selectTenantSubtitle": "You are registered in multiple academies. Please select one to continue.",
+    "voiceTitle": "Fill in your details by voice",
+    "voiceHint": "Tap the mic and say your name, email and password. You can edit the fields or say what to change.",
+    "voiceListening": "Listening... tap to stop",
+    "voiceProcessing": "Understanding what you said...",
+    "voiceMicDenied": "Microphone permission is required to fill your details by voice.",
+    "voiceRecordFailed": "Could not start recording, please try again.",
+    "voiceFailed": "Could not process your voice, please try again or fill the fields manually.",
+    "voiceDomainFirst": "Please enter your academy domain first."
   },
   "welcome": {
     "greeting": "Welcome 👋",
@@ -395,6 +403,10 @@
     "selectGroupOptional": "Select Group (Optional)",
     "loadingGroups": "Loading groups...",
     "noGroupsAvailable": "No groups available",
+    "audience": "Audience",
+    "sendToEveryone": "Everyone",
+    "sendToSpecific": "Specific groups",
+    "noSubGroups": "No sub-groups",
     "startLiveSession": "Start Live Session",
     "sessionCreatedSuccess": "Live session created successfully!",
     "createSessionFailed": "Failed to create session.",
@@ -521,7 +533,12 @@
     "createdAt": "Created",
     "active": "Active",
     "inactive": "Inactive",
-    "status": "Status"
+    "status": "Status",
+    "subGroups": "Sub-Groups",
+    "noSubGroups": "No sub-groups yet",
+    "subGroupDetails": "Sub-Group Details",
+    "addToSubGroup": "Add Student to Sub-Group",
+    "yourSubGroup": "Your Sub-Group"
   },
   "news": {
     "title": "News",

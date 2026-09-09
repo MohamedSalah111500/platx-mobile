@@ -198,11 +198,6 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   };
 
   const pickPaymentProof = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert(t('common.error'), t('checkout.permissionDenied'));
-      return;
-    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.8,

@@ -38,7 +38,7 @@ const AVATAR_COLORS = [
 type ListItem = { type: 'date'; label: string; key: string } | { type: 'msg'; data: ChatMessage; key: string };
 
 export default function ChatRoomScreen({ navigation, route }: Props) {
-  const { groupId, groupName, staffId, staffName, chatType } = route.params;
+  const { groupId, groupName, staffId, staffName, subGroupId, chatType } = route.params;
   const { theme } = useTheme();
   const { user, isStudent } = useAuth();
   const { t, isRTL } = useRTL();
@@ -50,18 +50,23 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
   const flatListRef = useRef<FlatList>(null);
 
   const isStaffChat = chatType === 'staff' && !!staffId;
+  const isSubGroupChat = chatType === 'subgroup' && !!subGroupId;
 
   useEffect(() => {
     loadMessages();
     const interval = setInterval(loadMessages, 10000);
     return () => clearInterval(interval);
-  }, [groupId, staffId]);
+  }, [groupId, staffId, subGroupId]);
 
   const loadMessages = async () => {
     try {
       let data: ChatMessage[];
       if (isStaffChat && staffId) {
         data = await chatApi.getMessagesWithStaff(groupId, staffId);
+      } else if (isSubGroupChat && subGroupId) {
+        data = isStudent
+          ? await chatApi.getMessagesForStudentSubGroup(subGroupId)
+          : await chatApi.getMessagesForTeacherSubGroup(subGroupId);
       } else if (isStudent) {
         data = await chatApi.getMessagesForStudent(groupId);
       } else {
@@ -85,6 +90,12 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
     try {
       if (isStaffChat && staffId) {
         await chatApi.sendToStaffFromStudent({ content: messageText, groupId, staffId });
+      } else if (isSubGroupChat && subGroupId) {
+        if (isStudent) {
+          await chatApi.sendToSubGroupFromStudent({ content: messageText, subGroupId });
+        } else {
+          await chatApi.sendToSubGroup({ content: messageText, subGroupId });
+        }
       } else if (isStudent) {
         await chatApi.sendToGroupFromStudent({ content: messageText, groupId });
       } else {
@@ -223,7 +234,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
           {isStaffChat ? (
             <Text style={[styles.headerAvatarText, { color: theme.colors.primary }]}>{headerInitial}</Text>
           ) : (
-            <Ionicons name="people" size={18} color={theme.colors.primary} />
+            <Ionicons name={isSubGroupChat ? 'git-branch-outline' : 'people'} size={18} color={theme.colors.primary} />
           )}
         </View>
         <View style={styles.headerInfo}>
@@ -231,7 +242,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
             {headerTitle}
           </Text>
           <Text style={[styles.headerSub, { color: theme.colors.textMuted }]}>
-            {isStaffChat ? t('chat.staff') : t('chat.members')}
+            {isStaffChat ? t('chat.staff') : isSubGroupChat ? t('groups.subGroups') : t('chat.members')}
           </Text>
         </View>
       </View>

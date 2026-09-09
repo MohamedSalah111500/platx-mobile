@@ -143,7 +143,7 @@ export default function ProfileScreen({ navigation }: Props) {
     <GradientBackground style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: spacing['3xl'] }}
       >
         {/* Purple header */}
         <View style={[styles.headerBg, { paddingTop: insets.top + spacing.lg, backgroundColor: theme.colors.primary }]}>

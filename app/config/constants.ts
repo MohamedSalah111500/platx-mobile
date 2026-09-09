@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   TENANT_NAME: 'tenant_name',
   TENANT_LOGO: 'tenant_logo',
   TENANT_COLOR: 'tenant_color',
+  PUSH_TOKEN: 'push_token',
 } as const;
 
 // API request timeout

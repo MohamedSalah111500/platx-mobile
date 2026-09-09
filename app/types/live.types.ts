@@ -55,12 +55,14 @@ export interface LiveMessage {
 
 export interface CreateLivePayload {
   liveName: string;
-  groupId?: number;
   isPaid?: boolean;
   price?: number | null;
   liveType?: LiveClassroomType;
   externalLink?: string;
   scheduledAt?: string;
+  sendToAll: boolean;
+  groupIds?: number[];
+  subGroupIds?: number[];
 }
 
 export interface JoinLivePayload {

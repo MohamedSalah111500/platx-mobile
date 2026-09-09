@@ -33,6 +33,7 @@ const HIDE_TAB_BAR_SCREENS = [
   'LessonPlayer',
   'LiveClassroom',
   'GroupDetail',
+  'SubGroupDetail',
   'NewsDetail',
   'EventDetail',
   'NotificationDetail',
@@ -67,18 +68,16 @@ export default function MainTabNavigator() {
 
   const baseTabBarStyle = {
     backgroundColor: theme.colors.tabBarBackground,
-    borderTopWidth: 0,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.border,
     height: TAB_BAR_HEIGHT + (Platform.OS === 'android' ? insets.bottom : 0),
     paddingBottom: bottomInset,
-    paddingTop: 10,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    position: 'absolute' as const,
+    paddingTop: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: theme.dark ? 0.3 : 0.08,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: theme.dark ? 0.2 : 0.04,
+    shadowRadius: 8,
+    elevation: 8,
   };
 
   const hiddenTabBarStyle = {
@@ -90,35 +89,30 @@ export default function MainTabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarIcon: ({ focused, color }) => {
-          const [filled, outlined] = TAB_ICONS[route.name] || ['ellipse', 'ellipse-outline'];
-          const iconName = focused ? filled : outlined;
-          return (
-            <View style={styles.iconContainer}>
-              <View
-                style={[
-                  styles.iconPill,
-                  focused && { backgroundColor: theme.colors.primaryLight },
-                ]}
-              >
-                <Ionicons name={iconName as any} size={isTablet ? 24 : 20} color={color} />
-              </View>
-            </View>
-          );
-        },
-        // react-navigation v7's default icon slot is a fixed 31x28 box, too
-        // small for the pill's own padding — widen it so the pill fits.
-        tabBarIconStyle: { width: 60, height: 36 },
+        tabBarIcon: ({ focused, color }) => (
+          <View
+            style={[
+              styles.iconPill,
+              focused && { backgroundColor: theme.colors.primaryLight },
+            ]}
+          >
+            <Ionicons
+              name={(focused ? TAB_ICONS[route.name]?.[0] : TAB_ICONS[route.name]?.[1]) as any || 'ellipse-outline'}
+              size={isTablet ? 23 : 20}
+              color={color}
+            />
+          </View>
+        ),
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.tabBarInactive,
         tabBarStyle: shouldHideTabBar(route) ? hiddenTabBarStyle : baseTabBarStyle,
         tabBarLabelStyle: {
-          fontSize: isTablet ? 13 : 11,
+          fontSize: isTablet ? 12 : 11,
           fontFamily: 'Cairo_600SemiBold',
-          marginTop: 2,
+          marginTop: 4,
         },
         tabBarItemStyle: {
-          paddingTop: 4,
+          paddingTop: 2,
         },
       })}
     >
@@ -149,13 +143,11 @@ export default function MainTabNavigator() {
 export { TAB_BAR_HEIGHT };
 
 const styles = StyleSheet.create({
-  iconContainer: {
+  iconPill: {
+    width: isTablet ? 48 : 42,
+    height: isTablet ? 32 : 28,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 999,
+    borderRadius: 12,
   },
 });

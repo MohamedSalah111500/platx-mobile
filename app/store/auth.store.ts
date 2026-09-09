@@ -4,6 +4,7 @@ import { STORAGE_KEYS, API_CONFIG } from '../config';
 import { authApi } from '../services/api/auth.api';
 import { setInMemoryToken, setOnUnauthorized } from '../services/api/client';
 import { signalRService } from '../services/realtime/signalr.service';
+import { unregisterPushNotifications } from '../services/realtime/pushNotifications';
 import { extractNumericId, extractTenantDomain } from '../utils/jwt';
 import { logger } from '../services/logger';
 import type {
@@ -278,6 +279,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   logout: async () => {
+    unregisterPushNotifications(get().token).catch(() => {});
     signalRService.stopConnection().catch(() => {});
     await AsyncStorage.multiRemove([
       STORAGE_KEYS.AUTH_TOKEN,
@@ -431,6 +433,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 }));
 
 setOnUnauthorized(() => {
+  signalRService.stopConnection().catch(() => {});
   useAuthStore.setState({
     user: null,
     token: null,
