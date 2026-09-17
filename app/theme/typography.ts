@@ -1,4 +1,4 @@
-// Font families — Cairo loaded in App.tsx via @expo-google-fonts/cairo
+// Font families — Cairo loaded in App.tsx from assets/fonts (metrics re-centred)
 export const fontFamily = {
   regular: 'Cairo_400Regular',
   medium: 'Cairo_500Medium',
@@ -28,8 +28,10 @@ export const fontWeight = {
 };
 
 // Line height multipliers (applied to fontSize to get absolute pixel values)
+// Cairo's glyphs are tall (Arabic ascenders/descenders), so "tight" can't go
+// much below 1.4 without clipping.
 export const lineHeightMultiplier = {
-  tight: 1.25,
+  tight: 1.4,
   normal: 1.5,
   relaxed: 1.75,
 } as const;
@@ -38,6 +40,25 @@ export const lineHeightMultiplier = {
 // Note: React Native requires lineHeight as absolute pixel values, not multipliers
 // On Android, custom fonts need fontFamily to set weight — fontWeight alone won't work
 export const typography = {
+  // Page titles — use these instead of ad-hoc sizes so every screen matches.
+  // screenTitle: large title at the top of a main/list screen.
+  screenTitle: {
+    fontFamily: fontFamily.bold,
+    fontSize: fontSize['2xl'],
+    lineHeight: 34,
+  },
+  // headerTitle: centred title in a header bar with a back button.
+  headerTitle: {
+    fontFamily: fontFamily.bold,
+    fontSize: fontSize.lg,
+    lineHeight: 28,
+  },
+  // sectionTitle: heading of a section inside a screen.
+  sectionTitle: {
+    fontFamily: fontFamily.bold,
+    fontSize: fontSize.lg,
+    lineHeight: 28,
+  },
   h1: {
     fontFamily: fontFamily.bold,
     fontSize: fontSize['4xl'],

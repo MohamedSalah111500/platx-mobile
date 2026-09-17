@@ -53,11 +53,11 @@ export default function HomeworkSubmissionsScreen({ navigation, route }: Props) 
   const statusMeta = (status: HomeworkSubmissionStatus, grade?: number | null) => {
     switch (status) {
       case HomeworkSubmissionStatus.Graded:
-        return { label: grade != null ? `${t('homework.graded')} · ${grade}` : t('homework.graded'), color: '#34C38F' };
+        return { label: grade != null ? `${t('homework.graded')} · ${grade}` : t('homework.graded'), color: theme.colors.success };
       case HomeworkSubmissionStatus.Submitted:
-        return { label: t('homework.submitted'), color: '#3B82F6' };
+        return { label: t('homework.submitted'), color: theme.colors.info };
       default:
-        return { label: t('homework.draft'), color: '#F59E0B' };
+        return { label: t('homework.draft'), color: theme.colors.warning };
     }
   };
 
@@ -102,7 +102,7 @@ export default function HomeworkSubmissionsScreen({ navigation, route }: Props) 
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
       <ScreenHeader title={homeworkName || t('homework.submissions')} onBack={() => navigation.goBack()} />
       {loading && items.length === 0 ? (
         <Spinner />

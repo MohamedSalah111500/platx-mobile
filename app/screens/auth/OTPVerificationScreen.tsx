@@ -137,9 +137,6 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
       alignItems: 'center',
       marginBottom: spacing['2xl'],
     },
-    iconText: {
-      fontSize: 36,
-    },
     title: {
       ...typography.h3,
       color: theme.colors.text,
@@ -169,9 +166,11 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
       borderColor: theme.colors.inputBorder,
       borderRadius: borderRadius.lg,
       textAlign: 'center',
+      textAlignVertical: 'center',
+      paddingVertical: 0,
       fontSize: fontSize.xl,
       fontFamily: 'Cairo_700Bold',
-      color: theme.colors.text,
+      color: theme.colors.inputText,
       backgroundColor: theme.colors.inputBackground,
     },
     otpInputFilled: {
@@ -191,6 +190,7 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
     },
     resendContainer: {
       flexDirection: 'row',
+      alignItems: 'center',
       justifyContent: 'center',
       marginTop: spacing.xl,
     },
@@ -221,9 +221,7 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
     >
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <Text style={styles.iconText}>
-            <Ionicons name={type === 'email_confirm' ? 'mail-outline' : 'lock-closed-outline'} size={48} color={theme.colors.primary} />
-          </Text>
+          <Ionicons name={type === 'email_confirm' ? 'mail-outline' : 'lock-closed-outline'} size={48} color={theme.colors.primary} />
         </View>
 
         <Text style={styles.title}>

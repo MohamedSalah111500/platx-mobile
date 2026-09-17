@@ -35,10 +35,20 @@
         "EXPO_PUBLIC_APP_ENV": "production"
       },
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "credentialsSource": "local"
       },
       "ios": {
         "simulator": false
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascApiKeyPath": "./AuthKey_5A92QT97Z2.p8",
+        "ascApiKeyId": "5A92QT97Z2",
+        "ascApiKeyIssuerId": "aa9faf8d-f9dd-417b-8fc9-d644b9bdff4c"
       }
     }
   }

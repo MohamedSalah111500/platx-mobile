@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -23,8 +24,14 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import * as WebBrowser from 'expo-web-browser';
 import { coursesApi } from '../../services/api/courses.api';
+import { reservationsApi } from '../../services/api/reservations.api';
 import { CERTIFICATE_URLS } from '../../services/api/endpoints';
-import type { Course, Section, Lesson } from '../../types/course.types';
+import { RESERVATION_STATUS, type StudentReservation } from '../../types/reservation.types';
+import { COURSE_AVAILABILITY, type Course, type Section, type Lesson } from '../../types/course.types';
+import { resolveCourseAvailability } from '../../utils/courseAvailability';
+import { CourseLockedNotice } from '../../components/course/CourseLockedNotice';
+import { CourseAvailabilityBadge } from '../../components/course/CourseAvailabilityBadge';
+import { CoursePrice } from '../../components/course/CoursePrice';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { useRTL } from '../../i18n/RTLProvider';
 import { useSound } from '../../hooks/useSound';
@@ -38,6 +45,16 @@ type Props = {
 const { width: SCREEN_W } = Dimensions.get('window');
 const HERO_HEIGHT = SCREEN_W * 0.56;
 
+type RequestStatus = 'none' | 'pending' | 'rejected';
+
+// Backend may serialize ReservationStatus as a number or as its name.
+function reservationStatusOf(r: StudentReservation | undefined): RequestStatus {
+  const s = r?.status;
+  if (s === RESERVATION_STATUS.Pending || String(s).toLowerCase() === 'pending') return 'pending';
+  if (s === RESERVATION_STATUS.Rejected || String(s).toLowerCase() === 'rejected') return 'rejected';
+  return 'none';
+}
+
 export default function CourseDetailScreen({ navigation, route }: Props) {
   const { courseId } = route.params;
   const { theme } = useTheme();
@@ -47,6 +64,8 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
 
   const isOwner = isAdmin || isStaff;
+  // In dark mode `divider` equals the card colour, so lines drawn on cards vanish.
+  const lineColor = theme.dark ? theme.colors.border : theme.colors.divider;
 
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,19 +74,31 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [certificateCode, setCertificateCode] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<number> | 'all'>('all');
+  const [requestStatus, setRequestStatus] = useState<RequestStatus>('none');
 
-  useEffect(() => { loadCourse(); }, [courseId]);
+  // Load on first focus, then refresh silently every time the screen regains
+  // focus (back from Checkout, or after staff approved the purchase request) so
+  // the CTA flips from "Buy now" to "Watch" without leaving the app.
+  const hasLoadedRef = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      loadCourse(hasLoadedRef.current);
+      hasLoadedRef.current = true;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [courseId, user?.studentId])
+  );
 
-  const loadCourse = async () => {
+  // Guards against an older in-flight load (e.g. before studentId resolved)
+  // finishing after a newer one and overwriting its enrollment/request state.
+  const loadSeq = useRef(0);
+
+  const loadCourse = async (silent = false) => {
+    const seq = ++loadSeq.current;
+    const stale = () => seq !== loadSeq.current;
     try {
       setError(null);
-      setLoading(true);
-      let data: Course | null = null;
-      try {
-        data = await coursesApi.getOnlineCourseSingle(courseId);
-      } catch {
-        data = await coursesApi.getSingle(courseId);
-      }
+      if (!silent) setLoading(true);
+      let data: Course | null = await coursesApi.getOnlineCourseSingle(courseId);
 
       if (data && !data.sections) {
         const raw = data as any;
@@ -99,30 +130,56 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
 
       }
 
+      if (stale()) return;
       setCourse(data);
+
+      // The course endpoint's isEnrolled flag is also true for Suspended/Cancelled
+      // enrollments, so once studentId is known the (status-filtered) enrollments
+      // list is the source of truth; the flag is only a fallback without it.
+      // The enrollments list is also where the certificate code lives.
+      const serverEnrolled = (data as any)?.isEnrolled === true;
+      let found = false;
+      // Stays true when the enrollments call fails, so we fall back to the flag.
+      let useServerFlag = !user?.studentId;
+      let status: RequestStatus = 'none';
+      const numCourseId = Number(courseId);
 
       if (user?.studentId) {
         try {
           const enrollments = await coursesApi.getStudentEnrollments(user.studentId);
-          const numCourseId = Number(courseId);
-          let found = false;
-          if (Array.isArray(enrollments)) {
-            for (const e of enrollments) {
-              const eCourseId = (e as any).courseId;
-              if ((typeof eCourseId === 'number' ? eCourseId : Number(String(eCourseId).trim())) === numCourseId) {
-                found = true;
-                setCertificateCode((e as any).certificateCode ?? null);
-                break;
-              }
+          for (const e of enrollments) {
+            const raw = (e as any).courseId ?? (e as any).course?.id;
+            if (Number(String(raw ?? '').trim()) === numCourseId) {
+              found = true;
+              setCertificateCode((e as any).certificateCode ?? null);
+              break;
             }
           }
-          setIsEnrolled(found);
-        } catch {}
+          useServerFlag = false;
+        } catch {
+          useServerFlag = true;
+        }
+
+        // Not enrolled yet → is there a purchase request in flight?
+        if (!found && !(useServerFlag && serverEnrolled)) {
+          try {
+            const mine = (await reservationsApi.getMine(user.studentId))
+              .filter((r) => Number(r.courseId) === numCourseId)
+              .sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+            status = reservationStatusOf(mine[0]);
+          } catch {}
+        }
       }
+
+      if (stale()) return;
+      if (!found) setCertificateCode(null);
+      setIsEnrolled(useServerFlag ? serverEnrolled || found : found);
+      setRequestStatus(status);
     } catch (err: any) {
+      if (stale()) return;
       setError(err?.userMessage || err?.message || 'Failed to load course details.');
     } finally {
-      setLoading(false);
+      if (!stale()) setLoading(false);
     }
   };
 
@@ -151,6 +208,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
       title: course?.title || course?.name,
       price: course?.price,
       discountPrice: course?.discountPrice,
+      currencyCode: course?.currencyCode,
       image: course?.previewImageUrl,
     });
   };
@@ -175,21 +233,39 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
     return null;
   };
 
+  // Lessons without enrollment only play when marked as free preview (the lesson
+  // endpoint strips the video/attachment otherwise).
+  const getFreePreviewLesson = (): Lesson | null => {
+    for (const section of course?.sections || []) {
+      const preview = section.lessons?.find((l: any) => l?.freePreview === true);
+      if (preview) return preview;
+    }
+    return null;
+  };
+
   const handleWatch = () => {
+    if (isLockedForStudent) return;
     if (isStudent && !user?.studentId) {
       Alert.alert(t('common.error'), t('courses.missingStudentId'));
       return;
     }
-    const firstLesson = getFirstLesson();
+    const firstLesson = isEnrolled || isOwner ? getFirstLesson() : getFreePreviewLesson();
     if (firstLesson) {
       play('swoosh');
-      navigation.navigate('LessonPlayer', { lessonId: firstLesson.id, courseId });
+      navigation.navigate('LessonPlayer', {
+        lessonId: firstLesson.id,
+        courseId,
+        isCompleted: lessonDone(firstLesson),
+        isEnrolled,
+      });
     } else {
       Alert.alert(t('common.info'), t('courses.noLessonsYet'));
     }
   };
 
   const hasLessons = course?.sections?.some((s) => s.lessons?.length > 0) ?? false;
+  const hasFreePreview = course?.sections?.some((s) => s.lessons?.some((l: any) => l?.freePreview === true)) ?? false;
+  const canWatch = isEnrolled || isOwner ? hasLessons : hasFreePreview;
 
   const toggleSection = (sectionId: number) => {
     setExpandedSections((prev) => {
@@ -207,11 +283,23 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
 
   const totalLessons = course?.sections?.reduce((n, s) => n + (s.lessons?.length || 0), 0) ?? 0;
   const isFree = course?.isFree || course?.price === 0;
+  const availability = resolveCourseAvailability(course);
+  const isLockedForStudent = !isOwner && availability !== COURSE_AVAILABILITY.Available;
 
   const lessonDone = (l: any): boolean => l?.isCompleated ?? l?.isCompleted ?? false;
 
+  // Mirrors web course-learning lockedLessonIds. Only students are gated —
+  // teachers/admins have no progress, so every quiz would look unsolved.
   const lockedLessonIds = (): number[] => {
-    if (!course?.quizPolicy) return [];
+    if (!isStudent || isOwner || !course?.quizPolicy) return [];
+    if (Number((course as any).quizPolicyScope) === 1) {
+      // Current-section-only: each section is gated by its own first unsolved quiz.
+      return (course.sections || []).flatMap((s) => {
+        const sectionLessons = s.lessons || [];
+        const idx = sectionLessons.findIndex((l) => l.type === 3 && !lessonDone(l));
+        return idx < 0 ? [] : sectionLessons.slice(idx + 1).map((l) => l.id);
+      });
+    }
     const lessons = (course?.sections || []).flatMap((s) => s.lessons || []);
     const quizIdx = lessons.findIndex((l) => l.type === 3 && !lessonDone(l));
     if (quizIdx < 0) return [];
@@ -219,13 +307,19 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
   };
 
   const openLesson = (lesson: Lesson) => {
+    if (isLockedForStudent) return;
     if (lockedIds.includes(lesson.id)) {
       play('pop');
       Alert.alert(t('common.info'), t('quiz.completeToContinue'));
       return;
     }
     play('tap');
-    navigation.navigate('LessonPlayer', { lessonId: lesson.id, courseId });
+    navigation.navigate('LessonPlayer', {
+      lessonId: lesson.id,
+      courseId,
+      isCompleted: lessonDone(lesson),
+      isEnrolled,
+    });
   };
 
   const handleViewCertificate = async () => {
@@ -255,7 +349,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
         <TouchableOpacity style={[styles.backBtnFloat, { backgroundColor: theme.colors.card, top: insets.top + spacing.sm }]} onPress={() => navigation.goBack()}>
           <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color={theme.colors.text} />
         </TouchableOpacity>
-        <ErrorRetry message={error || t('courses.courseNotFound')} onRetry={loadCourse} />
+        <ErrorRetry message={error || t('courses.courseNotFound')} onRetry={() => loadCourse()} />
       </View>
     );
   }
@@ -286,12 +380,12 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
           </View>
 
           {/* Play button — only the button itself is tappable, not the whole hero */}
-          {hasLessons && (
+          {canWatch && !isLockedForStudent && (
             <View style={styles.playCenter} pointerEvents="box-none">
               <TouchableOpacity onPress={handleWatch} activeOpacity={0.8}>
                 <View style={[styles.playRing, { borderColor: 'rgba(255,255,255,0.4)' }]}>
                   <View style={[styles.playBtnLarge, { backgroundColor: theme.colors.primary }]}>
-                    <Ionicons name="play" size={28} color="#fff" style={{ marginLeft: 3 }} />
+                    <Ionicons name="play" size={28} color="#fff" style={{ transform: [{ translateX: 2 }] }} />
                   </View>
                 </View>
               </TouchableOpacity>
@@ -299,24 +393,14 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
           )}
 
           {/* Bottom labels */}
+          {/* Price moved into the info card (see below) so the artwork stays clean. */}
           <View style={styles.heroBottom}>
-            {isFree ? (
-              <View style={styles.freeBadgeHero}>
-                <Text style={styles.freeBadgeHeroText}>{t('courses.free')}</Text>
-              </View>
-            ) : (
-              <View style={styles.priceBadgeHero}>
-                <Text style={styles.priceHeroMain}>${course.discountPrice || course.price || 0}</Text>
-                {course.discountPrice != null && course.discountPrice < (course.price || 0) && (
-                  <Text style={styles.priceHeroOld}>${course.price}</Text>
-                )}
-              </View>
-            )}
+            <CourseAvailabilityBadge availability={availability} forManager={isOwner} style={styles.availabilityBadge} />
           </View>
         </View>
 
         {/* ── Info card ── */}
-        <View style={[styles.infoCard, { backgroundColor: theme.colors.card }]}>
+        <View style={[styles.infoCard, { backgroundColor: theme.colors.card, borderColor: lineColor }]}>
           <Text style={[styles.courseTitle, { color: theme.colors.text }]}>
             {course.title || course.name || t('courses.untitled')}
           </Text>
@@ -331,15 +415,17 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
           ) : null}
 
           {/* Stats row */}
-          <View style={[styles.statsRow, { borderColor: theme.colors.divider }]}>
+          <View style={[styles.statsRow, { borderColor: lineColor }]}>
             {course.totalHours != null && (
-              <View style={styles.statItem}>
-                <Ionicons name="time-outline" size={16} color="#F5A623" />
-                <Text style={[styles.statValue, { color: theme.colors.text }]}>{course.totalHours}h</Text>
-                <Text style={[styles.statLabel, { color: theme.colors.textMuted }]}>{t('courses.total')}</Text>
-              </View>
+              <>
+                <View style={styles.statItem}>
+                  <Ionicons name="time-outline" size={16} color="#F5A623" />
+                  <Text style={[styles.statValue, { color: theme.colors.text }]}>{course.totalHours}h</Text>
+                  <Text style={[styles.statLabel, { color: theme.colors.textMuted }]}>{t('courses.total')}</Text>
+                </View>
+                <View style={[styles.statDivider, { backgroundColor: lineColor }]} />
+              </>
             )}
-            <View style={[styles.statDivider, { backgroundColor: theme.colors.divider }]} />
             <View style={styles.statItem}>
               <Ionicons name="layers-outline" size={16} color={theme.colors.primary} />
               <Text style={[styles.statValue, { color: theme.colors.text }]}>{totalLessons}</Text>
@@ -347,7 +433,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
             </View>
             {course.language ? (
               <>
-                <View style={[styles.statDivider, { backgroundColor: theme.colors.divider }]} />
+                <View style={[styles.statDivider, { backgroundColor: lineColor }]} />
                 <View style={styles.statItem}>
                   <Ionicons name="globe-outline" size={16} color="#3B82F6" />
                   <Text style={[styles.statValue, { color: theme.colors.text }]}>{course.language}</Text>
@@ -356,6 +442,15 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
               </>
             ) : null}
           </View>
+
+          {/* Price */}
+          <CoursePrice
+            price={course.price}
+            discountPrice={course.discountPrice}
+            currencyCode={course.currencyCode}
+            isFree={isFree}
+            style={styles.priceRow}
+          />
 
           {/* Extra info: certificate + last updated */}
           {(course.hasCertificate || course.updateTime) && (
@@ -382,10 +477,44 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
           ) : null}
         </View>
 
+        {isLockedForStudent && (
+          <CourseLockedNotice availability={availability} style={styles.lockedNotice} />
+        )}
+
+        {isOwner && (
+          <View style={[styles.manageCard, { backgroundColor: theme.colors.card, borderColor: lineColor }]}>
+            <Text style={[styles.manageHeading, { color: theme.colors.textMuted }]}>{t('courses.manage.title')}</Text>
+            {[
+              { key: 'settings', icon: 'options-outline', label: t('courses.manage.settings'), sub: t('courses.manage.settingsSub'), screen: 'CourseSettings' as const },
+              { key: 'students', icon: 'people-outline', label: t('courses.manage.students'), sub: t('courses.manage.studentsSub'), screen: 'CourseStudents' as const },
+              { key: 'requests', icon: 'mail-unread-outline', label: t('courses.manage.requests'), sub: t('courses.manage.requestsSub'), screen: 'EnrollmentRequests' as const },
+            ].map((row) => (
+              <TouchableOpacity
+                key={row.key}
+                style={styles.manageRow}
+                activeOpacity={0.7}
+                onPress={() => {
+                  play('tap');
+                  navigation.navigate(row.screen, { courseId, courseName: course.title || course.name });
+                }}
+              >
+                <View style={[styles.manageIcon, { backgroundColor: theme.colors.primary + '18' }]}>
+                  <Ionicons name={row.icon as any} size={18} color={theme.colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.manageTitle, { color: theme.colors.text }]}>{row.label}</Text>
+                  <Text style={[styles.manageSub, { color: theme.colors.textMuted }]} numberOfLines={1}>{row.sub}</Text>
+                </View>
+                <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         {/* ── Certificate card ── */}
         {certificateCode ? (
           <TouchableOpacity
-            style={[styles.certCard, { backgroundColor: theme.colors.card }]}
+            style={[styles.certCard, { backgroundColor: theme.colors.card, borderColor: lineColor }]}
             onPress={handleViewCertificate}
             activeOpacity={0.85}
           >
@@ -414,9 +543,9 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
               const isExpanded = expandedSections === 'all' || expandedSections.has(section.id);
               const lessonCount = section.lessons?.length || 0;
               return (
-                <View key={section.id} style={[styles.sectionCard, { backgroundColor: theme.colors.card }]}>
+                <View key={section.id} style={[styles.sectionCard, { backgroundColor: theme.colors.card, borderColor: lineColor }]}>
                   <TouchableOpacity
-                    style={[styles.sectionHeader, { borderBottomColor: theme.colors.divider, borderBottomWidth: isExpanded && lessonCount > 0 ? 1 : 0 }]}
+                    style={[styles.sectionHeader, { borderBottomColor: lineColor, borderBottomWidth: isExpanded && lessonCount > 0 ? 1 : 0 }]}
                     onPress={() => { play('pop'); toggleSection(section.id); }}
                     activeOpacity={0.7}
                   >
@@ -443,10 +572,13 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                     const isLink = lesson.type === 5;
                     const done = lessonDone(lesson);
                     const locked = lockedIds.includes(lesson.id);
+                    const durationSec = Number((lesson as any).durationInSeconds ?? 0);
+                    const durationMin = durationSec > 0 ? Math.max(1, Math.round(durationSec / 60)) : null;
 
                     const iconName = done ? 'checkmark-circle' : isLink ? 'link' : isFile ? 'download' : isDoc ? 'document-text' : isQuiz ? 'clipboard' : 'play-circle';
                     const iconColor = done ? '#34C38F' : isLink ? '#0EA5E9' : isFile ? '#8B5CF6' : isDoc ? '#3B82F6' : isQuiz ? '#F59E0B' : theme.colors.primary;
-                    const iconBg = done ? '#E8F8F0' : isLink ? '#E8F6FE' : isFile ? '#F3EEFF' : isDoc ? '#EFF6FF' : isQuiz ? '#FFFBEB' : theme.colors.primary + '15';
+                    const iconBg = iconColor + (theme.dark ? '26' : '18');
+                    const pillAlpha = theme.dark ? '26' : '1A';
 
                     return (
                       <TouchableOpacity
@@ -454,7 +586,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                         style={[
                           styles.lessonRow,
                           locked && { opacity: 0.55 },
-                          lIdx < lessonCount - 1 && { borderBottomWidth: 1, borderBottomColor: theme.colors.divider },
+                          lIdx < lessonCount - 1 && { borderBottomWidth: 1, borderBottomColor: lineColor },
                         ]}
                         onPress={() => openLesson(lesson)}
                         activeOpacity={0.65}
@@ -463,7 +595,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                         <Text style={[styles.lessonNum, { color: theme.colors.textMuted }]}>{lIdx + 1}</Text>
 
                         {/* Icon */}
-                        <View style={[styles.lessonIconWrap, { backgroundColor: theme.dark ? theme.colors.surface : iconBg }]}>
+                        <View style={[styles.lessonIconWrap, { backgroundColor: iconBg }]}>
                           <Ionicons name={iconName as any} size={17} color={iconColor} />
                         </View>
 
@@ -473,21 +605,21 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                             {lesson.title}
                           </Text>
                           <View style={styles.lessonMeta}>
-                            {lesson.duration != null && (
+                            {durationMin != null && (
                               <View style={styles.lessonMetaChip}>
                                 <Ionicons name="time-outline" size={11} color={theme.colors.textMuted} />
-                                <Text style={[styles.lessonMetaText, { color: theme.colors.textMuted }]}> {lesson.duration}m</Text>
+                                <Text style={[styles.lessonMetaText, { color: theme.colors.textMuted }]}>{durationMin} {t('exams.min')}</Text>
                               </View>
                             )}
-                            {isDoc && <View style={[styles.lessonTypePill, { backgroundColor: '#EFF6FF' }]}><Text style={[styles.lessonTypePillText, { color: '#3B82F6' }]}>{t('courses.document')}</Text></View>}
-                            {isFile && <View style={[styles.lessonTypePill, { backgroundColor: '#F3EEFF' }]}><Text style={[styles.lessonTypePillText, { color: '#8B5CF6' }]}>{t('courses.file')}</Text></View>}
-                            {isLink && <View style={[styles.lessonTypePill, { backgroundColor: '#E8F6FE' }]}><Text style={[styles.lessonTypePillText, { color: '#0EA5E9' }]}>{t('courses.link')}</Text></View>}
-                            {isQuiz && <View style={[styles.lessonTypePill, { backgroundColor: '#FFFBEB' }]}><Text style={[styles.lessonTypePillText, { color: '#F59E0B' }]}>{t('courses.exam')}</Text></View>}
+                            {isDoc && <View style={[styles.lessonTypePill, { backgroundColor: '#3B82F6' + pillAlpha }]}><Text style={[styles.lessonTypePillText, { color: '#3B82F6' }]}>{t('courses.document')}</Text></View>}
+                            {isFile && <View style={[styles.lessonTypePill, { backgroundColor: '#8B5CF6' + pillAlpha }]}><Text style={[styles.lessonTypePillText, { color: '#8B5CF6' }]}>{t('courses.file')}</Text></View>}
+                            {isLink && <View style={[styles.lessonTypePill, { backgroundColor: '#0EA5E9' + pillAlpha }]}><Text style={[styles.lessonTypePillText, { color: '#0EA5E9' }]}>{t('courses.link')}</Text></View>}
+                            {isQuiz && <View style={[styles.lessonTypePill, { backgroundColor: '#F59E0B' + pillAlpha }]}><Text style={[styles.lessonTypePillText, { color: '#F59E0B' }]}>{t('courses.exam')}</Text></View>}
                           </View>
                         </View>
 
                         {/* Lock or play arrow */}
-                        <View style={[styles.lessonArrow, { backgroundColor: theme.dark ? theme.colors.surface : (locked ? theme.colors.textMuted + '18' : theme.colors.primary + '12') }]}>
+                        <View style={[styles.lessonArrow, { backgroundColor: (locked ? theme.colors.textMuted : theme.colors.primary) + (theme.dark ? '26' : '14') }]}>
                           <Ionicons
                             name={locked ? 'lock-closed' : (isRTL ? 'chevron-back' : 'chevron-forward')}
                             size={14}
@@ -505,7 +637,8 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
       </ScrollView>
 
       {/* ── Sticky Action Bar ── */}
-      <View style={[styles.stickyBar, { backgroundColor: theme.colors.card, paddingBottom: insets.bottom + spacing.md, borderTopColor: theme.colors.divider }]}>
+      {!isLockedForStudent && (
+      <View style={[styles.stickyBar, { backgroundColor: theme.colors.card, paddingBottom: insets.bottom + spacing.md, borderTopColor: lineColor }]}>
         {isEnrolled || isOwner ? (
           <View style={styles.stickyActions}>
             <Button
@@ -528,38 +661,92 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
             )}
           </View>
         ) : (
-          <View style={styles.stickyActions}>
-            {hasLessons && (
-              <Button
-                title={t('courses.watch')}
-                onPress={handleWatch}
-                size="large"
-                variant="outline"
-                icon={<Ionicons name="play-circle" size={20} color={theme.colors.primary} />}
-                style={{ borderRadius: 16, flex: 1 }}
-              />
+          <>
+            {!isFree && requestStatus === 'rejected' && (
+              <Text style={[styles.requestNotice, { color: theme.colors.danger }]}>{t('courses.requestRejected')}</Text>
             )}
-            <Button
-              title={isFree ? t('courses.enrollForFree') : t('courses.buyNow')}
-              onPress={isFree ? handleEnroll : handlePurchase}
-              loading={enrolling}
-              size="large"
-              style={{ borderRadius: 16, flex: hasLessons ? 1.5 : undefined }}
-              fullWidth={!hasLessons}
-            />
-          </View>
+            <View style={styles.stickyActions}>
+              {hasFreePreview && (
+                <Button
+                  title={t('courses.watch')}
+                  onPress={handleWatch}
+                  size="large"
+                  variant="outline"
+                  icon={<Ionicons name="play-circle" size={20} color={theme.colors.primary} />}
+                  style={{ borderRadius: 16, flex: 1 }}
+                />
+              )}
+              {!isFree && requestStatus === 'pending' ? (
+                // Purchase request already sent — waiting for staff approval.
+                <Button
+                  title={t('courses.pendingRequest')}
+                  onPress={() => {}}
+                  disabled
+                  size="large"
+                  variant="outline"
+                  icon={<Ionicons name="time-outline" size={20} color={theme.colors.primary} />}
+                  style={{ borderRadius: 16, flex: hasFreePreview ? 1.5 : undefined }}
+                  fullWidth={!hasFreePreview}
+                />
+              ) : (
+                <Button
+                  title={isFree ? t('courses.enrollForFree') : t('courses.buyNow')}
+                  onPress={isFree ? handleEnroll : handlePurchase}
+                  loading={enrolling}
+                  size="large"
+                  style={{ borderRadius: 16, flex: hasFreePreview ? 1.5 : undefined }}
+                  fullWidth={!hasFreePreview}
+                />
+              )}
+            </View>
+          </>
         )}
       </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  availabilityBadge: { marginTop: 8 },
+  requestNotice: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  lockedNotice: { marginHorizontal: spacing.lg, marginBottom: spacing.lg },
+  manageCard: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    paddingVertical: spacing.xs,
+  },
+  manageHeading: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Cairo_600SemiBold',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  manageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  manageIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  manageTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold' },
+  manageSub: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular' },
 
   backBtnFloat: {
     position: 'absolute',
-    left: spacing.xl,
+    start: spacing.xl,
     width: 42,
     height: 42,
     borderRadius: 14,
@@ -572,8 +759,8 @@ const styles = StyleSheet.create({
   heroNav: {
     position: 'absolute',
     top: 0,
-    left: 0,
-    right: 0,
+    start: 0,
+    end: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
@@ -587,7 +774,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   playCenter: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -609,50 +796,24 @@ const styles = StyleSheet.create({
   heroBottom: {
     position: 'absolute',
     bottom: spacing.lg,
-    left: spacing.xl,
-    right: spacing.xl,
+    start: spacing.xl,
+    end: spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  freeBadgeHero: {
-    backgroundColor: '#34C38F',
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-    borderRadius: 10,
-  },
-  freeBadgeHeroText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Cairo_700Bold',
-    color: '#fff',
-  },
-  priceBadgeHero: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  priceHeroMain: {
-    fontSize: fontSize.xl,
-    fontFamily: 'Cairo_700Bold',
-    color: '#fff',
-  },
-  priceHeroOld: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Cairo_500Medium',
-    color: 'rgba(255,255,255,0.6)',
-    textDecorationLine: 'line-through',
+  priceRow: {
+    marginBottom: spacing.lg,
   },
 
   // Info card
+  // Card and background are both pure white in the light theme, so the cards on
+  // this screen need a hairline border to read as cards at all.
   infoCard: {
     marginTop: -20,
     marginHorizontal: spacing.xl,
     borderRadius: 22,
     padding: spacing.xl,
-    
+    borderWidth: 1,
   },
   courseTitle: {
     fontSize: fontSize.xl,
@@ -697,7 +858,6 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
-    marginTop: 2,
   },
   statLabel: {
     fontSize: 10,
@@ -732,6 +892,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     marginHorizontal: spacing.xl,
     borderRadius: 18,
+    borderWidth: 1,
     padding: spacing.lg,
   },
   certIcon: {
@@ -764,8 +925,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   sectionsHeading: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Cairo_700Bold',
+    ...typography.sectionTitle,
   },
   sectionsCount: {
     fontSize: fontSize.sm,
@@ -773,9 +933,9 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     borderRadius: 18,
+    borderWidth: 1,
     overflow: 'hidden',
     marginBottom: spacing.sm,
-    
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -842,6 +1002,7 @@ const styles = StyleSheet.create({
   lessonMetaChip: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 3,
   },
   lessonMetaText: {
     fontSize: 11,
@@ -868,8 +1029,8 @@ const styles = StyleSheet.create({
   stickyBar: {
     position: 'absolute',
     bottom: 0,
-    left: 0,
-    right: 0,
+    start: 0,
+    end: 0,
     paddingTop: spacing.md,
     paddingHorizontal: spacing.xl,
     borderTopWidth: 1,

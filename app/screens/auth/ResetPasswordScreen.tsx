@@ -78,9 +78,6 @@ export default function ResetPasswordScreen({ navigation, route }: Props) {
       alignSelf: 'center',
       marginBottom: spacing['2xl'],
     },
-    iconText: {
-      fontSize: 36,
-    },
     title: {
       ...typography.h3,
       color: theme.colors.text,
@@ -98,8 +95,8 @@ export default function ResetPasswordScreen({ navigation, route }: Props) {
       borderRadius: borderRadius.lg,
       padding: spacing.md,
       marginBottom: spacing.lg,
-      borderLeftWidth: 3,
-      borderLeftColor: theme.colors.danger,
+      borderStartWidth: 3,
+      borderStartColor: theme.colors.danger,
     },
     errorText: {
       ...typography.bodySmall,

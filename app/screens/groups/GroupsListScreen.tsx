@@ -34,6 +34,16 @@ export default function GroupsListScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const loadGroups = async () => {
+    // Student id is resolved after login (api/Students/me) and the effect re-runs
+    // once it arrives. If it never does we can't call the student endpoint at all,
+    // so show a retry instead of spinning forever.
+    if (isStudent && !user?.studentId) {
+      setGroups([]);
+      setError(t('groups.failedToLoadGroups'));
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     try {
       setError(null);
       if (isStudent && user?.studentId) {
@@ -57,7 +67,7 @@ export default function GroupsListScreen({ navigation }: Props) {
         setGroups(items);
       }
     } catch (err: any) {
-      const msg = err?.userMessage || err?.message || 'Failed to load groups.';
+      const msg = err?.userMessage || err?.message || t('groups.failedToLoadGroups');
       setError(msg);
       setGroups([]);
     } finally {
@@ -68,12 +78,12 @@ export default function GroupsListScreen({ navigation }: Props) {
 
   useEffect(() => {
     loadGroups();
-  }, []);
+  }, [isStudent, user?.studentId]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     loadGroups();
-  }, []);
+  }, [isStudent, user?.studentId]);
 
   const renderItem = ({ item }: { item: Group }) => (
     <TouchableOpacity
@@ -91,13 +101,13 @@ export default function GroupsListScreen({ navigation }: Props) {
         <View style={styles.groupStats}>
           {item.studentsCount != null && (
             <View style={styles.statItem}>
-              <Ionicons name="school-outline" size={12} color={theme.colors.textMuted} style={{ marginRight: 2 }} />
+              <Ionicons name="school-outline" size={12} color={theme.colors.textMuted} />
               <Text style={styles.groupMembers}>{item.studentsCount} {t('groups.students')}</Text>
             </View>
           )}
           {item.nextDueDate ? (
             <View style={styles.statItem}>
-              <Ionicons name="calendar-outline" size={12} color={theme.colors.textMuted} style={{ marginRight: 2 }} />
+              <Ionicons name="calendar-outline" size={12} color={theme.colors.textMuted} />
               <Text style={styles.groupMembers}>{item.nextDueDate}</Text>
             </View>
           ) : null}
@@ -130,7 +140,7 @@ export default function GroupsListScreen({ navigation }: Props) {
       backgroundColor: theme.colors.primaryLight,
       justifyContent: 'center',
       alignItems: 'center',
-      marginRight: spacing.md,
+      marginEnd: spacing.md,
     },
     groupInfo: {
       flex: 1,
@@ -153,6 +163,7 @@ export default function GroupsListScreen({ navigation }: Props) {
     statItem: {
       flexDirection: 'row',
       alignItems: 'center',
+      gap: 4,
     },
     groupMembers: {
       ...typography.caption,
@@ -169,7 +180,7 @@ export default function GroupsListScreen({ navigation }: Props) {
         renderItem={renderItem}
         keyExtractor={(item, idx) => item?.id != null ? item.id.toString() : `group-${idx}`}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} colors={[theme.colors.primary]} />
         }
         ListEmptyComponent={
           loading ? (

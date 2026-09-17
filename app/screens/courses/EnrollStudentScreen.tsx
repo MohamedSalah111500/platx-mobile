@@ -19,7 +19,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, typography } from '../../theme/typography';
 import { studentsApi, type TopStudent } from '../../services/api/students.api';
 import { reservationsApi } from '../../services/api/reservations.api';
 import type { HomeStackParamList } from '../../types/navigation.types';
@@ -193,9 +193,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
   },
-  backBtn: { width: 22, alignItems: 'flex-start' },
-  headerTitle: { fontSize: fontSize.lg, fontFamily: 'Cairo_700Bold' },
-  headerSubtitle: { fontSize: fontSize.xs, fontFamily: 'Cairo_400Regular', marginTop: 1 },
+  backBtn: { width: 22, height: 32, justifyContent: 'center', alignItems: 'flex-start' },
+  headerTitle: { ...typography.headerTitle },
+  headerSubtitle: { fontSize: fontSize.xs, fontFamily: 'Cairo_400Regular' },
 
   studentRow: {
     flexDirection: 'row',

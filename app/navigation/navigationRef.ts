@@ -12,3 +12,12 @@ export function navigateToNotifications() {
     params: { screen: 'NotificationsList' },
   });
 }
+
+export function navigateToCourse(courseId: number) {
+  if (!navigationRef.isReady()) return;
+  if (!useAuthStore.getState().isAuthenticated) return;
+  (navigationRef.navigate as (name: string, params?: object) => void)('Main', {
+    screen: 'HomeTab',
+    params: { screen: 'CourseDetail', params: { courseId } },
+  });
+}

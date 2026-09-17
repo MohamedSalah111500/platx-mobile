@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, StyleSheet, Image, Dimensions, AppState } from 'react-native';
 import * as Notifications from 'expo-notifications';
 
 import { useAuthStore } from '../store/auth.store';
@@ -15,6 +15,9 @@ import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
 import LiveClassroomScreen from '../screens/live/LiveClassroomScreen';
 import WelcomeSplash from '../components/WelcomeSplash';
+import UpdateRequiredScreen from '../screens/UpdateRequiredScreen';
+import { useUIStore } from '../store/ui.store';
+import { checkAppVersion } from '../services/appVersionGate';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -45,6 +48,7 @@ export default function RootNavigator() {
   const showWelcome = useAuthStore((s) => s.showWelcome);
   const restoreSession = useAuthStore((s) => s.restoreSession);
   const { theme } = useTheme();
+  const updateRequired = useUIStore((s) => s.updateRequired);
   const [bootstrapped, setBootstrapped] = useState(false);
 
   useEffect(() => {
@@ -57,6 +61,11 @@ export default function RootNavigator() {
         setBootstrapped(true);
       }
     }, STARTUP_HARD_TIMEOUT_MS);
+
+    // Not a startup step: runStartup runs steps in series, so a slow version
+    // check would hold the splash up. The gate is an overlay — it appears by
+    // itself as soon as the store updates.
+    checkAppVersion(true);
 
     runStartup([
       {
@@ -74,6 +83,13 @@ export default function RootNavigator() {
       clearTimeout(ceiling);
     };
   }, [restoreSession]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') checkAppVersion();
+    });
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener(() => {
@@ -127,13 +143,18 @@ export default function RootNavigator() {
 
       {isAuthenticated && showWelcome && <WelcomeSplash />}
       {!bootstrapped && <BrandedLoading />}
+      {updateRequired && (
+        <View style={StyleSheet.absoluteFill}>
+          <UpdateRequiredScreen />
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   splash: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#121935',
     justifyContent: 'center',
     alignItems: 'center',

@@ -1,7 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Audio } from 'expo-av';
+import {
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+} from 'expo-audio';
 
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
@@ -22,18 +27,18 @@ export function VoiceRegisterAssistant({ domain, currentFields, onFieldsExtracte
   const { theme } = useTheme();
   const { t, isRTL } = useRTL();
 
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [isRecording, setIsRecording] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [followUp, setFollowUp] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const stopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const recordingRef = useRef<Audio.Recording | null>(null);
+  const isRecordingRef = useRef(false);
 
   useEffect(() => () => {
     if (stopTimer.current) clearTimeout(stopTimer.current);
-    recordingRef.current?.stopAndUnloadAsync().catch(() => undefined);
-  }, []);
+    if (isRecordingRef.current) recorder.stop().catch(() => undefined);
+  }, [recorder]);
 
   const startRecording = async () => {
     setErrorMessage('');
@@ -42,35 +47,32 @@ export function VoiceRegisterAssistant({ domain, currentFields, onFieldsExtracte
       return;
     }
     try {
-      const permission = await Audio.requestPermissionsAsync();
+      const permission = await requestRecordingPermissionsAsync();
       if (!permission.granted) {
         setErrorMessage(t('auth.voiceMicDenied'));
         return;
       }
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const rec = new Audio.Recording();
-      await rec.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      await rec.startAsync();
-      recordingRef.current = rec;
-      setRecording(rec);
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+      isRecordingRef.current = true;
       setIsRecording(true);
-      stopTimer.current = setTimeout(() => stopRecording(rec), MAX_RECORDING_MS);
+      stopTimer.current = setTimeout(() => stopRecording(), MAX_RECORDING_MS);
     } catch {
       setErrorMessage(t('auth.voiceRecordFailed'));
     }
   };
 
-  const stopRecording = async (rec: Audio.Recording | null = recording) => {
-    if (!rec) return;
+  const stopRecording = async () => {
+    if (!isRecordingRef.current) return;
     if (stopTimer.current) clearTimeout(stopTimer.current);
+    isRecordingRef.current = false;
     setIsRecording(false);
-    setRecording(null);
-    recordingRef.current = null;
     let uri: string | null = null;
     try {
-      await rec.stopAndUnloadAsync();
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
-      uri = rec.getURI();
+      await recorder.stop();
+      await setAudioModeAsync({ allowsRecording: false });
+      uri = recorder.uri;
     } catch {
       setErrorMessage(t('auth.voiceRecordFailed'));
       return;
@@ -115,13 +117,13 @@ export function VoiceRegisterAssistant({ domain, currentFields, onFieldsExtracte
       paddingHorizontal: spacing.lg,
       borderRadius: borderRadius.full,
       borderWidth: 1,
-      borderColor: isRecording ? '#EF4444' : theme.colors.primary,
-      backgroundColor: isRecording ? '#EF444415' : 'transparent',
+      borderColor: isRecording ? theme.colors.danger : theme.colors.primary,
+      backgroundColor: isRecording ? theme.colors.danger + '15' : 'transparent',
     },
     pillText: {
       ...typography.body,
       fontFamily: fontFamily.semibold,
-      color: isRecording ? '#EF4444' : theme.colors.primary,
+      color: isRecording ? theme.colors.danger : theme.colors.primary,
     },
     status: {
       ...typography.body,
@@ -137,7 +139,7 @@ export function VoiceRegisterAssistant({ domain, currentFields, onFieldsExtracte
     },
     error: {
       ...typography.body,
-      color: '#EF4444',
+      color: theme.colors.danger,
       marginTop: spacing.sm,
       textAlign: isRTL ? 'right' : 'left',
     },
@@ -153,7 +155,7 @@ export function VoiceRegisterAssistant({ domain, currentFields, onFieldsExtracte
           activeOpacity={0.8}
           accessibilityLabel={t('auth.voiceHint')}
         >
-          <Ionicons name={isRecording ? 'stop' : 'mic'} size={18} color={isRecording ? '#EF4444' : theme.colors.primary} />
+          <Ionicons name={isRecording ? 'stop' : 'mic'} size={18} color={isRecording ? theme.colors.danger : theme.colors.primary} />
           <Text style={styles.pillText}>{t(isRecording ? 'auth.voiceListening' : 'auth.voiceTitle')}</Text>
         </TouchableOpacity>
         {processing && (

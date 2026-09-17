@@ -21,7 +21,7 @@ export function ErrorBanner({ message, style }: ErrorBannerProps) {
         styles.container,
         {
           backgroundColor: theme.colors.danger + '15',
-          borderLeftColor: theme.colors.danger,
+          borderStartColor: theme.colors.danger,
         },
         style,
       ]}
@@ -36,11 +36,10 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius['2xl'],
     padding: spacing.md,
     marginBottom: spacing.lg,
-    borderLeftWidth: 3,
+    borderStartWidth: 3,
   },
   text: {
     ...typography.bodySmall,
-    textAlign: 'left',
   },
 });
 

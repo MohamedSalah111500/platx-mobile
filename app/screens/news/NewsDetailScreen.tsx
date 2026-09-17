@@ -13,6 +13,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { Badge } from '../../components/ui/Badge';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import NewsPhotoViewerModal from '../../components/news/NewsPhotoViewerModal';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -24,7 +25,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'NewsDetail'>;
 export default function NewsDetailScreen({ navigation, route }: Props) {
   const { newsItem } = route.params;
   const { theme } = useTheme();
-  const { t, isRTL } = useRTL();
+  const { t } = useRTL();
   const [photoViewerVisible, setPhotoViewerVisible] = useState(false);
 
   const formatDate = (dateStr?: string) => {
@@ -46,14 +47,6 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: spacing.xl,
-      paddingVertical: spacing.lg,
-    },
-    backButton: { marginRight: spacing.md },
-    headerTitle: { ...typography.h4, color: theme.colors.text },
     content: { paddingBottom: spacing['3xl'] },
     imageContainer: {
       width: '100%',
@@ -95,6 +88,7 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
     metaItem: {
       flexDirection: 'row',
       alignItems: 'center',
+      gap: 4,
     },
     metaText: { ...typography.caption, color: theme.colors.textMuted },
     divider: {
@@ -119,7 +113,7 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
     },
     commentsButtonText: {
       ...typography.body,
-      fontWeight: '700',
+      fontFamily: 'Cairo_700Bold',
     },
     emptyContainer: {
       flex: 1,
@@ -132,13 +126,8 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
 
   if (!newsItem) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('news.title')}</Text>
-        </View>
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+        <ScreenHeader title={t('news.title')} onBack={() => navigation.goBack()} />
         <View style={styles.emptyContainer}>
           <Ionicons name="newspaper-outline" size={48} color={theme.colors.textMuted} />
           <Text style={styles.emptyText}>{t('news.newsNotFound')}</Text>
@@ -148,13 +137,8 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('news.title')}</Text>
-      </View>
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <ScreenHeader title={t('news.title')} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Hero Image */}
@@ -191,13 +175,13 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
             ) : null}
             {newsItem.staffName ? (
               <View style={styles.metaItem}>
-                <Ionicons name="person-outline" size={14} color={theme.colors.textMuted} style={{ marginRight: 4 }} />
+                <Ionicons name="person-outline" size={14} color={theme.colors.textMuted} />
                 <Text style={styles.metaText}>{newsItem.staffName}</Text>
               </View>
             ) : null}
             {dateStr ? (
               <View style={styles.metaItem}>
-                <Ionicons name="calendar-outline" size={14} color={theme.colors.textMuted} style={{ marginRight: 4 }} />
+                <Ionicons name="calendar-outline" size={14} color={theme.colors.textMuted} />
                 <Text style={styles.metaText}>{dateStr}</Text>
               </View>
             ) : null}

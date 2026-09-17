@@ -15,6 +15,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useRTL } from '../../i18n/RTLProvider';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { liveApi } from '../../services/api/live.api';
@@ -33,7 +34,7 @@ const SCHEDULE_PRESETS = [0, 30, 60, 24 * 60];
 export default function CreateLiveScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { user } = useAuth();
-  const { t, isRTL } = useRTL();
+  const { t } = useRTL();
   const [title, setTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -151,15 +152,7 @@ export default function CreateLiveScreen({ navigation }: Props) {
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: spacing.xl,
-      paddingVertical: spacing.lg,
-    },
-    backButton: { marginRight: spacing.md },
-    headerTitle: { ...typography.h4, color: theme.colors.text },
-    content: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
+    content: { paddingHorizontal: spacing.xl, paddingTop: spacing.sm },
     label: {
       ...typography.bodySmall,
       color: theme.colors.textSecondary,
@@ -199,6 +192,7 @@ export default function CreateLiveScreen({ navigation }: Props) {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
+      gap: spacing.md,
     },
     expandBtn: {
       paddingHorizontal: spacing.sm,
@@ -206,7 +200,7 @@ export default function CreateLiveScreen({ navigation }: Props) {
     },
     subGroupList: {
       marginTop: spacing.xs,
-      marginLeft: spacing.xl,
+      marginStart: spacing.xl,
       gap: spacing.xs,
     },
     subGroupOption: {
@@ -217,18 +211,13 @@ export default function CreateLiveScreen({ navigation }: Props) {
       borderRadius: borderRadius.md,
       borderWidth: 1,
     },
-    groupOptionText: { ...typography.body, flex: 1, marginLeft: spacing.md },
+    groupOptionText: { ...typography.body, flex: 1 },
     footer: { paddingHorizontal: spacing.xl, paddingVertical: spacing.xl },
   });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('live.createLiveSession')}</Text>
-      </View>
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <ScreenHeader title={t('live.createLiveSession')} onBack={() => navigation.goBack()} />
 
       <ScrollView>
         <View style={styles.content}>

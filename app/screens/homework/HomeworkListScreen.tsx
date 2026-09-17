@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { spacing } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, typography } from '../../theme/typography';
 import { homeworkApi } from '../../services/api/homework.api';
 import type { HomeworkStackParamList } from '../../types/navigation.types';
 import {
@@ -43,6 +43,7 @@ export default function HomeworkListScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const loadingMoreRef = useRef(false);
 
   const load = useCallback(
     async (p = 1, refresh = false) => {
@@ -81,7 +82,11 @@ export default function HomeworkListScreen({ navigation }: Props) {
   };
 
   const handleLoadMore = () => {
-    if (!loading && hasMore) load(page + 1);
+    if (loadingMoreRef.current || loading || !hasMore) return;
+    loadingMoreRef.current = true;
+    load(page + 1).finally(() => {
+      loadingMoreRef.current = false;
+    });
   };
 
   const statusMeta = (status?: HomeworkSubmissionStatus | null, grade?: number | null) => {
@@ -89,13 +94,13 @@ export default function HomeworkListScreen({ navigation }: Props) {
       case HomeworkSubmissionStatus.Graded:
         return {
           label: grade != null ? `${t('homework.graded')} · ${grade}` : t('homework.graded'),
-          color: '#34C38F',
+          color: theme.colors.success,
           icon: 'ribbon-outline' as const,
         };
       case HomeworkSubmissionStatus.Submitted:
-        return { label: t('homework.submitted'), color: '#3B82F6', icon: 'checkmark-circle-outline' as const };
+        return { label: t('homework.submitted'), color: theme.colors.info, icon: 'checkmark-circle-outline' as const };
       case HomeworkSubmissionStatus.Draft:
-        return { label: t('homework.draft'), color: '#F59E0B', icon: 'create-outline' as const };
+        return { label: t('homework.draft'), color: theme.colors.warning, icon: 'create-outline' as const };
       default:
         return { label: t('homework.notStarted'), color: theme.colors.textMuted, icon: 'ellipse-outline' as const };
     }
@@ -139,7 +144,7 @@ export default function HomeworkListScreen({ navigation }: Props) {
             {overdue && (
               <>
                 <Text style={[styles.metaDot, { color: theme.colors.textMuted }]}>·</Text>
-                <Text style={[styles.metaText, { color: '#EF4444' }]}>{t('homework.overdue')}</Text>
+                <Text style={[styles.metaText, { color: theme.colors.danger }]}>{t('homework.overdue')}</Text>
               </>
             )}
           </View>
@@ -168,9 +173,9 @@ export default function HomeworkListScreen({ navigation }: Props) {
           <Ionicons
             name={item.isPublished ? 'checkmark-circle-outline' : 'create-outline'}
             size={11}
-            color={item.isPublished ? '#34C38F' : '#F59E0B'}
+            color={item.isPublished ? theme.colors.success : theme.colors.warning}
           />
-          <Text style={[styles.metaText, { color: item.isPublished ? '#34C38F' : '#F59E0B' }]}>
+          <Text style={[styles.metaText, { color: item.isPublished ? theme.colors.success : theme.colors.warning }]}>
             {item.isPublished ? t('homework.published') : t('homework.draft')}
           </Text>
           <Text style={[styles.metaDot, { color: theme.colors.textMuted }]}>·</Text>
@@ -255,8 +260,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: fontSize.xl,
-    fontFamily: 'Cairo_700Bold',
+    ...typography.screenTitle,
+    flex: 1,
   },
   listContent: {
     paddingHorizontal: spacing.lg,

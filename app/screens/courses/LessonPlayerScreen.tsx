@@ -14,9 +14,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { WebView } from 'react-native-webview';
 import * as WebBrowser from 'expo-web-browser';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import * as IntentLauncher from 'expo-intent-launcher';
 import { usePreventScreenCapture } from 'expo-screen-capture';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
+import { useAuth } from '../../hooks/useAuth';
 import { Spinner } from '../../components/ui/Spinner';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
@@ -24,6 +28,9 @@ import { coursesApi } from '../../services/api/courses.api';
 import { getToken } from '../../services/api/client';
 import { FILE_MANAGER_URLS } from '../../services/api/endpoints';
 import type { CoursesStackParamList } from '../../types/navigation.types';
+import type { CourseAvailability } from '../../types/course.types';
+import { isCourseLocked, resolveCourseAvailability } from '../../utils/courseAvailability';
+import { CourseLockedNotice } from '../../components/course/CourseLockedNotice';
 import type { Lesson } from '../../types/course.types';
 import { useRTL } from '../../i18n/RTLProvider';
 import { useSound } from '../../hooks/useSound';
@@ -42,24 +49,69 @@ function buildPlayerHtml(embedUrl: string): string {
   return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#000;overflow:hidden}iframe{position:absolute;inset:0;width:100%;height:100%;border:0}</style></head><body><iframe src="${embedUrl}" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></body></html>`;
 }
 
+const MIME_EXT: Record<string, string> = {
+  'application/pdf': 'pdf',
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'text/plain': 'txt',
+  'application/zip': 'zip',
+  'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.ms-powerpoint': 'ppt',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+};
+
+// Pick a safe local file name for a downloaded attachment: prefer the server's
+// Content-Disposition name (keeps the real extension), else derive one from the
+// MIME type. Non-ASCII is stripped so file:// / content:// URIs stay valid.
+function pickFileName(disposition: string | undefined, id: number, mimeType: string): string {
+  const star = disposition?.match(/filename\*=(?:UTF-8'')?([^;]+)/i)?.[1];
+  const plain = disposition?.match(/filename="?([^";]+)"?/i)?.[1];
+  let name = '';
+  try {
+    name = star ? decodeURIComponent(star.trim()) : (plain?.trim() ?? '');
+  } catch {
+    name = plain?.trim() ?? '';
+  }
+  const extFromName = name.includes('.') ? name.split('.').pop() : undefined;
+  const ext = (extFromName && /^[A-Za-z0-9]{1,6}$/.test(extFromName) ? extFromName : MIME_EXT[mimeType]) || 'bin';
+  const base = (name ? name.replace(/\.[^.]*$/, '') : '').replace(/[^A-Za-z0-9._-]+/g, '_').replace(/^_+|_+$/g, '');
+  return `${base || `lesson-file-${id}`}.${ext.toLowerCase()}`;
+}
+
 export default function LessonPlayerScreen({ navigation, route }: Props) {
-  const { lessonId, courseId } = route.params;
+  // Completion/enrollment come from CourseDetail's section data: CheckForStudent
+  // never fills IsCompleated, and the complete endpoint is a toggle.
+  const { lessonId, courseId, isCompleted: routeCompleted, isEnrolled: routeEnrolled } =
+    route.params;
   const { theme } = useTheme();
   const { t, isRTL } = useRTL();
   const { play } = useSound();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [completed, setCompleted] = useState(false);
+  const [completed, setCompleted] = useState(routeCompleted ?? false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoResolving, setVideoResolving] = useState(false);
   const [quizPolicy, setQuizPolicy] = useState(0);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [docViewerOpen, setDocViewerOpen] = useState(false);
+  // Attachment downloaded into the app cache (authenticated), reused by open/download.
+  const [localFile, setLocalFile] = useState<{ uri: string; mimeType: string } | null>(null);
+  const [fileBusy, setFileBusy] = useState<'open' | 'download' | null>(null);
 
   // Block screenshots/screen recording while a lesson video is open, to protect
   // paid course content from being captured.
   usePreventScreenCapture('lesson-player');
+
+  const { isStudent, user } = useAuth();
+  // Only enrolled students have progress; the complete endpoint rejects anyone else.
+  const canComplete = isStudent && (routeEnrolled ?? (lesson as any)?.isEnrolled === true);
+  const [lockedAvailability, setLockedAvailability] = useState<CourseAvailability | null>(null);
 
   const isQuiz = lesson?.type === 3;
   const isDocOrFile = lesson?.type === 2 || lesson?.type === 4;
@@ -73,16 +125,20 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
     try {
       setError(null);
       setLoading(true);
-      const data = await coursesApi.getLessonVideo(lessonId);
-      setLesson(data);
-      setCompleted((data as any)?.isCompleted ?? (data as any)?.isCompleated ?? false);
+      const [data, course] = await Promise.all([
+        coursesApi.getLessonVideo(lessonId),
+        courseId ? coursesApi.getOnlineCourseSingle(courseId).catch(() => null) : Promise.resolve(null),
+      ]);
 
-      if (data?.type === 3 && courseId) {
-        try {
-          const course = await coursesApi.getOnlineCourseSingle(courseId);
-          setQuizPolicy((course as any)?.quizPolicy ?? 0);
-        } catch {}
+      if (course && isStudent && isCourseLocked(course)) {
+        setLockedAvailability(resolveCourseAvailability(course));
+        return;
       }
+
+      setLockedAvailability(null);
+      setLesson(data);
+      setCompleted(routeCompleted ?? (data as any)?.isCompleted ?? (data as any)?.isCompleated ?? false);
+      if (data?.type === 3) setQuizPolicy((course as any)?.quizPolicy ?? 0);
       if (data?.type === 2 || data?.type === 4) {
         try {
           setAuthToken(await getToken());
@@ -97,8 +153,14 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
   };
 
   const handleComplete = async () => {
+    // The backend toggles completion, so never call it for a finished lesson.
+    if (completed || !canComplete) return;
+    if (!user?.studentId) {
+      Alert.alert(t('common.error'), t('courses.missingStudentId'));
+      return;
+    }
     try {
-      await coursesApi.completeLesson(lessonId);
+      await coursesApi.completeLesson(lessonId, user.studentId);
       setCompleted(true);
       play('success');
       Alert.alert(t('common.success'), t('lessons.lessonCompleted'));
@@ -118,12 +180,95 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
 
   const onQuizFinished = async (r: { score: number; total: number; passed: boolean }) => {
     const satisfied = quizPolicy === 2 ? r.passed : true;
-    if (!satisfied || completed) return;
+    if (!satisfied || completed || !canComplete || !user?.studentId) return;
     try {
-      await coursesApi.completeLesson(lessonId);
+      await coursesApi.completeLesson(lessonId, user.studentId);
       setCompleted(true);
       play('success');
     } catch {}
+  };
+
+  // ── Lesson files (type 2 = document, 4 = file) ─────────────────────────────
+  // Download once into the app cache with the auth header (a WebView can't send
+  // it reliably, and the old FileManager route doesn't exist), then either open
+  // with the system viewer or hand it to the share sheet ("Save to Files/Drive").
+  const ensureLocalFile = async (): Promise<{ uri: string; mimeType: string } | null> => {
+    if (localFile) return localFile;
+    const attachmentId = lesson?.attachementId;
+    if (!attachmentId) {
+      Alert.alert(t('common.info'), t('lessons.noVideo'));
+      return null;
+    }
+    const token = authToken ?? (await getToken().catch(() => null));
+    const tmpUri = `${FileSystem.cacheDirectory}lesson-${attachmentId}.download`;
+    const res = await FileSystem.downloadAsync(FILE_MANAGER_URLS.DOWNLOAD_FILE(attachmentId), tmpUri, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (res.status < 200 || res.status >= 300) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const headers: Record<string, string> = {};
+    for (const [k, v] of Object.entries(res.headers ?? {})) headers[k.toLowerCase()] = String(v);
+    const mimeType = (headers['content-type'] || 'application/octet-stream').split(';')[0].trim();
+    const finalUri = `${FileSystem.cacheDirectory}${pickFileName(headers['content-disposition'], attachmentId, mimeType)}`;
+    await FileSystem.deleteAsync(finalUri, { idempotent: true }).catch(() => {});
+    await FileSystem.moveAsync({ from: tmpUri, to: finalUri });
+    const file = { uri: finalUri, mimeType };
+    setLocalFile(file);
+    return file;
+  };
+
+  const openDocument = async () => {
+    if (fileBusy) return;
+    play('tap');
+    setFileBusy('open');
+    try {
+      const file = await ensureLocalFile();
+      if (!file) return;
+      if (Platform.OS === 'android') {
+        // Android WebView can't render PDFs/Office files — use the system viewer.
+        try {
+          const contentUri = await FileSystem.getContentUriAsync(file.uri);
+          await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+            data: contentUri,
+            flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
+            type: file.mimeType,
+          });
+        } catch {
+          if (await Sharing.isAvailableAsync()) {
+            await Sharing.shareAsync(file.uri, { mimeType: file.mimeType });
+          } else {
+            Alert.alert(t('common.info'), t('lessons.noAppToOpen'));
+          }
+        }
+      } else {
+        // iOS WKWebView renders PDF, images and Office docs from a local file.
+        setDocViewerOpen(true);
+      }
+    } catch {
+      Alert.alert(t('common.error'), t('lessons.downloadFailed'));
+    } finally {
+      setFileBusy(null);
+    }
+  };
+
+  const downloadDocument = async () => {
+    if (fileBusy) return;
+    play('tap');
+    setFileBusy('download');
+    try {
+      const file = await ensureLocalFile();
+      if (!file) return;
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(file.uri, { mimeType: file.mimeType, dialogTitle: lesson?.title });
+      } else {
+        Alert.alert(t('common.info'), t('lessons.noAppToOpen'));
+      }
+    } catch {
+      Alert.alert(t('common.error'), t('lessons.downloadFailed'));
+    } finally {
+      setFileBusy(null);
+    }
   };
 
   // Resolve the video URL. Bunny videos need a short-lived signed embed URL from
@@ -173,22 +318,28 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
   }, [lesson]);
 
   const getLessonTypeInfo = () => {
-    if (!lesson) return { icon: 'play-circle', label: 'Video', color: theme.colors.primary, bg: theme.colors.primaryLight };
+    if (!lesson) return { icon: 'play-circle', label: t('lessons.video'), color: theme.colors.primary };
     switch (lesson.type) {
       case 2:
-        return { icon: 'document-text', label: t('courses.document'), color: '#3B82F6', bg: '#EFF6FF' };
+        return { icon: 'document-text', label: t('courses.document'), color: '#3B82F6' };
       case 3:
-        return { icon: 'clipboard', label: t('courses.exam'), color: '#F59E0B', bg: '#FFFBEB' };
+        return { icon: 'clipboard', label: t('courses.exam'), color: '#F59E0B' };
       case 4:
-        return { icon: 'document-attach', label: t('courses.file'), color: '#8B5CF6', bg: '#F3EEFF' };
+        return { icon: 'document-attach', label: t('courses.file'), color: '#8B5CF6' };
       case 5:
-        return { icon: 'link', label: t('courses.link'), color: '#0EA5E9', bg: '#E8F6FE' };
+        return { icon: 'link', label: t('courses.link'), color: '#0EA5E9' };
       default:
-        return { icon: 'play-circle', label: 'Video', color: theme.colors.primary, bg: theme.colors.primaryLight };
+        return { icon: 'play-circle', label: t('lessons.video'), color: theme.colors.primary };
     }
   };
 
   const typeInfo = getLessonTypeInfo();
+  const durationSec = Number((lesson as any)?.durationInSeconds ?? 0);
+  const durationMin = durationSec > 0 ? Math.max(1, Math.round(durationSec / 60)) : null;
+  const rawOrder = (lesson as any)?.orderIndex;
+  const orderIndex = rawOrder != null && Number(rawOrder) > 0 ? Number(rawOrder) : null;
+  // Tinted chip/icon backgrounds that read on both light and dark cards.
+  const tintAlpha = theme.dark ? '26' : '1A';
 
   if (loading) {
     return (
@@ -201,6 +352,23 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
           <View style={{ width: 40 }} />
         </View>
         <Spinner />
+      </SafeAreaView>
+    );
+  }
+
+  if (lockedAvailability) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
+          <TouchableOpacity style={[styles.backButton, { backgroundColor: theme.colors.card }]} onPress={() => navigation.goBack()}>
+            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={20} color={theme.colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{t('lessons.title')}</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={{ padding: 20 }}>
+          <CourseLockedNotice availability={lockedAvailability} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -229,20 +397,22 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: '#000' }]} edges={['top']}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: '#000' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isQuiz ? theme.colors.background : '#000' }]} edges={['top']}>
+      {/* Header — dark over the media area; quizzes have no media, so follow the theme */}
+      <View style={[styles.header, { backgroundColor: isQuiz ? theme.colors.background : '#000' }]}>
         <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: 'rgba(255,255,255,0.12)' }]}
+          style={[styles.backButton, { backgroundColor: isQuiz ? theme.colors.card : 'rgba(255,255,255,0.12)' }]}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={20} color="#fff" />
+          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={20} color={isQuiz ? theme.colors.text : '#fff'} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: '#fff' }]} numberOfLines={1}>
+        <Text style={[styles.headerTitle, { color: isQuiz ? theme.colors.text : '#fff' }]} numberOfLines={1}>
           {lesson.title}
         </Text>
         {/* Mark Complete — read-only for quizzes (completed by solving) */}
-        {isQuiz ? (
+        {!canComplete ? (
+          <View style={{ width: 40 }} />
+        ) : isQuiz || completed ? (
           completed ? (
             <View style={[styles.completeButton, styles.completedButton]}>
               <Ionicons name="checkmark-circle" size={16} color="#fff" />
@@ -251,12 +421,8 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
             <View style={{ width: 40 }} />
           )
         ) : (
-          <TouchableOpacity
-            style={[styles.completeButton, completed && styles.completedButton]}
-            onPress={!completed ? handleComplete : undefined}
-            activeOpacity={completed ? 1 : 0.7}
-          >
-            <Ionicons name={completed ? 'checkmark-circle' : 'checkmark'} size={16} color="#fff" />
+          <TouchableOpacity style={styles.completeButton} onPress={handleComplete} activeOpacity={0.7}>
+            <Ionicons name="checkmark" size={16} color="#fff" />
           </TouchableOpacity>
         )}
       </View>
@@ -267,9 +433,9 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
             <LessonQuiz examId={lesson.examId} onFinished={onQuizFinished} />
           </View>
         ) : (
-          <View style={[styles.noVideoContainer, { flex: 1, aspectRatio: undefined }]}>
-            <Ionicons name="clipboard-outline" size={40} color="#666" />
-            <Text style={styles.noVideoText}>{t('lessons.noVideo')}</Text>
+          <View style={[styles.noVideoContainer, { flex: 1, aspectRatio: undefined, backgroundColor: theme.colors.background }]}>
+            <Ionicons name="clipboard-outline" size={40} color={theme.colors.textMuted} />
+            <Text style={[styles.noVideoText, { color: theme.colors.textMuted }]}>{t('lessons.noVideo')}</Text>
           </View>
         )
       ) : (
@@ -317,21 +483,38 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
                 <Ionicons name={lesson.type === 4 ? 'document-attach' : 'document-text'} size={38} color="#fff" />
               </View>
               <Text style={styles.docPanelTitle} numberOfLines={2}>{lesson.title}</Text>
-              <TouchableOpacity
-                style={[styles.docOpenBtn, { backgroundColor: theme.colors.primary }]}
-                onPress={() => {
-                  if (!lesson.attachementId) {
-                    Alert.alert(t('common.info'), t('lessons.noVideo'));
-                    return;
-                  }
-                  play('tap');
-                  setDocViewerOpen(true);
-                }}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="open-outline" size={18} color="#fff" />
-                <Text style={styles.docOpenBtnText}>{t('lessons.openDocument')}</Text>
-              </TouchableOpacity>
+              <View style={styles.docActions}>
+                <TouchableOpacity
+                  style={[styles.docOpenBtn, { backgroundColor: theme.colors.primary, opacity: fileBusy ? 0.7 : 1 }]}
+                  onPress={openDocument}
+                  disabled={!!fileBusy}
+                  activeOpacity={0.85}
+                >
+                  {fileBusy === 'open' ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Ionicons name="open-outline" size={18} color="#fff" />
+                  )}
+                  <Text style={styles.docOpenBtnText}>
+                    {fileBusy === 'open' ? t('lessons.downloading') : t('lessons.openDocument')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.docOpenBtn, styles.docSecondaryBtn, { opacity: fileBusy ? 0.7 : 1 }]}
+                  onPress={downloadDocument}
+                  disabled={!!fileBusy}
+                  activeOpacity={0.85}
+                >
+                  {fileBusy === 'download' ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Ionicons name="download-outline" size={18} color="#fff" />
+                  )}
+                  <Text style={styles.docOpenBtnText}>
+                    {fileBusy === 'download' ? t('lessons.downloading') : t('lessons.downloadFile')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : videoUrl ? (
             <View style={styles.videoContainer}>
@@ -373,7 +556,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
           >
             <View style={[styles.infoCard, { backgroundColor: theme.colors.card }]}>
               <View style={styles.infoCardHeader}>
-                <View style={[styles.typeBadge, { backgroundColor: theme.dark ? theme.colors.surface : typeInfo.bg }]}>
+                <View style={[styles.typeBadge, { backgroundColor: typeInfo.color + tintAlpha }]}>
                   <Ionicons name={typeInfo.icon as any} size={14} color={typeInfo.color} />
                   <Text style={[styles.typeBadgeText, { color: typeInfo.color }]}>{typeInfo.label}</Text>
                 </View>
@@ -388,34 +571,34 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
               <Text style={[styles.lessonTitle, { color: theme.colors.text }]}>{lesson.title}</Text>
 
               <View style={styles.metaRow}>
-                {lesson.duration != null && (
+                {durationMin != null && (
                   <View style={styles.metaItem}>
                     <Ionicons name="time-outline" size={14} color={theme.colors.textMuted} />
-                    <Text style={[styles.metaText, { color: theme.colors.textMuted }]}>{lesson.duration} min</Text>
+                    <Text style={[styles.metaText, { color: theme.colors.textMuted }]}>{durationMin} {t('exams.min')}</Text>
                   </View>
                 )}
-                {lesson.order != null && (
+                {orderIndex != null && (
                   <View style={styles.metaItem}>
                     <Ionicons name="list-outline" size={14} color={theme.colors.textMuted} />
-                    <Text style={[styles.metaText, { color: theme.colors.textMuted }]}>{t('courses.lessonN', { n: lesson.order })}</Text>
+                    <Text style={[styles.metaText, { color: theme.colors.textMuted }]}>{t('courses.lessonN', { n: orderIndex })}</Text>
                   </View>
                 )}
               </View>
 
               {lesson.description ? (
-                <View style={[styles.descriptionWrap, { borderTopColor: theme.colors.divider }]}>
+                <View style={[styles.descriptionWrap, { borderTopColor: theme.dark ? theme.colors.border : theme.colors.divider }]}>
                   <Text style={[styles.lessonDescription, { color: theme.colors.textSecondary }]}>{lesson.description}</Text>
                 </View>
               ) : null}
             </View>
 
-            {!completed && (
+            {canComplete && !completed && (
               <TouchableOpacity
                 style={[styles.completeCard, { backgroundColor: theme.colors.card }]}
                 onPress={handleComplete}
                 activeOpacity={0.7}
               >
-                <View style={[styles.completeCardIcon, { backgroundColor: '#E8F8F0' }]}>
+                <View style={[styles.completeCardIcon, { backgroundColor: '#34C38F' + tintAlpha }]}>
                   <Ionicons name="checkmark-done" size={20} color="#34C38F" />
                 </View>
                 <View style={styles.completeCardInfo}>
@@ -439,12 +622,12 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
             <Text style={[styles.headerTitle, { color: '#fff' }]} numberOfLines={1}>{lesson.title}</Text>
             <View style={{ width: 40 }} />
           </View>
-          {lesson.attachementId ? (
+          {localFile ? (
             <WebView
-              source={{
-                uri: FILE_MANAGER_URLS.DOWNLOAD_FILE(lesson.attachementId),
-                headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
-              }}
+              source={{ uri: localFile.uri }}
+              originWhitelist={['*']}
+              allowFileAccess
+              allowingReadAccessToURL={FileSystem.cacheDirectory ?? undefined}
               style={{ flex: 1, backgroundColor: '#fff' }}
               startInLoadingState
               renderLoading={() => (
@@ -477,9 +660,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: fontSize.base,
-    fontFamily: 'Cairo_600SemiBold',
+    ...typography.headerTitle,
     flex: 1,
+    textAlign: 'center',
   },
   completeButton: {
     width: 40,
@@ -555,14 +738,25 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
   },
+  docActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
   docOpenBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderRadius: 12,
     marginTop: spacing.xs,
+  },
+  docSecondaryBtn: {
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
   },
   docOpenBtnText: {
     color: '#fff',

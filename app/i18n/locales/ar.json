@@ -25,7 +25,11 @@
     "ok": "حسناً",
     "validation": "تحقق",
     "info": "معلومة",
-    "continue": "متابعة"
+    "continue": "متابعة",
+    "justNow": "الآن",
+    "minutesAgo": "منذ {{count}} دقيقة",
+    "hoursAgo": "منذ {{count}} ساعة",
+    "daysAgo": "منذ {{count}} يوم"
   },
   "tabs": {
     "home": "الرئيسية",
@@ -192,7 +196,14 @@
     "voiceMicDenied": "يلزم إذن الميكروفون لملء بياناتك بالصوت.",
     "voiceRecordFailed": "تعذر بدء التسجيل، حاول مرة أخرى.",
     "voiceFailed": "تعذر معالجة صوتك، حاول مرة أخرى أو املأ الحقول يدويًا.",
-    "voiceDomainFirst": "من فضلك أدخل دومين الأكاديمية أولًا."
+    "voiceDomainFirst": "من فضلك أدخل دومين الأكاديمية أولًا.",
+    "loginFailedCheckCredentials": "فشل تسجيل الدخول. يرجى التحقق من بياناتك.",
+    "tenantSelectionFailed": "فشل اختيار الأكاديمية.",
+    "registrationFailed": "فشل إنشاء الحساب.",
+    "emailConfirmationFailed": "فشل تأكيد البريد الإلكتروني.",
+    "sendResetCodeFailed": "فشل إرسال رمز إعادة التعيين.",
+    "invalidVerificationCode": "رمز التحقق غير صحيح.",
+    "passwordResetFailed": "فشل إعادة تعيين كلمة المرور."
   },
   "welcome": {
     "greeting": "مرحباً 👋",
@@ -220,7 +231,11 @@
     "loadFailed": "فشل تحميل طرق الدفع.",
     "selectMethodFirst": "يرجى اختيار طريقة الدفع.",
     "proofRequired": "يرجى رفع صورة إثبات الدفع.",
-    "permissionDenied": "نحتاج إذن الوصول إلى الصور لرفع صورة الإيصال."
+    "permissionDenied": "نحتاج إذن الوصول إلى الصور لرفع صورة الإيصال.",
+    "requestTitle": "طلب الانضمام",
+    "requestNotice": "أرسل طلبًا للانضمام إلى هذا الكورس. ستراجع الأكاديمية طلبك وتتواصل معك لإتمام التسجيل.",
+    "sendRequest": "إرسال الطلب",
+    "requestSubmitted": "تم إرسال طلبك. ستتواصل معك الأكاديمية وسيتم منحك حق الوصول بعد الموافقة عليه."
   },
   "enrollStudent": {
     "title": "تسجيل طالب",
@@ -264,6 +279,11 @@
     "allCourses": "جميع الدورات",
     "enroll": "سجل الآن",
     "buyNow": "اشترِ الآن",
+    "pendingRequest": "طلب الشراء قيد المراجعة",
+    "lang": "اللغة",
+    "total": "المدة",
+    "discountOff": "خصم {{pct}}%",
+    "requestRejected": "تم رفض طلبك السابق، يمكنك إرسال طلب جديد.",
     "enrolled": "مسجل",
     "continue": "متابعة التعلم",
     "lessons": "الدروس",
@@ -306,7 +326,43 @@
     "link": "رابط",
     "certificateIncluded": "شهادة إتمام",
     "updated": "آخر تحديث",
-    "viewCertificate": "عرض الشهادة"
+    "viewCertificate": "عرض الشهادة",
+    "availability": {
+      "upcoming": "قريبًا",
+      "expired": "منتهي",
+      "open": "متاح للطلاب",
+      "lockedUpcoming": "مقفول للطلاب · لم يبدأ بعد",
+      "lockedExpired": "مقفول للطلاب · انتهت فترته"
+    },
+    "locked": {
+      "upcomingTitle": "هذا الكورس لم يبدأ بعد",
+      "upcomingBody": "لم تُفتح فترة هذا الكورس حتى الآن، ولذلك لا يمكن التسجيل أو الدخول إلى محتواه في الوقت الحالي.",
+      "expiredTitle": "هذا الكورس موقوف حاليًا",
+      "expiredBody": "تم إيقاف هذا الكورس من قِبل إدارة المنصة، ولذلك لا يمكن الدخول إلى محتواه في الوقت الحالي. تسجيلك وبياناتك محفوظة كما هي.",
+      "contact": "لمزيد من المعلومات، تواصل مع إدارة المنصة"
+    },
+    "manage": {
+      "title": "إدارة الكورس",
+      "settings": "إعدادات الكورس",
+      "settingsSub": "التفعيل والفترة الزمنية",
+      "students": "الطلاب المسجّلون",
+      "studentsSub": "تاريخ التسجيل ونسبة التقدم",
+      "requests": "طلبات الانضمام",
+      "requestsSub": "قبول أو رفض طلبات الشراء",
+      "active": "الكورس مفعّل",
+      "activeHint": "لو أوقفته، يختفي من الطلاب فورًا.",
+      "schedule": "فترة زمنية محددة",
+      "scheduleHint": "فعّل الخيار لو الكورس متاح في فترة معيّنة فقط. لو تركته مغلقًا، يفضل متاحًا دائمًا.",
+      "startDate": "تاريخ البداية",
+      "endDate": "تاريخ الانتهاء",
+      "dateFormatHint": "الصيغة: سنة-شهر-يوم. يفتح الكورس من بداية يوم البدء ويُغلق بنهاية يوم الانتهاء.",
+      "invalidDate": "تاريخ غير صحيح",
+      "endBeforeStart": "تاريخ الانتهاء لا يمكن أن يسبق تاريخ البداية",
+      "preview": "الحالة الحالية:",
+      "save": "حفظ الفترة",
+      "saved": "تم حفظ إعدادات الكورس",
+      "saveFailed": "تعذّر الحفظ. حاول مرة أخرى."
+    }
   },
   "quiz": {
     "completeToContinue": "أكمل الاختبار لفتح الدروس التالية.",
@@ -341,7 +397,11 @@
     "openDocument": "فتح المستند",
     "openLink": "فتح الرابط",
     "markComplete": "تم",
-    "lessonCompleted": "تم وضع علامة اكتمال على الدرس!"
+    "lessonCompleted": "تم وضع علامة اكتمال على الدرس!",
+    "downloadFile": "تحميل الملف",
+    "downloading": "جارٍ التحميل…",
+    "downloadFailed": "تعذّر تحميل الملف، حاول مرة أخرى.",
+    "noAppToOpen": "لا يوجد تطبيق لفتح هذا الملف، استخدم زر التحميل لحفظه."
   },
   "live": {
     "title": "البث المباشر",
@@ -451,7 +511,11 @@
     "paymentSubmitSuccess": "تم إرسال الدفع، في انتظار الموافقة.",
     "paymentSubmitFailed": "فشل إرسال الدفع.",
     "transactionIdRequired": "من فضلك أدخل رقم عملية التحويل.",
-    "receiptImageRequired": "من فضلك أرفق صورة الإيصال."
+    "receiptImageRequired": "من فضلك أرفق صورة الإيصال.",
+    "agoraNotAvailable": "البث المباشر غير متاح",
+    "permissionsRequired": "الأذونات مطلوبة",
+    "permissionsExplanation": "يلزم السماح بالوصول إلى الكاميرا والميكروفون للانضمام.",
+    "invalidTokenResponse": "فشل الحصول على رمز جلسة البث المباشر."
   },
   "reports": {
     "title": "التقارير",
@@ -485,7 +549,8 @@
     "justNow": "الآن",
     "minutesAgo": "منذ {{count}} دقيقة",
     "hoursAgo": "منذ {{count}} ساعة",
-    "daysAgo": "منذ {{count}} يوم"
+    "daysAgo": "منذ {{count}} يوم",
+    "openCourse": "فتح الكورس"
   },
   "chat": {
     "title": "الرسائل",
@@ -497,6 +562,7 @@
     "noConversations": "لا توجد محادثات",
     "joinGroupToChat": "انضم لمجموعة لبدء المحادثة.",
     "members": "أعضاء",
+    "groupChat": "محادثة جماعية",
     "sendFirstMessage": "أرسل أول رسالة.",
     "failedToSend": "فشل إرسال الرسالة.",
     "staff": "موظف",
@@ -538,7 +604,9 @@
     "noSubGroups": "لا توجد مجموعات فرعية بعد",
     "subGroupDetails": "تفاصيل المجموعة الفرعية",
     "addToSubGroup": "إضافة طالب للمجموعة الفرعية",
-    "yourSubGroup": "مجموعتك الفرعية"
+    "yourSubGroup": "مجموعتك الفرعية",
+    "fileUrlMissing": "رابط الملف غير موجود",
+    "cannotOpenFile": "لا يمكن فتح هذا النوع من الملفات"
   },
   "news": {
     "title": "الأخبار",
@@ -684,12 +752,74 @@
     "percentage": "النسبة المئوية",
     "correct": "صحيح",
     "incorrect": "خطأ",
+    "pendingReview": "في انتظار تصحيح المعلم",
     "timeTaken": "الوقت المستغرق",
     "questionDetails": "تفاصيل الأسئلة",
     "yourAnswer": "إجابتك",
     "preview": "معاينة",
     "deleteExam": "حذف الاختبار",
     "deleteExamConfirm": "هل أنت متأكد من حذف هذا الاختبار؟",
-    "deleteFailed": "فشل حذف الاختبار."
+    "deleteFailed": "فشل حذف الاختبار.",
+    "essay": "مقالي",
+    "trueFalse": "صح / خطأ"
+  },
+  "courseStudents": {
+    "title": "الطلاب المسجّلون",
+    "search": "ابحث بالاسم أو البريد...",
+    "count": "{{count}} طالب",
+    "enrolledOn": "سُجّل في",
+    "loadFailed": "فشل تحميل الطلاب.",
+    "empty": "لا يوجد طلاب مسجّلون",
+    "emptyHint": "لما يسجّل طالب في الكورس هيظهر هنا.",
+    "status": {
+      "active": "نشط",
+      "completed": "مكتمل",
+      "suspended": "موقوف",
+      "cancelled": "ملغي"
+    }
+  },
+  "enrollmentRequests": {
+    "title": "طلبات الانضمام",
+    "empty": "لا توجد طلبات معلّقة",
+    "emptyHint": "طلبات شراء الكورسات الجديدة هتظهر هنا.",
+    "loadFailed": "فشل تحميل الطلبات.",
+    "approve": "قبول",
+    "reject": "رفض",
+    "confirmApproveTitle": "تأكيد القبول",
+    "confirmApprove": "هل تريد قبول طلب {{name}} في \"{{course}}\"؟ سيتم تسجيله فورًا.",
+    "confirmRejectTitle": "تأكيد الرفض",
+    "confirmReject": "هل تريد رفض طلب {{name}} في \"{{course}}\"؟",
+    "approved": "تم قبول الطلب وتسجيل الطالب.",
+    "rejected": "تم رفض الطلب.",
+    "failed": "تعذّر تنفيذ الإجراء. حاول مرة أخرى.",
+    "paymentMethod": "طريقة الدفع",
+    "vodafone": "فودافون كاش",
+    "instapay": "إنستاباي",
+    "unknownStudent": "طالب"
+  },
+  "sendNotification": {
+    "title": "إرسال إشعار",
+    "titleLabel": "العنوان",
+    "titlePlaceholder": "عنوان قصير وواضح",
+    "bodyLabel": "نص الإشعار",
+    "bodyPlaceholder": "اكتب الرسالة التي ستصل للطلاب...",
+    "sendToAll": "إرسال لكل الطلاب",
+    "sendToAllHint": "أوقف الخيار لاختيار مجموعات محددة.",
+    "chooseGroups": "اختر المجموعات",
+    "noGroups": "لا توجد مجموعات بعد.",
+    "chooseAtLeastOne": "اختر مجموعة واحدة على الأقل",
+    "required": "هذا الحقل مطلوب",
+    "send": "إرسال",
+    "sent": "تم إرسال الإشعار.",
+    "failed": "تعذّر الإرسال. حاول مرة أخرى."
+  },
+  "updateRequired": {
+    "title": "يلزم تحديث التطبيق",
+    "body": "هذا الإصدار لم يعد مدعومًا. حدّث التطبيق من المتجر للمتابعة والاستفادة من أحدث المميزات.",
+    "current": "إصدارك الحالي",
+    "latest": "أحدث إصدار",
+    "update": "تحديث الآن",
+    "hint": "بعد التحديث افتح التطبيق مرة أخرى.",
+    "storeFailed": "تعذّر فتح المتجر."
   }
 }

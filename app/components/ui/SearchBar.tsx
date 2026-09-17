@@ -32,7 +32,7 @@ export function SearchBar({
         {
           backgroundColor: isDark ? theme.colors.surface : theme.colors.card,
           borderRadius: radius,
-          borderColor: isDark ? theme.colors.border : '#F0F0F0',
+          borderColor: isDark ? theme.colors.border : theme.colors.divider,
         },
         style,
       ]}
@@ -66,9 +66,10 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    marginLeft: spacing.sm,
+    marginStart: spacing.sm,
     paddingVertical: 0,
-    ...typography.bodySmall,
+    // No lineHeight: bodySmall's 21 is too tight for 16px Cairo inside a single-line input.
+    fontFamily: typography.bodySmall.fontFamily,
     fontSize: fontSize.base,
   },
 });

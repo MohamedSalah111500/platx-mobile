@@ -1,6 +1,7 @@
 import apiClient from './client';
 import { COURSES_URLS, ONLINE_COURSE_URLS, COURSE_SECTION_URLS, COURSE_LESSON_URLS, BUNNY_URLS, EXAM_ONLINE_URLS, withPagination } from './endpoints';
-import type { Course, Enrollment, Lesson, Section, Quiz } from '../../types/course.types';
+import { ENROLLMENT_STATUS } from '../../types/course.types';
+import type { Course, Enrollment, EnrollmentHistoryItem, Lesson, Section, Quiz } from '../../types/course.types';
 import type { PaginatedResponse } from '../../types/api.types';
 
 export interface BunnyPlaybackToken {
@@ -34,10 +35,43 @@ export const coursesApi = {
   getPublic: async (
     domain: string,
     page = 1,
-    size = 10
+    size = 10,
+    search?: string
   ): Promise<PaginatedResponse<Course>> => {
     const { data } = await apiClient.get<PaginatedResponse<Course>>(
-      COURSES_URLS.GET_PUBLIC(domain, page, size)
+      COURSES_URLS.GET_PUBLIC(domain, page, size, search)
+    );
+    return data;
+  },
+
+  setActive: async (courseId: number, isActive: boolean): Promise<void> => {
+    await apiClient.put(COURSES_URLS.SET_ACTIVE(courseId, isActive));
+  },
+
+  updateSchedule: async (
+    courseId: number,
+    schedule: { startDate: string | null; endDate: string | null }
+  ): Promise<void> => {
+    await apiClient.put(COURSES_URLS.UPDATE_SCHEDULE(courseId), schedule);
+  },
+
+  getEnrollmentHistory: async (filter: {
+    courseId?: number;
+    studentId?: number;
+    page?: number;
+    size?: number;
+    search?: string;
+  }): Promise<PaginatedResponse<EnrollmentHistoryItem>> => {
+    const params: Record<string, string | number> = {
+      page: filter.page ?? 1,
+      size: filter.size ?? 20,
+    };
+    if (filter.courseId) params.courseId = filter.courseId;
+    if (filter.studentId) params.studentId = filter.studentId;
+    if (filter.search) params.search = filter.search;
+    const { data } = await apiClient.get<PaginatedResponse<EnrollmentHistoryItem>>(
+      COURSES_URLS.ENROLLMENT_HISTORY,
+      { params }
     );
     return data;
   },
@@ -46,10 +80,25 @@ export const coursesApi = {
     if (studentId == null || studentId <= 0) {
       throw new Error('studentId is required');
     }
-    const { data } = await apiClient.get<Enrollment[]>(
+    const { data } = await apiClient.get<any>(
       COURSES_URLS.GET_STUDENT_ENROLLMENTS(studentId)
     );
-    return data;
+    const list: Enrollment[] = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.items)
+        ? data.items
+        : Array.isArray(data?.result)
+          ? data.result
+          : [];
+    // The backend returns every enrollment row, including suspended/cancelled
+    // ones — only courses the student still owns count as "my courses".
+    return list.filter(
+      (e) =>
+        e != null &&
+        (e.status == null ||
+          e.status === ENROLLMENT_STATUS.Active ||
+          e.status === ENROLLMENT_STATUS.Completed)
+    );
   },
 
 
@@ -60,8 +109,9 @@ export const coursesApi = {
     await apiClient.post(COURSES_URLS.ENROLL_FREE(courseId, studentId));
   },
 
-  completeLesson: async (lessonId: number): Promise<void> => {
-    await apiClient.post(COURSES_URLS.COMPLETE_LESSON(lessonId));
+  // Backend expects CompleteLessonRequest { studentId } in the body.
+  completeLesson: async (lessonId: number, studentId: number): Promise<void> => {
+    await apiClient.post(COURSES_URLS.COMPLETE_LESSON(lessonId), { studentId });
   },
 
   getEnrollment: async (studentId: number, courseId: number): Promise<Enrollment | null> => {

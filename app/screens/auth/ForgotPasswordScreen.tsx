@@ -74,9 +74,6 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
       alignSelf: 'center',
       marginBottom: spacing['2xl'],
     },
-    iconText: {
-      fontSize: 36,
-    },
     title: {
       ...typography.h3,
       color: theme.colors.text,
@@ -91,6 +88,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
     },
     backLink: {
       flexDirection: 'row',
+      alignItems: 'center',
       justifyContent: 'center',
       marginTop: spacing.xl,
     },

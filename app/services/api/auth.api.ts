@@ -11,7 +11,6 @@ import type {
   EmailConfirmPayload,
   ResetPasswordPayload,
   ChangePasswordPayload,
-  GoogleSignInPayload,
 } from '../../types/auth.types';
 
 export const authApi = {
@@ -51,8 +50,9 @@ export const authApi = {
     await apiClient.post(AUTH_URLS.CONFIRM_EMAIL, payload);
   },
 
+  // Backend SendConfirmationEmailModel binds { Username (required), Domain }.
   sendConfirmationEmail: async (email: string, domain: string): Promise<void> => {
-    await apiClient.post(AUTH_URLS.SEND_CONFIRM_EMAIL, { email, domain });
+    await apiClient.post(AUTH_URLS.SEND_CONFIRM_EMAIL, { username: email, domain });
   },
 
   verifyOtpResetPassword: async (
@@ -73,10 +73,5 @@ export const authApi = {
 
   changePassword: async (payload: ChangePasswordPayload): Promise<void> => {
     await apiClient.post(AUTH_URLS.CHANGE_PASSWORD, payload);
-  },
-
-  googleSignIn: async (payload: GoogleSignInPayload): Promise<LoginResponse> => {
-    const { data } = await apiClient.post<LoginResponse>(AUTH_URLS.GOOGLE_SIGNIN, payload);
-    return data;
   },
 };

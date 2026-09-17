@@ -31,8 +31,21 @@ export function RTLProvider({ children }: RTLProviderProps) {
       try {
         const saved = await AsyncStorage.getItem(STORAGE_KEYS.LOCALE);
         if (cancelled) return;
+        const active = saved || i18n.language;
         if (saved && saved !== i18n.language) {
           await changeLocale(saved, false);
+        }
+        // Native layout direction is persisted by RN and only changes on the
+        // next launch, so bring it in line with the locale that's actually in
+        // use (a first install has nothing saved and starts LTR).
+        const shouldBeRTL = RTL_LANGUAGES.includes(active);
+        if (shouldBeRTL !== I18nManager.isRTL) {
+          try {
+            I18nManager.allowRTL(shouldBeRTL);
+            I18nManager.forceRTL(shouldBeRTL);
+          } catch (err) {
+            logger.recordError(err, 'RTLProvider:forceRTL');
+          }
         }
       } catch (err) {
         logger.recordError(err, 'RTLProvider:load');

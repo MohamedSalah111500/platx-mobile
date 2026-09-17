@@ -74,8 +74,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    ...typography.h4,
-    fontFamily: 'Cairo_700Bold',
+    ...typography.headerTitle,
     flex: 1,
     textAlign: 'center',
     marginHorizontal: spacing.sm,

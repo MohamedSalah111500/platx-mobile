@@ -35,7 +35,12 @@ export default function ExamResultScreen({ navigation, route }: Props) {
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
 
   const loadResults = async () => {
-    if (!user?.studentId) return;
+    if (!user?.studentId) {
+      // Student id not resolved (yet): stop the spinner; the effect re-runs once it arrives.
+      setError(t('exams.failedToLoadResults'));
+      setLoading(false);
+      return;
+    }
     try {
       setError(null);
       setLoading(true);
@@ -50,7 +55,7 @@ export default function ExamResultScreen({ navigation, route }: Props) {
 
   useEffect(() => {
     loadResults();
-  }, []);
+  }, [user?.studentId]);
 
   const toggleQuestion = (questionId: number) => {
     setExpandedQuestions(prev => {
@@ -62,9 +67,9 @@ export default function ExamResultScreen({ navigation, route }: Props) {
   };
 
   const getPercentageColor = (pct: number) => {
-    if (pct >= 80) return '#34C38F';
-    if (pct >= 60) return '#F59E0B';
-    return '#EF4444';
+    if (pct >= 80) return theme.colors.success;
+    if (pct >= 60) return theme.colors.warning;
+    return theme.colors.danger;
   };
 
   const formatTimeTaken = () => {
@@ -82,7 +87,7 @@ export default function ExamResultScreen({ navigation, route }: Props) {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
         <ScreenHeader title={t('exams.results')} onBack={() => navigation.goBack()} />
         <Spinner />
       </SafeAreaView>
@@ -91,7 +96,7 @@ export default function ExamResultScreen({ navigation, route }: Props) {
 
   if (error || !result) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
         <ScreenHeader title={t('exams.results')} onBack={() => navigation.goBack()} />
         <ErrorRetry message={error || t('exams.failedToLoadResults')} onRetry={loadResults} />
       </SafeAreaView>
@@ -103,7 +108,7 @@ export default function ExamResultScreen({ navigation, route }: Props) {
   const totalQuestions = result.correctAnswers + result.incorrectAnswers;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
       <ScreenHeader title={t('exams.results')} onBack={() => navigation.goBack()} />
 
       <ScrollView
@@ -135,7 +140,7 @@ export default function ExamResultScreen({ navigation, route }: Props) {
             </View>
 
             <View style={[styles.statCard, { backgroundColor: theme.colors.card }]}>
-              <Ionicons name="checkmark-circle-outline" size={18} color="#34C38F" />
+              <Ionicons name="checkmark-circle-outline" size={18} color={theme.colors.success} />
               <Text style={[styles.statValue, { color: theme.colors.text }]}>
                 {result.correctAnswers}/{totalQuestions}
               </Text>
@@ -145,7 +150,7 @@ export default function ExamResultScreen({ navigation, route }: Props) {
             </View>
 
             <View style={[styles.statCard, { backgroundColor: theme.colors.card }]}>
-              <Ionicons name="close-circle-outline" size={18} color="#EF4444" />
+              <Ionicons name="close-circle-outline" size={18} color={theme.colors.danger} />
               <Text style={[styles.statValue, { color: theme.colors.text }]}>
                 {result.incorrectAnswers}/{totalQuestions}
               </Text>
@@ -156,7 +161,7 @@ export default function ExamResultScreen({ navigation, route }: Props) {
 
             {timeTaken && (
               <View style={[styles.statCard, { backgroundColor: theme.colors.card }]}>
-                <Ionicons name="time-outline" size={18} color="#3B82F6" />
+                <Ionicons name="time-outline" size={18} color={theme.colors.info} />
                 <Text style={[styles.statValue, { color: theme.colors.text }]}>{timeTaken}</Text>
                 <Text style={[styles.statLabel, { color: theme.colors.textMuted }]}>
                   {t('exams.timeTaken')}
@@ -207,29 +212,40 @@ function QuestionResultCard({
   t: (key: string) => string;
 }) {
   const isCorrect = result.isCorrect;
+  // An essay the teacher hasn't graded yet isn't wrong — it has no result.
+  const isPending = result.isPendingReview === true;
+  const statusColor = isPending
+    ? theme.colors.warning
+    : isCorrect
+      ? theme.colors.success
+      : theme.colors.danger;
 
   return (
     <View style={[styles.qrCard, { backgroundColor: theme.colors.card }]}>
       <TouchableOpacity style={styles.qrHeader} onPress={onToggle} activeOpacity={0.7}>
-        <View style={[styles.qrNum, { backgroundColor: isCorrect ? '#E8F8F0' : '#FEE2E2' }]}>
-          <Text style={[styles.qrNumText, { color: isCorrect ? '#34C38F' : '#EF4444' }]}>
+        <View style={[styles.qrNum, { backgroundColor: statusColor + '1A' }]}>
+          <Text style={[styles.qrNumText, { color: statusColor }]}>
             {index + 1}
           </Text>
         </View>
         <View style={styles.qrHeaderInfo}>
           <View style={styles.qrBadges}>
-            <View style={[styles.qrBadge, { backgroundColor: isCorrect ? '#E8F8F0' : '#FEE2E2' }]}>
+            <View style={[styles.qrBadge, { backgroundColor: statusColor + '1A' }]}>
               <Ionicons
-                name={isCorrect ? 'checkmark-circle' : 'close-circle'}
+                name={isPending ? 'time' : isCorrect ? 'checkmark-circle' : 'close-circle'}
                 size={12}
-                color={isCorrect ? '#34C38F' : '#EF4444'}
+                color={statusColor}
               />
-              <Text style={{ fontSize: 11, fontFamily: 'Cairo_600SemiBold', color: isCorrect ? '#34C38F' : '#EF4444' }}>
-                {isCorrect ? t('exams.correct') : t('exams.incorrect')}
+              <Text style={{ fontSize: 11, fontFamily: 'Cairo_600SemiBold', color: statusColor }}>
+                {isPending
+                  ? t('exams.pendingReview')
+                  : isCorrect
+                    ? t('exams.correct')
+                    : t('exams.incorrect')}
               </Text>
             </View>
             <Text style={[styles.qrScore, { color: theme.colors.textMuted }]}>
-              {result.earnedScore}/{result.questionScore}
+              {isPending ? `—/${result.questionScore}` : `${result.earnedScore}/${result.questionScore}`}
             </Text>
           </View>
         </View>
@@ -243,8 +259,19 @@ function QuestionResultCard({
       {expanded && (
         <View style={styles.qrBody}>
           <Text style={[styles.qrQuestionText, { color: theme.colors.text }]}>
-            {result.questionBody?.replace(/<[^>]*>/g, '') || ''}
+            {result.questionText?.replace(/<[^>]*>/g, '') || ''}
           </Text>
+
+          {result.textAnswer ? (
+            <View style={[styles.qrAnswer, { borderColor: theme.colors.border }]}>
+              <Text style={[styles.qrAnswerText, { color: theme.colors.text }]}>
+                {result.textAnswer}
+              </Text>
+              <View style={[styles.yourAnswerBadge, { backgroundColor: theme.colors.primary }]}>
+                <Text style={styles.yourAnswerText}>{t('exams.yourAnswer')}</Text>
+              </View>
+            </View>
+          ) : null}
 
           {result.answers.map(answer => {
             let bgColor = 'transparent';
@@ -253,15 +280,15 @@ function QuestionResultCard({
             let iconColor = '';
 
             if (answer.isCorrect) {
-              bgColor = '#E8F8F0';
-              borderColor = '#34C38F';
+              bgColor = theme.colors.success + '1A';
+              borderColor = theme.colors.success;
               iconName = 'checkmark-circle';
-              iconColor = '#34C38F';
+              iconColor = theme.colors.success;
             } else if (answer.isSubmittedAnswer && !answer.isCorrect) {
-              bgColor = '#FEF3C7';
-              borderColor = '#F59E0B';
+              bgColor = theme.colors.warning + '1A';
+              borderColor = theme.colors.warning;
               iconName = 'alert-circle';
-              iconColor = '#F59E0B';
+              iconColor = theme.colors.warning;
             }
 
             return (
@@ -273,7 +300,9 @@ function QuestionResultCard({
                 ]}
               >
                 {iconName && (
-                  <Ionicons name={iconName as any} size={16} color={iconColor} />
+                  <View style={styles.qrAnswerIcon}>
+                    <Ionicons name={iconName as any} size={16} color={iconColor} />
+                  </View>
                 )}
                 <Text style={[styles.qrAnswerText, { color: theme.colors.text }]}>
                   {String(answer.answerBody || '').replace(/<[^>]*>/g, '')}
@@ -346,8 +375,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   sectionTitle: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Cairo_700Bold',
+    ...typography.sectionTitle,
     marginBottom: spacing.sm,
   },
   // Question result card
@@ -407,17 +435,23 @@ const styles = StyleSheet.create({
   },
   qrAnswer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    // flex-start keeps the icon on the first line when the answer wraps.
+    alignItems: 'flex-start',
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1,
   },
+  qrAnswerIcon: {
+    height: 20,
+    justifyContent: 'center',
+  },
   qrAnswerText: {
     flex: 1,
     fontSize: 13,
     fontFamily: 'Cairo_500Medium',
+    lineHeight: 20,
   },
   yourAnswerBadge: {
     paddingHorizontal: 8,

@@ -24,7 +24,17 @@ import { typography, fontSize } from '../../theme/typography';
 import { coursesApi } from '../../services/api/courses.api';
 import type { CoursesStackParamList } from '../../types/navigation.types';
 import type { Course, Enrollment } from '../../types/course.types';
+import { resolveCourseAvailability } from '../../utils/courseAvailability';
+import { CourseAvailabilityBadge } from '../../components/course/CourseAvailabilityBadge';
 import { getFullImageUrl } from '../../utils/imageUrl';
+import { formatPrice } from '../../utils/price';
+
+// A single character is too short to search; treat it as "no filter" so the
+// rendered list, the debounced search and loadMore always use the same query.
+function effectiveQuery(q: string): string {
+  const s = q.trim();
+  return s.length === 1 ? '' : s;
+}
 import { useRTL } from '../../i18n/RTLProvider';
 
 const CARD_ACCENT = ['#7c63fd', '#F5A623', '#34C38F', '#F46A6A', '#9B59B6', '#1ABC9C'];
@@ -34,7 +44,7 @@ type Props = NativeStackScreenProps<CoursesStackParamList, 'CoursesList'>;
 export default function CoursesListScreen({ navigation, route }: Props) {
   const { theme } = useTheme();
   const { user, domain, isStudent } = useAuth();
-  const { t, isRTL } = useRTL();
+  const { t, isRTL, locale } = useRTL();
 
   // if the logged‑in account is a student but we don't have an ID, things
   // like enrollments/notifications will not work. log a warning and show an
@@ -43,8 +53,11 @@ export default function CoursesListScreen({ navigation, route }: Props) {
     console.warn('[CoursesList] student user without studentId, API calls may fail');
   }
   const insets = useSafeAreaInsets();
+  // A search handed over from Home must land on the tab that actually searches,
+  // otherwise the query is silently dropped on the enrolled tab.
+  const openedWithSearch = !!route.params?.search;
   const initialTab: 'browse' | 'enrolled' =
-    isStudent && user?.studentId ? 'enrolled' : 'browse';
+    !openedWithSearch && isStudent && user?.studentId ? 'enrolled' : 'browse';
   const [activeTab, setActiveTab] = useState<'browse' | 'enrolled'>(initialTab);
   const [courses, setCourses] = useState<Course[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
@@ -57,7 +70,15 @@ export default function CoursesListScreen({ navigation, route }: Props) {
   const [loadingMore, setLoadingMore] = useState(false);
 
   const loadEnrolledCourses = async () => {
-    if (!user?.studentId) return;
+    if (!user?.studentId) {
+      // Without a student id the request can't be made — surface it instead of
+      // leaving the list on an endless spinner.
+      setEnrollments([]);
+      setError(t('courses.missingStudentId'));
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     try {
       setError(null);
       const data = await coursesApi.getStudentEnrollments(user.studentId);
@@ -76,7 +97,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
     try {
       setError(null);
       const res: any = domain
-        ? await coursesApi.getPublic(domain, pageNum, 10)
+        ? await coursesApi.getPublic(domain, pageNum, 10, search)
         : await coursesApi.getAll(pageNum, 10, search);
       const items: Course[] = Array.isArray(res?.items)
         ? res.items
@@ -112,20 +133,30 @@ export default function CoursesListScreen({ navigation, route }: Props) {
     if (activeTab === 'enrolled') {
       loadEnrolledCourses();
     } else {
-      loadCourses(1, searchQuery);
+      loadCourses(1, effectiveQuery(searchQuery));
     }
   };
 
+  // Only the enrolled tab depends on the student id (fetched from /Students/me
+  // after login), so resolving it must not reload the browse list.
+  const tabStudentId = activeTab === 'enrolled' ? user?.studentId : null;
   useEffect(() => {
     loadData();
-  }, [activeTab]);
+  }, [activeTab, tabStudentId]);
+
+  // Students land on 'enrolled' once their id resolves, unless they already
+  // picked a tab themselves.
+  const userPickedTabRef = useRef(openedWithSearch);
+  useEffect(() => {
+    if (isStudent && user?.studentId && !userPickedTabRef.current) setActiveTab('enrolled');
+  }, [isStudent, user?.studentId]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     if (activeTab === 'enrolled') {
       loadEnrolledCourses();
     } else {
-      loadCourses(1, searchQuery);
+      loadCourses(1, effectiveQuery(searchQuery));
     }
   }, [searchQuery, activeTab]);
 
@@ -134,7 +165,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
     if (activeTab === 'enrolled' || !hasMore || loading || loadingMoreRef.current) return;
     loadingMoreRef.current = true;
     setLoadingMore(true);
-    loadCourses(page + 1, searchQuery).finally(() => {
+    loadCourses(page + 1, effectiveQuery(searchQuery)).finally(() => {
       loadingMoreRef.current = false;
       setLoadingMore(false);
     });
@@ -144,11 +175,21 @@ export default function CoursesListScreen({ navigation, route }: Props) {
   const onSearch = useCallback((text: string) => {
     setSearchQuery(text);
     if (searchTimer.current) clearTimeout(searchTimer.current);
+    const term = effectiveQuery(text);
     searchTimer.current = setTimeout(() => {
       setLoading(true);
-      loadCourses(1, text);
-    }, 400);
+      loadCourses(1, term);
+    }, 600);
   }, []);
+
+  // Drop a pending debounced search when the tab changes or the screen unmounts,
+  // so it can't overwrite the enrolled list or set state after unmount.
+  useEffect(
+    () => () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    },
+    [activeTab]
+  );
 
   const handleShare = async (course: Course) => {
     const title = course.title || course.name || '';
@@ -187,9 +228,13 @@ export default function CoursesListScreen({ navigation, route }: Props) {
           {/* Price badge on image */}
           <View style={[styles.priceBadge, { backgroundColor: isFree ? '#34C38F' : theme.colors.primary }]}>
             <Text style={styles.priceBadgeText}>
-              {isFree ? t('courses.free') : `$${hasDiscount ? item.discountPrice : item.price || 0}`}
+              {isFree ? t('courses.free') : formatPrice(hasDiscount ? item.discountPrice : item.price, item.currencyCode, locale)}
             </Text>
           </View>
+          <CourseAvailabilityBadge
+            availability={resolveCourseAvailability(item)}
+            style={{ ...styles.availabilityBadge, backgroundColor: theme.colors.card + 'EB' }}
+          />
         </View>
 
         {/* Info */}
@@ -209,13 +254,13 @@ export default function CoursesListScreen({ navigation, route }: Props) {
 
           <View style={styles.metaRow}>
             {item.totalLessons != null && (
-              <View style={[styles.metaChip, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
+              <View style={[styles.metaChip, { backgroundColor: theme.colors.primary + '1A' }]}>
                 <Ionicons name="play-circle" size={12} color={theme.colors.primary} />
                 <Text style={[styles.metaChipText, { color: theme.colors.primary }]}>{item.totalLessons} {t('courses.lessons')}</Text>
               </View>
             )}
             {item.totalHours != null && (
-              <View style={[styles.metaChip, { backgroundColor: theme.dark ? theme.colors.surface : '#FFF4E5' }]}>
+              <View style={[styles.metaChip, { backgroundColor: '#F5A623' + (theme.dark ? '26' : '1A') }]}>
                 <Ionicons name="time" size={12} color="#F5A623" />
                 <Text style={[styles.metaChipText, { color: '#F5A623' }]}>{item.totalHours}h</Text>
               </View>
@@ -223,6 +268,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
             <View style={{ flex: 1 }} />
             <TouchableOpacity
               onPress={() => handleShare(item)}
+              style={styles.shareBtn}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Ionicons name="share-social-outline" size={18} color={theme.colors.textMuted} />
@@ -265,7 +311,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
               </Text>
             ) : null}
             <View style={styles.progressWrap}>
-              <View style={[styles.progressBar, { backgroundColor: theme.dark ? theme.colors.surface : '#E8E8E8' }]}>
+              <View style={[styles.progressBar, { backgroundColor: theme.colors.border }]}>
                 <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: accent }]} />
               </View>
               <Text style={[styles.progressText, { color: theme.colors.textMuted }]}>
@@ -296,7 +342,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
           <View style={styles.tabRow}>
             <TouchableOpacity
               style={[styles.tab, activeTab === 'enrolled' && styles.tabActive, activeTab === 'enrolled' && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }]}
-              onPress={() => setActiveTab('enrolled')}
+              onPress={() => { userPickedTabRef.current = true; setActiveTab('enrolled'); }}
               activeOpacity={0.7}
             >
               <Text style={[styles.tabText, { color: theme.colors.textSecondary }, activeTab === 'enrolled' && styles.tabTextActive]}>
@@ -305,7 +351,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.tab, activeTab === 'browse' && styles.tabActive, activeTab === 'browse' && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }]}
-              onPress={() => setActiveTab('browse')}
+              onPress={() => { userPickedTabRef.current = true; setActiveTab('browse'); }}
               activeOpacity={0.7}
             >
               <Text style={[styles.tabText, { color: theme.colors.textSecondary }, activeTab === 'browse' && styles.tabTextActive]}>
@@ -335,7 +381,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
           initialNumToRender={6}
           maxToRenderPerBatch={8}
           windowSize={9}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} colors={[theme.colors.primary]} progressBackgroundColor={theme.colors.card} />}
           ListHeaderComponent={<View style={{ height: spacing.sm }} />}
           ListEmptyComponent={
             loading ? (
@@ -357,7 +403,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
           initialNumToRender={6}
           maxToRenderPerBatch={8}
           windowSize={9}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} colors={[theme.colors.primary]} progressBackgroundColor={theme.colors.card} />}
           onEndReached={onLoadMore}
           onEndReachedThreshold={0.3}
           ListHeaderComponent={<View style={{ height: spacing.sm }} />}
@@ -365,12 +411,12 @@ export default function CoursesListScreen({ navigation, route }: Props) {
             loading ? (
               <Spinner />
             ) : error ? (
-              <ErrorRetry message={error} onRetry={() => { setLoading(true); loadCourses(1, searchQuery); }} />
+              <ErrorRetry message={error} onRetry={() => { setLoading(true); loadCourses(1, effectiveQuery(searchQuery)); }} />
             ) : (
               <EmptyState title={t('courses.noCourses')} message={t('courses.noCoursesAvailable')} />
             )
           }
-          ListFooterComponent={hasMore && courses.length > 0 ? <Spinner size="small" /> : null}
+          ListFooterComponent={loadingMore ? <Spinner size="small" /> : null}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         />
@@ -380,6 +426,9 @@ export default function CoursesListScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
+  // Price badge sits at the end edge, availability badge at the start edge, so
+  // they never overlap in either LTR or RTL.
+  availabilityBadge: { position: 'absolute', top: spacing.sm, start: spacing.sm },
   container: { flex: 1 },
   header: {
     paddingHorizontal: spacing.xl,
@@ -400,8 +449,7 @@ const styles = StyleSheet.create({
     marginStart: -6,
   },
   title: {
-    ...typography.h2,
-    fontFamily: 'Cairo_700Bold',
+    ...typography.screenTitle,
   },
   listContent: {
     paddingHorizontal: spacing.xl,
@@ -427,7 +475,7 @@ const styles = StyleSheet.create({
   priceBadge: {
     position: 'absolute',
     top: spacing.sm,
-    right: spacing.sm,
+    end: spacing.sm,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -443,7 +491,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
-    lineHeight: fontSize.base * 1.4,
+    lineHeight: Math.round(fontSize.base * 1.4),
     marginBottom: 4,
   },
   instructorRow: {
@@ -474,6 +522,12 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 8,
   },
+  shareBtn: {
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   metaChipText: {
     fontSize: 11,
     fontFamily: 'Cairo_600SemiBold',
@@ -488,6 +542,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: 'transparent',

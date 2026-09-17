@@ -8,6 +8,7 @@ import {
   Alert,
   Platform,
   Image,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -37,6 +38,16 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [answers, setAnswers] = useState<Record<number, number[]>>({});
+  const [textAnswers, setTextAnswers] = useState<Record<number, string>>({});
+  // Latest answers for the timer-driven auto submit (avoids stale closures).
+  const answersRef = useRef(answers);
+  answersRef.current = answers;
+  const textAnswersRef = useRef(textAnswers);
+  textAnswersRef.current = textAnswers;
+  // In-flight / done guards so the exam is never submitted twice.
+  const submittingRef = useRef(false);
+  const submittedRef = useRef(false);
+  const timeUpHandledRef = useRef(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [examStarted, setExamStarted] = useState(false);
   const startDateRef = useRef(new Date().toISOString());
@@ -121,7 +132,6 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
       setTimeLeft(prev => {
         if (prev === null || prev <= 1) {
           if (timerRef.current) clearInterval(timerRef.current);
-          handleAutoSubmit();
           return 0;
         }
         return prev - 1;
@@ -139,11 +149,19 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
     };
   }, []);
 
-  const handleAutoSubmit = () => {
-    Alert.alert(t('exams.timeUp'), t('exams.autoSubmitMessage'), [
-      { text: t('common.ok'), onPress: () => doSubmit() },
-    ]);
-  };
+  const doSubmitRef = useRef<() => void>(() => {});
+
+  // Time up: notify once, then submit the latest answers.
+  useEffect(() => {
+    if (timeLeft !== 0 || !isStudent || timeUpHandledRef.current || submittedRef.current) return;
+    timeUpHandledRef.current = true;
+    Alert.alert(
+      t('exams.timeUp'),
+      t('exams.autoSubmitMessage'),
+      [{ text: t('common.ok'), onPress: () => doSubmitRef.current() }],
+      { cancelable: false },
+    );
+  }, [timeLeft]);
 
   const selectSingleAnswer = (questionId: number, answerId: number) => {
     setAnswers(prev => ({ ...prev, [questionId]: [answerId] }));
@@ -162,13 +180,26 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
     });
   };
 
+  const setTextAnswer = (questionId: number, value: string) => {
+    setTextAnswers(prev => ({ ...prev, [questionId]: value }));
+  };
+
   const doSubmit = async () => {
-    if (!exam || !user?.studentId) return;
+    if (!exam || submittingRef.current || submittedRef.current) return;
+    if (!user?.studentId) {
+      // Keep the answers on screen so the student can retry.
+      Alert.alert(t('common.error'), t('exams.submitFailed'));
+      return;
+    }
+    submittingRef.current = true;
     try {
       setSubmitting(true);
+      const latestAnswers = answersRef.current;
+      const latestText = textAnswersRef.current;
       const questionAnswers = exam.questions.map(q => ({
         questionId: q.id,
-        answersId: answers[q.id] || [],
+        answersId: q.typeId === 4 ? [] : latestAnswers[q.id] || [],
+        textAnswer: q.typeId === 4 ? latestText[q.id]?.trim() || null : null,
       }));
 
       await examApi.submitExam({
@@ -178,6 +209,7 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
         questionAnswers,
       });
 
+      submittedRef.current = true;
       if (timerRef.current) clearInterval(timerRef.current);
 
       if (exam.isShowCorrectAnswers) {
@@ -192,11 +224,14 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
     } catch (err: any) {
       Alert.alert(t('common.error'), err?.userMessage || err?.message || t('exams.submitFailed'));
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
+  doSubmitRef.current = doSubmit;
 
   const handleSubmit = () => {
+    if (submittingRef.current || submittedRef.current) return;
     Alert.alert(t('exams.confirmSubmitTitle'), t('exams.confirmSubmitMessage'), [
       { text: t('common.cancel'), style: 'cancel' },
       { text: t('exams.submit'), onPress: doSubmit },
@@ -221,7 +256,7 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
         <ScreenHeader title={t('exams.exam')} onBack={() => navigation.goBack()} />
         <Spinner />
       </SafeAreaView>
@@ -230,7 +265,7 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
 
   if (error || !exam) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
         <ScreenHeader title={t('exams.exam')} onBack={() => navigation.goBack()} />
         <ErrorRetry message={error || t('exams.examNotFound')} onRetry={loadExam} />
       </SafeAreaView>
@@ -241,7 +276,7 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
   if (!examStarted && countdown !== null && countdown > 0) {
     const cd = formatCountdown(countdown);
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
         <ScreenHeader title={exam.name} onBack={() => navigation.goBack()} />
         <View style={styles.countdownContainer}>
           <View style={[styles.countdownIconWrap, { backgroundColor: theme.colors.primary + '15' }]}>
@@ -289,7 +324,7 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
       {/* Header with timer */}
       <View style={[styles.examHeader, { backgroundColor: theme.colors.card }]}>
         <TouchableOpacity
-          style={[styles.backBtn, { backgroundColor: theme.dark ? theme.colors.surface : '#F3F0FF' }]}
+          style={[styles.backBtn, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primary + '15' }]}
           onPress={() => navigation.goBack()}
         >
           <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color={theme.colors.text} />
@@ -304,7 +339,7 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
           </Text>
         </View>
         {isStudent && timeLeft !== null && (
-          <View style={[styles.timerBadge, { backgroundColor: theme.colors.primary + '15' }, timeLeft < 60 && styles.timerBadgeDanger]}>
+          <View style={[styles.timerBadge, { backgroundColor: theme.colors.primary + '15' }, timeLeft < 60 && { backgroundColor: theme.colors.danger }]}>
             <Ionicons name="timer-outline" size={14} color={timeLeft < 60 ? '#fff' : theme.colors.primary} />
             <Text style={[styles.timerText, { color: theme.colors.primary }, timeLeft < 60 && { color: '#fff' }]}>
               {formatTime(timeLeft)}
@@ -326,6 +361,8 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
             selectedAnswers={isStudent ? (answers[question.id] || []) : []}
             onSelectSingle={isStudent ? (answerId) => selectSingleAnswer(question.id, answerId) : () => {}}
             onToggleMulti={isStudent ? (answerId) => toggleMultiAnswer(question.id, answerId) : () => {}}
+            textValue={isStudent ? (textAnswers[question.id] || '') : ''}
+            onChangeText={isStudent ? (value) => setTextAnswer(question.id, value) : () => {}}
             theme={theme}
             t={t}
             readOnly={!isStudent}
@@ -358,6 +395,8 @@ function QuestionCard({
   selectedAnswers,
   onSelectSingle,
   onToggleMulti,
+  textValue,
+  onChangeText,
   theme,
   t,
   readOnly,
@@ -367,12 +406,20 @@ function QuestionCard({
   selectedAnswers: number[];
   onSelectSingle: (answerId: number) => void;
   onToggleMulti: (answerId: number) => void;
+  textValue: string;
+  onChangeText: (value: string) => void;
   theme: any;
-  t: (key: string) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
   readOnly?: boolean;
 }) {
-  const isSingle = question.typeId === 1;
-  const typeLabel = isSingle ? t('exams.singleChoice') : t('exams.multipleChoice');
+  // 1 = Single choice, 2 = Multiple choice, 3 = True/False, 4 = Essay
+  const isEssay = question.typeId === 4;
+  const isSingle = question.typeId === 1 || question.typeId === 3;
+  const typeLabel = isEssay
+    ? t('exams.essay')
+    : question.typeId === 3
+      ? t('exams.trueFalse')
+      : isSingle ? t('exams.singleChoice') : t('exams.multipleChoice');
 
   return (
     <View style={[styles.questionCard, { backgroundColor: theme.colors.card }]}>
@@ -383,7 +430,7 @@ function QuestionCard({
         </View>
         <View style={styles.questionTypeBadge}>
           <Ionicons
-            name={isSingle ? 'radio-button-on' : 'checkbox'}
+            name={isEssay ? 'create-outline' : isSingle ? 'radio-button-on' : 'checkbox'}
             size={12}
             color={theme.colors.textMuted}
           />
@@ -410,7 +457,24 @@ function QuestionCard({
         />
       )}
 
+      {/* Essay answer */}
+      {isEssay && (
+        <TextInput
+          style={[
+            styles.essayInput,
+            { color: theme.colors.inputText, borderColor: theme.colors.inputBorder, backgroundColor: theme.colors.inputBackground },
+          ]}
+          value={textValue}
+          onChangeText={onChangeText}
+          editable={!readOnly}
+          multiline
+          placeholder={t('homework.writeAnswer')}
+          placeholderTextColor={theme.colors.inputPlaceholder}
+        />
+      )}
+
       {/* Answers */}
+      {!isEssay && (
       <View style={styles.answersContainer}>
         {question.answers.map(answer => {
           const isSelected = selectedAnswers.includes(answer.id);
@@ -446,6 +510,7 @@ function QuestionCard({
           );
         })}
       </View>
+      )}
     </View>
   );
 }
@@ -472,8 +537,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   examHeaderTitle: {
-    fontSize: fontSize.base,
-    fontFamily: 'Cairo_600SemiBold',
+    ...typography.headerTitle,
   },
   questionCount: {
     fontSize: 11,
@@ -486,9 +550,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
-  },
-  timerBadgeDanger: {
-    backgroundColor: '#EF4444',
   },
   timerText: {
     fontSize: 13,
@@ -545,13 +606,24 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: spacing.md,
   },
+  essayInput: {
+    minHeight: 100,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    padding: spacing.md,
+    fontSize: fontSize.sm,
+    fontFamily: 'Cairo_500Medium',
+    textAlignVertical: 'top',
+  },
   // Answers
   answersContainer: {
     gap: spacing.sm,
   },
   answerOption: {
     flexDirection: 'row',
-    alignItems: 'center',
+    // flex-start + indicator height == answerText lineHeight keeps the
+    // radio/checkbox centred on the first line when the answer wraps.
+    alignItems: 'flex-start',
     gap: spacing.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 14,
@@ -592,7 +664,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderRadius: 14,
     marginTop: spacing.md,
   },

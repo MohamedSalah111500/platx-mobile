@@ -24,7 +24,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, typography } from '../../theme/typography';
 import { groupsApi } from '../../services/api/groups.api';
 import { subGroupsApi } from '../../services/api/subgroups.api';
 import { chatApi } from '../../services/api/chat.api';
@@ -33,6 +33,7 @@ import { getFullImageUrl } from '../../utils/imageUrl';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 import type { Group, GroupMember, GroupFile, SubGroup } from '../../types/group.types';
 import type { ChatMessage } from '../../types/chat.types';
+import { isOwnMessage } from '../chat/isOwnMessage';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'GroupDetail'>;
 
@@ -241,8 +242,9 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
       setMessageText('');
       await loadMessages();
       setTimeout(() => chatListRef.current?.scrollToEnd({ animated: true }), 200);
-    } catch (err) {
+    } catch (err: any) {
       console.error('[GroupDetail] Send failed:', err);
+      Alert.alert(t('common.error'), err?.userMessage || t('chat.failedToSend'));
     } finally {
       setSending(false);
     }
@@ -273,14 +275,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
   const getInitials = (first?: string, last?: string) =>
     `${(first?.[0] || '').toUpperCase()}${(last?.[0] || '').toUpperCase()}` || '?';
 
-  const currentUserId = (user as any)?.id || user?.userId;
-
-  const isMySender = (msg: ChatMessage) => {
-    if (msg.senderId === currentUserId) return true;
-    if (msg.senderStaffId && msg.senderStaffId === currentUserId) return true;
-    if (msg.senderStudentId && msg.senderStudentId === currentUserId) return true;
-    return false;
-  };
+  const isMySender = (msg: ChatMessage) => isOwnMessage(msg, user, isStudent);
 
   const getSenderName = (msg: ChatMessage) => {
     if (msg.senderName) return msg.senderName;
@@ -385,7 +380,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
             style={s.actionBtn}
             onPress={() => handleRemoveStudent(item)}
           >
-            <Ionicons name="person-remove-outline" size={18} color="#e74c3c" />
+            <Ionicons name="person-remove-outline" size={18} color={theme.colors.danger} />
           </TouchableOpacity>
         )}
       </View>
@@ -482,7 +477,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
     const time = formatTime(item.sentAt || item.createdAt);
 
     return (
-      <View style={[s.messageBubbleRow, isMine && { flexDirection: isRTL ? 'row' : 'row-reverse' }]}>
+      <View style={[s.messageBubbleRow, isMine && { flexDirection: 'row-reverse' }]}>
         <View
           style={[
             s.messageBubble,
@@ -557,7 +552,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
         <TextInput
           style={[s.chatInput, { color: theme.colors.text }]}
           placeholder={t('groups.typeMessage')}
-          placeholderTextColor={theme.colors.textMuted}
+          placeholderTextColor={theme.colors.inputPlaceholder}
           value={messageText}
           onChangeText={setMessageText}
           multiline
@@ -569,9 +564,9 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
           disabled={!messageText.trim() || sending}
         >
           {sending ? (
-            <Spinner size="small" />
+            <Spinner size="small" color="#fff" style={{ padding: 0 }} />
           ) : (
-            <Ionicons name="send" size={20} color="#fff" />
+            <Ionicons name="send" size={20} color="#fff" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
           )}
         </TouchableOpacity>
       </View>
@@ -623,12 +618,12 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
           <Text style={[s.statLabel, { color: theme.colors.textMuted }]}>{t('groups.students')}</Text>
         </View>
         <View style={[s.statCard, { backgroundColor: theme.colors.card }]}>
-          <Ionicons name="school" size={22} color="#4CAF50" />
+          <Ionicons name="school" size={22} color={theme.colors.success} />
           <Text style={[s.statValue, { color: theme.colors.text }]}>{staff.length}</Text>
           <Text style={[s.statLabel, { color: theme.colors.textMuted }]}>{t('groups.staff')}</Text>
         </View>
         <View style={[s.statCard, { backgroundColor: theme.colors.card }]}>
-          <Ionicons name="checkmark-circle" size={22} color="#FF9800" />
+          <Ionicons name="checkmark-circle" size={22} color={theme.colors.warning} />
           <Text style={[s.statValue, { color: theme.colors.text }]}>
             {group?.isActive ? t('groups.active') : t('groups.inactive')}
           </Text>
@@ -640,7 +635,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
       {group?.nextDueDate ? (
         <View style={[s.infoRow, { backgroundColor: theme.colors.card }]}>
           <Ionicons name="calendar-outline" size={20} color={theme.colors.primary} />
-          <View style={{ marginLeft: spacing.md }}>
+          <View style={{ flex: 1 }}>
             <Text style={[s.infoRowLabel, { color: theme.colors.textMuted }]}>{t('groups.startDate')}</Text>
             <Text style={[s.infoRowValue, { color: theme.colors.text }]}>
               {group.nextDueDate} {group.nextDueTime || ''}
@@ -652,7 +647,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
       {group?.createdAt ? (
         <View style={[s.infoRow, { backgroundColor: theme.colors.card }]}>
           <Ionicons name="time-outline" size={20} color={theme.colors.primary} />
-          <View style={{ marginLeft: spacing.md }}>
+          <View style={{ flex: 1 }}>
             <Text style={[s.infoRowLabel, { color: theme.colors.textMuted }]}>{t('groups.createdAt')}</Text>
             <Text style={[s.infoRowValue, { color: theme.colors.text }]}>{group.createdAt}</Text>
           </View>
@@ -670,11 +665,11 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
             const imageUrl = getFullImageUrl(member.profileImage);
             return (
               <View key={`info-staff-${member.id}`} style={[s.studentCard, { backgroundColor: theme.colors.card }]}>
-                <View style={[s.avatar, { backgroundColor: '#E8F5E9' }]}>
+                <View style={[s.avatar, { backgroundColor: theme.colors.success + '26' }]}>
                   {imageUrl ? (
                     <Image source={{ uri: imageUrl }} style={s.avatarImg} />
                   ) : (
-                    <Text style={[s.avatarText, { color: '#4CAF50' }]}>{initials}</Text>
+                    <Text style={[s.avatarText, { color: theme.colors.success }]}>{initials}</Text>
                   )}
                 </View>
                 <View style={{ flex: 1 }}>
@@ -884,7 +879,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
                 onPress={handleInviteStudent}
               >
                 {inviting ? (
-                  <Spinner size="small" />
+                  <Spinner size="small" color="#fff" style={{ padding: 0 }} />
                 ) : (
                   <Text style={ms.addBtnText}>{t('groups.inviteStudent')}</Text>
                 )}
@@ -921,10 +916,10 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
+    ...typography.headerTitle,
     flex: 1,
     textAlign: 'center',
-    fontSize: fontSize.lg,
-    fontFamily: 'Cairo_700Bold',
+    marginHorizontal: spacing.sm,
     color: '#fff',
   },
 
@@ -1110,9 +1105,13 @@ const s = StyleSheet.create({
   chatInput: {
     flex: 1,
     fontSize: 14,
+    lineHeight: 20,
+    minHeight: 40,
     maxHeight: 100,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingTop: 10,
+    paddingBottom: 10,
+    textAlignVertical: 'center',
   },
   sendBtn: {
     width: 40,
@@ -1120,7 +1119,6 @@ const s = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 2,
   },
 
   // Info tab
@@ -1180,7 +1178,7 @@ const s = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: 16,
     marginBottom: spacing.sm,
-    
+    gap: spacing.md,
   },
   infoRowLabel: {
     fontSize: 12,
@@ -1238,8 +1236,8 @@ const ms = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sheetTitle: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Cairo_700Bold',
+    ...typography.headerTitle,
+    flex: 1,
   },
   searchRow: {
     flexDirection: 'row',
@@ -1278,7 +1276,7 @@ const ms = StyleSheet.create({
   },
   addBtn: {
     borderRadius: 16,
-    height: 50,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: spacing.md,

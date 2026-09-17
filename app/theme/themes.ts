@@ -1,5 +1,5 @@
 import { colors } from './colors';
-import { isValidHexColor, lighten, darken } from '../utils/color';
+import { isValidHexColor, lighten, darken, ensureContrastOn } from '../utils/color';
 
 export interface ThemeColors {
   primary: string;
@@ -45,9 +45,14 @@ const DEFAULT_ACCENT = colors.primary[500];
  */
 export function buildTheme(dark: boolean, accentColor?: string | null): Theme {
   const accent = isValidHexColor(accentColor) ? accentColor : DEFAULT_ACCENT;
-  // Dark backgrounds need a lighter tint of the accent to stay legible/AA-contrast.
-  const primary = dark ? lighten(accent, 18) : accent;
-  const primaryLight = dark ? darken(primary, 55) : lighten(primary, 38);
+  // Dark backgrounds need a lighter tint of the accent to stay legible. Muted
+  // tenant colours need more than the base 18%, so keep lightening until the
+  // accent reaches AA text contrast on the card colour (icons, links, tints).
+  const primary = dark ? ensureContrastOn(lighten(accent, 18), colors.secondary[800]) : accent;
+  // Only ever used as a soft fill behind primary-coloured icons/text, so it has
+  // to stay close to the surface: a dark brand colour lightened by 38% is still
+  // mid-grey and reads as a solid button.
+  const primaryLight = dark ? darken(primary, 55) : lighten(primary, 88);
   const primaryDark = dark ? lighten(primary, 25) : darken(primary, 15);
 
   if (dark) {
@@ -69,12 +74,16 @@ export function buildTheme(dark: boolean, accentColor?: string | null): Theme {
         textMuted: colors.secondary[500],
 
         border: colors.secondary[700],
-        divider: colors.secondary[800],
+        // Between card (800) and border (700): same as card was invisible on cards.
+        divider: '#323238',
 
-        success: colors.success.light,
-        warning: colors.warning.light,
-        danger: colors.danger.light,
-        info: colors.info.light,
+        // Mid tones, not the pastel ".light" ones: these are also used as solid
+        // fills behind white text (danger buttons, badges), where pastels are
+        // unreadable. They still have enough contrast on the dark background.
+        success: colors.success.main,
+        warning: colors.warning.main,
+        danger: colors.danger.main,
+        info: colors.info.main,
 
         inputBackground: colors.secondary[800],
         inputBorder: colors.secondary[600],
@@ -100,7 +109,9 @@ export function buildTheme(dark: boolean, accentColor?: string | null): Theme {
       primaryLight,
       primaryDark,
 
-      background: colors.white,
+      // Cards are white, so the page behind them can't also be pure white or
+      // every card loses its edges (nothing here carries a shadow).
+      background: colors.secondary[100],
       backgroundGradientFrom: colors.secondary[100],
       backgroundGradientTo: colors.white,
       surface: colors.secondary[50],

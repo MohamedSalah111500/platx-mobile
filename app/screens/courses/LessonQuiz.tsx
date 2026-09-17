@@ -21,7 +21,7 @@ function stripHtml(s?: string): string {
 
 export default function LessonQuiz({ examId, onFinished }: Props) {
   const { theme } = useTheme();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,14 +99,14 @@ export default function LessonQuiz({ examId, onFinished }: Props) {
     if (!s?.checked) {
       const sel = isSelected(q.id, aId);
       return {
-        border: sel ? theme.colors.primary : theme.colors.divider,
+        border: sel ? theme.colors.primary : theme.colors.border,
         bg: sel ? theme.colors.primary + '14' : theme.colors.card,
         markerBg: sel ? theme.colors.primary : 'transparent',
       };
     }
     if (isCorrect) return { border: '#12A150', bg: '#12A15015', markerBg: '#12A150' };
     if (s.selected.includes(aId)) return { border: '#E0342C', bg: '#E0342C15', markerBg: '#E0342C' };
-    return { border: theme.colors.divider, bg: theme.colors.card, markerBg: 'transparent' };
+    return { border: theme.colors.border, bg: theme.colors.card, markerBg: 'transparent' };
   };
 
   if (loading) {
@@ -190,7 +190,16 @@ export default function LessonQuiz({ examId, onFinished }: Props) {
       {currentState?.checked && (
         <View style={[styles.feedback, { backgroundColor: currentState.correct ? '#12A15015' : '#E0342C15' }]}>
           <Ionicons name={currentState.correct ? 'checkmark-circle' : 'close-circle'} size={18} color={currentState.correct ? '#12A150' : '#E0342C'} />
-          <Text style={[styles.feedbackText, { color: currentState.correct ? '#0f5132' : '#842029' }]}>
+          <Text
+            style={[
+              styles.feedbackText,
+              {
+                color: currentState.correct
+                  ? (theme.dark ? '#86efac' : '#0f5132')
+                  : (theme.dark ? '#fca5a5' : '#842029'),
+              },
+            ]}
+          >
             {currentState.correct ? t('quiz.thatsCorrect') : t('quiz.thatsIncorrect')}
           </Text>
         </View>
@@ -199,16 +208,16 @@ export default function LessonQuiz({ examId, onFinished }: Props) {
       <View style={styles.actions}>
         {!currentState?.checked ? (
           <TouchableOpacity
-            style={[styles.btnPrimary, { backgroundColor: canCheck ? theme.colors.primary : theme.colors.divider }]}
+            style={[styles.btnPrimary, { backgroundColor: canCheck ? theme.colors.primary : theme.colors.border }]}
             disabled={!canCheck}
             onPress={check}
           >
-            <Text style={styles.btnPrimaryText}>{t('quiz.checkAnswer')}</Text>
+            <Text style={[styles.btnPrimaryText, !canCheck && { color: theme.colors.textMuted }]}>{t('quiz.checkAnswer')}</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={[styles.btnPrimary, { backgroundColor: theme.colors.primary }]} onPress={next}>
             <Text style={styles.btnPrimaryText}>{isLast ? t('quiz.seeResults') : t('quiz.next')}</Text>
-            <Ionicons name="arrow-forward" size={16} color="#fff" />
+            <Ionicons name={isRTL ? 'arrow-back' : 'arrow-forward'} size={16} color="#fff" />
           </TouchableOpacity>
         )}
       </View>

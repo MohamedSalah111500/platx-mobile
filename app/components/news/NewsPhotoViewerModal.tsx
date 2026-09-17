@@ -21,9 +21,10 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { useSound } from '../../hooks/useSound';
 import { Spinner } from '../ui/Spinner';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, typography } from '../../theme/typography';
 import { newsApi } from '../../services/api/news.api';
 import type { NewsComment } from '../../types/news.types';
+import { parseServerDate } from '../../utils/date';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 
@@ -96,7 +97,7 @@ export default function NewsPhotoViewerModal({ visible, onClose, newsId, imageUr
   };
 
   const timeAgo = (dateStr: string): string => {
-    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const diffMs = Date.now() - parseServerDate(dateStr).getTime();
     const minutes = Math.floor(diffMs / 60000);
     if (minutes < 1) return t('common.justNow');
     if (minutes < 60) return t('common.minutesAgo', { count: minutes });
@@ -114,7 +115,7 @@ export default function NewsPhotoViewerModal({ visible, onClose, newsId, imageUr
             <Ionicons name="close" size={24} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{t('news.comments')}</Text>
-          <View style={{ width: 24 }} />
+          <View style={styles.closeBtn} />
         </View>
 
         {imageUrl ? (
@@ -148,7 +149,7 @@ export default function NewsPhotoViewerModal({ visible, onClose, newsId, imageUr
                       {(item.authorName?.[0] || '?').toUpperCase()}
                     </Text>
                   </View>
-                  <View style={[styles.bubble, { backgroundColor: theme.colors.card }]}>
+                  <View style={[styles.bubble, { backgroundColor: theme.colors.surface }]}>
                     <View style={styles.bubbleHeader}>
                       <Text style={[styles.authorName, { color: theme.colors.text }]} numberOfLines={1}>
                         {item.authorName}
@@ -179,7 +180,7 @@ export default function NewsPhotoViewerModal({ visible, onClose, newsId, imageUr
           )}
 
           <View style={[styles.inputBar, { backgroundColor: theme.colors.card, borderTopColor: theme.colors.divider, paddingBottom: insets.bottom + spacing.sm }]}>
-            <View style={[styles.inputWrap, { backgroundColor: theme.colors.surface }]}>
+            <View style={[styles.inputWrap, { backgroundColor: theme.dark ? theme.colors.background : theme.colors.surface }]}>
               <TextInput
                 style={[styles.input, { color: theme.colors.text, textAlign: isRTL ? 'right' : 'left' }]}
                 value={draft}
@@ -200,7 +201,12 @@ export default function NewsPhotoViewerModal({ visible, onClose, newsId, imageUr
               disabled={!draft.trim() || sending}
               activeOpacity={0.7}
             >
-              <Ionicons name="send" size={18} color="#fff" />
+              <Ionicons
+                name="send"
+                size={18}
+                color="#fff"
+                style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
+              />
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -219,8 +225,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
   },
-  closeBtn: { width: 24 },
-  headerTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold' },
+  closeBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { ...typography.headerTitle, flex: 1, textAlign: 'center' },
 
   imageWrap: {
     width: '100%',
@@ -275,6 +281,7 @@ const styles = StyleSheet.create({
   },
   input: {
     fontSize: fontSize.base,
+    fontFamily: 'Cairo_400Regular',
     maxHeight: 100,
     paddingVertical: Platform.OS === 'ios' ? 6 : spacing.sm,
   },

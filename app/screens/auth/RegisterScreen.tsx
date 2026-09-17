@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-let GoogleSignin: any = null;
-let statusCodes: any = {};
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuthStore } from '../../store/auth.store';
@@ -25,8 +22,6 @@ import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { VoiceRegisterAssistant } from '../../components/auth/VoiceRegisterAssistant';
 import type { VoiceRegisterFields } from '../../types/auth.types';
 
-const GOOGLE_WEB_CLIENT_ID = '997004801769-ni3d4vb3d1g551vrj4ku9fsr99k1mhr6.apps.googleusercontent.com';
-
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 export default function RegisterScreen({ navigation, route }: Props) {
@@ -34,17 +29,6 @@ export default function RegisterScreen({ navigation, route }: Props) {
   const { register, googleLogin, isLoading, error, clearError } = useAuthStore();
   const { t, isRTL } = useRTL();
   const [googleLoading, setGoogleLoading] = useState(false);
-
-  useEffect(() => {
-    try {
-      GoogleSignin?.configure({
-        webClientId: GOOGLE_WEB_CLIENT_ID,
-        offlineAccess: true,
-      });
-    } catch {
-      // Google Sign-In not available
-    }
-  }, []);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -110,43 +94,7 @@ export default function RegisterScreen({ navigation, route }: Props) {
     clearError();
     setGoogleLoading(true);
     try {
-      if (!GoogleSignin || typeof GoogleSignin.signIn !== 'function') {
-        Alert.alert(t('common.error'), 'Google Sign-In is not available in this build');
-        return;
-      }
-      await GoogleSignin.hasPlayServices();
-      const response = await GoogleSignin.signIn();
-      const userInfo = response.data;
-      if (!userInfo?.user) throw new Error('No user info');
-
-      const tokens = await GoogleSignin.getTokens();
-
-      await googleLogin(
-        {
-          id: userInfo.user.id,
-          email: userInfo.user.email,
-          name: userInfo.user.name || '',
-          givenName: userInfo.user.givenName || '',
-          familyName: userInfo.user.familyName || '',
-          picture: userInfo.user.photo || '',
-          accessToken: tokens.accessToken,
-          returnUrl: '',
-          Domain: domain.trim(),
-        },
-        domain.trim(),
-      );
-    } catch (err: any) {
-      if (err?.code === statusCodes.SIGN_IN_CANCELLED) {
-        // User cancelled
-      } else if (err?.code === statusCodes.IN_PROGRESS) {
-        // Already in progress
-      } else if (err?.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert(t('common.error'), 'Google Play Services not available');
-      } else {
-        if (!useAuthStore.getState().error) {
-          Alert.alert(t('common.error'), t('auth.googleSignInFailed'));
-        }
-      }
+      await googleLogin(domain.trim());
     } finally {
       setGoogleLoading(false);
     }
@@ -185,6 +133,7 @@ export default function RegisterScreen({ navigation, route }: Props) {
     },
     footer: {
       flexDirection: 'row',
+      alignItems: 'center',
       justifyContent: 'center',
       marginTop: spacing.xl,
       marginBottom: spacing['2xl'],
@@ -322,6 +271,7 @@ export default function RegisterScreen({ navigation, route }: Props) {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
+            gap: spacing.md,
             backgroundColor: theme.colors.card,
             borderWidth: 1,
             borderColor: theme.colors.border,
@@ -339,7 +289,6 @@ export default function RegisterScreen({ navigation, route }: Props) {
             style={{
               ...typography.button,
               color: theme.colors.text,
-              marginLeft: spacing.md,
             }}
           >
             {googleLoading ? t('common.loading') : t('auth.signUpWithGoogle')}

@@ -48,7 +48,7 @@ export default function ExamReportDetailScreen({ navigation, route }: Props) {
   );
 
   const renderRow = ({ item }: { item: ExamStudentRow }) => {
-    const color = item.passed ? '#34C38F' : '#EF4444';
+    const color = item.passed ? theme.colors.success : theme.colors.danger;
     const initials = (item.studentName || '?').trim().slice(0, 1).toUpperCase();
     return (
       <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
@@ -71,7 +71,7 @@ export default function ExamReportDetailScreen({ navigation, route }: Props) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
       <ScreenHeader title={examName} onBack={() => navigation.goBack()} />
 
       {loading && items.length === 0 ? (

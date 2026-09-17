@@ -30,6 +30,7 @@ import { getFullImageUrl } from '../../utils/imageUrl';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 import type { GroupMember, SubGroup } from '../../types/group.types';
 import type { ChatMessage } from '../../types/chat.types';
+import { isOwnMessage } from '../chat/isOwnMessage';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'SubGroupDetail'>;
 
@@ -175,14 +176,7 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
 
   // ─── Chat helpers ───
 
-  const currentUserId = (user as any)?.id || user?.userId;
-
-  const isMySender = (msg: ChatMessage) => {
-    if (msg.senderId === currentUserId) return true;
-    if (msg.senderStaffId && msg.senderStaffId === currentUserId) return true;
-    if (msg.senderStudentId && msg.senderStudentId === currentUserId) return true;
-    return false;
-  };
+  const isMySender = (msg: ChatMessage) => isOwnMessage(msg, user, isStudent);
 
   const getSenderName = (msg: ChatMessage) => {
     if (msg.senderName) return msg.senderName;
@@ -210,8 +204,9 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
       setMessageText('');
       await loadMessages();
       setTimeout(() => chatListRef.current?.scrollToEnd({ animated: true }), 200);
-    } catch (err) {
+    } catch (err: any) {
       console.error('[SubGroupDetail] Send failed:', err);
+      Alert.alert(t('common.error'), err?.userMessage || t('chat.failedToSend'));
     } finally {
       setSending(false);
     }
@@ -242,7 +237,7 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
         </View>
         {isTeacher && (
           <TouchableOpacity style={s.actionBtn} onPress={() => handleRemoveStudent(item)}>
-            <Ionicons name="person-remove-outline" size={18} color="#e74c3c" />
+            <Ionicons name="person-remove-outline" size={18} color={theme.colors.danger} />
           </TouchableOpacity>
         )}
       </View>
@@ -303,7 +298,7 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
     const time = formatTime(item.sentAt || item.createdAt);
 
     return (
-      <View style={[s.messageBubbleRow, isMine && { flexDirection: isRTL ? 'row' : 'row-reverse' }]}>
+      <View style={[s.messageBubbleRow, isMine && { flexDirection: 'row-reverse' }]}>
         <View
           style={[
             s.messageBubble,
@@ -369,7 +364,7 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
         <TextInput
           style={[s.chatInput, { color: theme.colors.text }]}
           placeholder={t('groups.typeMessage')}
-          placeholderTextColor={theme.colors.textMuted}
+          placeholderTextColor={theme.colors.inputPlaceholder}
           value={messageText}
           onChangeText={setMessageText}
           multiline
@@ -380,7 +375,11 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
           onPress={handleSendMessage}
           disabled={!messageText.trim() || sending}
         >
-          {sending ? <Spinner size="small" /> : <Ionicons name="send" size={20} color="#fff" />}
+          {sending ? (
+            <Spinner size="small" color="#fff" style={{ padding: 0 }} />
+          ) : (
+            <Ionicons name="send" size={20} color="#fff" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+          )}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -480,7 +479,7 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
                       {item.firstName} {item.lastName}
                     </Text>
                     {adding === item.id ? (
-                      <Spinner size="small" />
+                      <Spinner size="small" style={{ padding: 0 }} />
                     ) : (
                       <Ionicons name="add-circle-outline" size={22} color={theme.colors.primary} />
                     )}
@@ -522,10 +521,10 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
+    ...typography.headerTitle,
     flex: 1,
     textAlign: 'center',
-    fontSize: fontSize.lg,
-    fontFamily: 'Cairo_700Bold',
+    marginHorizontal: spacing.sm,
     color: '#fff',
   },
 
@@ -687,9 +686,13 @@ const s = StyleSheet.create({
   chatInput: {
     flex: 1,
     fontSize: 14,
+    lineHeight: 20,
+    minHeight: 40,
     maxHeight: 100,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingTop: 10,
+    paddingBottom: 10,
+    textAlignVertical: 'center',
   },
   sendBtn: {
     width: 40,
@@ -697,7 +700,6 @@ const s = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 2,
   },
 });
 
@@ -720,8 +722,8 @@ const ms = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sheetTitle: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Cairo_700Bold',
+    ...typography.headerTitle,
+    flex: 1,
   },
   searchRow: {
     flexDirection: 'row',

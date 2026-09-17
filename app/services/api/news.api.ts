@@ -47,14 +47,10 @@ export const newsApi = {
     return { items: result.items, totalCount: result.totalCount };
   },
 
+  // api/News/{id} (Admin/Staff). There is no student single-news endpoint.
   getSingle: async (id: number | string, domain?: string): Promise<NewsItem> => {
-    try {
-      const { data } = await apiClient.get<NewsItem>(NEWS_URLS.GET_SINGLE_STUDENT(id, domain || ''));
-      return data;
-    } catch {
-      const { data } = await apiClient.get<NewsItem>(NEWS_URLS.GET_SINGLE(id, domain || ''));
-      return data;
-    }
+    const { data } = await apiClient.get<NewsItem>(NEWS_URLS.GET_SINGLE(id, domain || ''));
+    return data;
   },
 
   create: async (formData: FormData): Promise<NewsItem> => {

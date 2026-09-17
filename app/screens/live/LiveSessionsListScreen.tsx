@@ -98,13 +98,22 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
       openExternal(session);
       return;
     }
+    // Host only when the session's owner id matches our staff id. The backend
+    // LiveClassroomDto currently exposes no owner id (any Staff/Admin may end a
+    // session), so without one staff/admin keep the host role.
+    const ownerId = session.teacherId;
+    const isHost = !isStudent && (
+      ownerId != null
+        ? user?.staffId != null && Number(ownerId) === Number(user.staffId)
+        : true
+    );
     // Internal (Agora): LiveClassroom is registered at the RootStack level.
     navigation.dispatch(
       CommonActions.navigate({
         name: 'LiveClassroom',
         params: {
           roomId: session.id,
-          isTeacher: !isStudent,
+          isTeacher: isHost,
         },
       }),
     );
@@ -193,13 +202,13 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
       paddingHorizontal: spacing.sm,
       paddingVertical: 3,
       borderRadius: borderRadius.full,
+      gap: spacing.xs,
     },
     liveDot: {
       width: 8,
       height: 8,
       borderRadius: 4,
       backgroundColor: theme.colors.danger,
-      marginRight: spacing.xs,
     },
     liveText: {
       ...typography.caption,
@@ -272,7 +281,7 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
         renderItem={renderSession}
         keyExtractor={(item) => item.id.toString()}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} colors={[theme.colors.primary]} />
         }
         ListEmptyComponent={
           loading ? (

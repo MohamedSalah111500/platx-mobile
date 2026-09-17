@@ -9,6 +9,16 @@ export interface EventItem {
   meetingLink?: string;
   color?: string;
   mainEventId?: number;
+  // Raw backend (EventDetailsReadDto) names; eventsApi maps them onto the fields above.
+  name?: string;
+  onlineMeetingLink?: string | null;
+  locationLink?: string | null;
+  // This occurrence: Date + StartTime, lasting Duration hours. startDate/endDate
+  // above are derived from these (the DTO's own StartDate/EndDate are the
+  // recurring series' bounds).
+  date?: string;
+  startTime?: string;
+  duration?: number;
 }
 
 export interface EventDetail extends EventItem {

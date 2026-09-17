@@ -2,18 +2,21 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS, API_CONFIG } from '../config';
 import { authApi } from '../services/api/auth.api';
+import { studentsApi } from '../services/api/students.api';
 import { setInMemoryToken, setOnUnauthorized } from '../services/api/client';
 import { signalRService } from '../services/realtime/signalr.service';
 import { unregisterPushNotifications } from '../services/realtime/pushNotifications';
 import { extractNumericId, extractTenantDomain } from '../utils/jwt';
 import { logger } from '../services/logger';
+import { signInWithGoogle } from '../services/auth/googleAuth';
+import i18n from '../i18n/i18n.config';
+import { useNotificationsStore } from './notifications.store';
 import type {
   User,
   LoginResponse,
   MobileLoginPayload,
   RegisterPayload,
   EmailConfirmPayload,
-  GoogleSignInPayload,
   TenantInfo,
 } from '../types/auth.types';
 
@@ -30,13 +33,17 @@ interface AuthState {
   tenantLogo: string | null;
   tenantColor: string | null;
   showWelcome: boolean;
+  // Set when login succeeded credential-wise but the email isn't confirmed yet
+  // (backend returns token null + isEmailConfirmed false). LoginScreen routes to OTP.
+  pendingEmailConfirmation: { email: string; domain: string; password: string } | null;
 }
 
 interface AuthActions {
   login: (payload: MobileLoginPayload) => Promise<void>;
   selectTenant: (tenantId: string) => Promise<void>;
   clearPendingTenants: () => void;
-  googleLogin: (payload: GoogleSignInPayload, domain: string) => Promise<void>;
+  clearPendingEmailConfirmation: () => void;
+  googleLogin: (domain: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
   confirmEmail: (payload: EmailConfirmPayload) => Promise<void>;
@@ -57,7 +64,12 @@ interface AuthActions {
 
 type AuthStore = AuthState & AuthActions;
 
-function processAuthResponse(response: LoginResponse): { user: User; domain: string | null } {
+// `fallbackDomain` is the tenant domain from the outer mobile-login response
+// (MobileLoginResponse.Domain / Tenants[i].Domain) — AuthResponse itself has none.
+function processAuthResponse(
+  response: LoginResponse,
+  fallbackDomain?: string | null
+): { user: User; domain: string | null } {
   const jwtNumericId = extractNumericId(response.token);
   const _resp: any = response;
   const numericId =
@@ -72,10 +84,12 @@ function processAuthResponse(response: LoginResponse): { user: User; domain: str
     response.id;
 
   const domain =
+    fallbackDomain ||
     _resp.domain ||
     _resp.tenantDomain ||
     extractTenantDomain(response.token) ||
     null;
+  const staffId = Number(_resp.staff?.id);
 
   return {
     user: {
@@ -89,16 +103,112 @@ function processAuthResponse(response: LoginResponse): { user: User; domain: str
       tenantActive: response.tenantActive,
       token: response.token,
       studentId: numericId,
+      // Staff.Id (AuthResponse.Staff) — needed by staff-scoped endpoints such as
+      // GetStaffNotificationListAsync. There is no api/Staffs/me to resolve it later.
+      staffId: Number.isFinite(staffId) && staffId > 0 ? staffId : undefined,
       profileImage: _resp.student?.profileImage ?? _resp.staff?.profileImage ?? undefined,
     },
     domain,
   };
 }
 
+// Backend returns AuthResponse with Token = null and IsEmailConfirmed = false when
+// the password is right but the email (per tenant) isn't confirmed yet.
+function isUnconfirmedEmail(authResponse: LoginResponse | null | undefined): boolean {
+  return !!authResponse && !authResponse.token && authResponse.isEmailConfirmed === false;
+}
+
+async function startEmailConfirmation(
+  set: (state: Partial<AuthState>) => void,
+  credentials: { userName: string; password: string },
+  domain: string | null
+) {
+  const resolvedDomain = domain ?? '';
+  // Login doesn't send an OTP by itself — request one so the user has a code to enter.
+  await authApi.sendConfirmationEmail(credentials.userName, resolvedDomain).catch(() => {});
+  set({
+    isLoading: false,
+    error: null,
+    pendingEmailConfirmation: {
+      email: credentials.userName,
+      domain: resolvedDomain,
+      password: credentials.password,
+    },
+  });
+}
+
+function hasStudentRole(roles?: unknown): boolean {
+  return Array.isArray(roles) && roles.some((r) => String(r).toLowerCase() === 'student');
+}
+
+// The JWT only carries the Identity user GUID (no StudentId claim), so the id we
+// derive at login can be wrong or missing. For student accounts ask the backend
+// for the real Student.Id — it's what enrollments/reservations endpoints key on.
+// Requires the in-memory token to be set already.
+async function resolveStudentId(user: User): Promise<User> {
+  if (!hasStudentRole(user.roles)) return user;
+  try {
+    const me = await studentsApi.getMe();
+    if (me?.id && me.id !== user.studentId) {
+      return {
+        ...user,
+        studentId: me.id,
+        profileImage: user.profileImage ?? me.profileImage ?? undefined,
+      };
+    }
+  } catch {
+    // Keep whatever we had; screens surface a "missing student id" message.
+  }
+  return user;
+}
+
 function resolveLogoUrl(logoUrl?: string | null): string | null {
   if (!logoUrl) return null;
   if (logoUrl.startsWith('http')) return logoUrl;
   return `${API_CONFIG.BASE_URL}${logoUrl.startsWith('/') ? logoUrl.slice(1) : logoUrl}`;
+}
+
+const LOGGED_OUT_STATE: Partial<AuthState> = {
+  user: null,
+  token: null,
+  domain: null,
+  isAuthenticated: false,
+  isLoading: false,
+  error: null,
+  pendingTenants: null,
+  pendingCredentials: null,
+  pendingEmailConfirmation: null,
+  tenantName: null,
+  tenantLogo: null,
+  tenantColor: null,
+  showWelcome: false,
+};
+
+// Shared by normal logout and the forced (401) logout so both leave the device clean
+// for the next user.
+async function clearSession(options: { removePushToken: boolean }) {
+  signalRService.stopConnection().catch(() => {});
+  setInMemoryToken(null);
+  useNotificationsStore.getState().clear();
+  const keys: string[] = [
+    STORAGE_KEYS.AUTH_TOKEN,
+    STORAGE_KEYS.CURRENT_USER,
+    STORAGE_KEYS.USER_ROLES,
+    STORAGE_KEYS.DOMAIN,
+    STORAGE_KEYS.TENANT_NAME,
+    STORAGE_KEYS.TENANT_LOGO,
+    STORAGE_KEYS.TENANT_COLOR,
+  ];
+  // Normal logout lets unregisterPushNotifications() read + remove it itself.
+  // A forced logout can't unregister (token is dead), but the stored push token
+  // must go or the next user's login skips backend registration.
+  if (options.removePushToken) keys.push(STORAGE_KEYS.PUSH_TOKEN);
+  // Reset state synchronously (like the old 401 handler) so a login that is
+  // persisting concurrently still ends up as the final state.
+  useAuthStore.setState(LOGGED_OUT_STATE);
+  try {
+    await AsyncStorage.multiRemove(keys);
+  } catch {}
 }
 
 async function persistAndSetAuth(
@@ -111,6 +221,13 @@ async function persistAndSetAuth(
   const tenantName = branding?.tenantName ?? null;
   const tenantLogo = resolveLogoUrl(branding?.tenantLogo);
   const tenantColor = branding?.primaryColor ?? null;
+
+  // Token must be usable by the API client before we ask for the student profile.
+  setInMemoryToken(token);
+  user = await resolveStudentId(user);
+  // If that request happened to 401, the client's interceptor cleared the
+  // in-memory token; restore it so expiry handling keeps working.
+  setInMemoryToken(token);
 
   await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
   await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
@@ -133,7 +250,6 @@ async function persistAndSetAuth(
   } else {
     await AsyncStorage.removeItem(STORAGE_KEYS.TENANT_COLOR);
   }
-  setInMemoryToken(token);
   set({
     user,
     token,
@@ -142,6 +258,7 @@ async function persistAndSetAuth(
     isLoading: false,
     pendingTenants: null,
     pendingCredentials: null,
+    pendingEmailConfirmation: null,
     tenantName,
     tenantLogo,
     tenantColor,
@@ -170,16 +287,20 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   tenantLogo: null,
   tenantColor: null,
   showWelcome: false,
+  pendingEmailConfirmation: null,
 
   login: async (payload: MobileLoginPayload) => {
     try {
-      set({ isLoading: true, error: null });
+      set({ isLoading: true, error: null, pendingEmailConfirmation: null });
       const response = await authApi.mobileLogin(payload);
+      // Single-tenant login returns the tenant (with logo) in tenants[0].
+      const branding = response.tenants?.[0];
+      const responseDomain = response.domain ?? branding?.domain ?? null;
 
-      if (!response.requiresTenantSelection && response.authResponse) {
-        const { user, domain } = processAuthResponse(response.authResponse);
-        // Single-tenant login returns the tenant (with logo) in tenants[0].
-        const branding = response.tenants?.[0];
+      if (!response.requiresTenantSelection && isUnconfirmedEmail(response.authResponse)) {
+        await startEmailConfirmation(set, payload, responseDomain);
+      } else if (!response.requiresTenantSelection && response.authResponse) {
+        const { user, domain } = processAuthResponse(response.authResponse, responseDomain);
         await persistAndSetAuth(set, user, response.authResponse.token, domain || undefined, {
           tenantName: branding?.tenantName,
           tenantLogo: branding?.logoUrl,
@@ -193,7 +314,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         });
       } else {
         set({
-          error: response.message || 'Login failed.',
+          error: response.message || i18n.t('auth.loginFailed'),
           isLoading: false,
         });
       }
@@ -201,7 +322,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const message =
         error?.response?.data?.message ||
         error?.userMessage ||
-        'Login failed. Please check your credentials.';
+        i18n.t('auth.loginFailedCheckCredentials');
       set({ error: message, isLoading: false });
       throw error;
     }
@@ -219,9 +340,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         tenantId,
       });
 
-      if (response.authResponse) {
-        const selected = get().pendingTenants?.find((t) => t.tenantId === tenantId);
-        const { user, domain } = processAuthResponse(response.authResponse);
+      const selected = get().pendingTenants?.find((t) => t.tenantId === tenantId);
+      if (isUnconfirmedEmail(response.authResponse)) {
+        await startEmailConfirmation(set, pendingCredentials, response.domain ?? selected?.domain ?? null);
+      } else if (response.authResponse) {
+        const { user, domain } = processAuthResponse(
+          response.authResponse,
+          response.domain ?? selected?.domain ?? null
+        );
         await persistAndSetAuth(set, user, response.authResponse.token, domain || undefined, {
           tenantName: selected?.tenantName,
           tenantLogo: selected?.logoUrl,
@@ -229,7 +355,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         });
       } else {
         set({
-          error: response.message || 'Tenant selection failed.',
+          error: response.message || i18n.t('auth.tenantSelectionFailed'),
           isLoading: false,
         });
       }
@@ -237,7 +363,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const message =
         error?.response?.data?.message ||
         error?.userMessage ||
-        'Tenant selection failed.';
+        i18n.t('auth.tenantSelectionFailed');
       set({ error: message, isLoading: false });
       throw error;
     }
@@ -247,19 +373,30 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ pendingTenants: null, pendingCredentials: null, error: null });
   },
 
-  googleLogin: async (payload: GoogleSignInPayload, domain: string) => {
+  clearPendingEmailConfirmation: () => {
+    set({ pendingEmailConfirmation: null });
+  },
+
+  googleLogin: async (domain: string) => {
+    set({ error: null });
+    const failedMessage = i18n.t('auth.googleSignInFailed');
     try {
-      set({ isLoading: true, error: null });
-      const response = await authApi.googleSignIn(payload);
-      const { user, domain: resDomain } = processAuthResponse(response);
-      await persistAndSetAuth(set, user, response.token, resDomain || domain);
+      const result = await signInWithGoogle(domain);
+      if (result.type === 'cancel') return;
+      if (result.type === 'error') {
+        set({ error: failedMessage });
+        return;
+      }
+
+      set({ isLoading: true });
+      const { user, domain: resDomain } = processAuthResponse(result.response);
+      await persistAndSetAuth(set, user, result.response.token, resDomain || domain);
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
         error?.userMessage ||
-        'Google sign-in failed.';
+        failedMessage;
       set({ error: message, isLoading: false });
-      throw error;
     }
   },
 
@@ -272,39 +409,16 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const message =
         error?.response?.data?.message ||
         error?.userMessage ||
-        'Registration failed.';
+        i18n.t('auth.registrationFailed');
       set({ error: message, isLoading: false });
       throw error;
     }
   },
 
   logout: async () => {
+    // Kicked off first so it reads the stored push token before the cleanup runs.
     unregisterPushNotifications(get().token).catch(() => {});
-    signalRService.stopConnection().catch(() => {});
-    await AsyncStorage.multiRemove([
-      STORAGE_KEYS.AUTH_TOKEN,
-      STORAGE_KEYS.CURRENT_USER,
-      STORAGE_KEYS.USER_ROLES,
-      STORAGE_KEYS.DOMAIN,
-      STORAGE_KEYS.TENANT_NAME,
-      STORAGE_KEYS.TENANT_LOGO,
-      STORAGE_KEYS.TENANT_COLOR,
-    ]);
-    setInMemoryToken(null);
-    set({
-      user: null,
-      token: null,
-      domain: null,
-      isAuthenticated: false,
-      isLoading: false,
-      error: null,
-      pendingTenants: null,
-      pendingCredentials: null,
-      tenantName: null,
-      tenantLogo: null,
-      tenantColor: null,
-      showWelcome: false,
-    });
+    await clearSession({ removePushToken: false });
   },
 
   confirmEmail: async (payload: EmailConfirmPayload) => {
@@ -314,7 +428,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: false });
     } catch (error: any) {
       const message =
-        error?.response?.data?.message || 'Email confirmation failed.';
+        error?.response?.data?.message || i18n.t('auth.emailConfirmationFailed');
       set({ error: message, isLoading: false });
       throw error;
     }
@@ -327,7 +441,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: false });
     } catch (error: any) {
       const message =
-        error?.response?.data?.message || 'Failed to send reset code.';
+        error?.response?.data?.message || i18n.t('auth.sendResetCodeFailed');
       set({ error: message, isLoading: false });
       throw error;
     }
@@ -341,7 +455,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       return result;
     } catch (error: any) {
       const message =
-        error?.response?.data?.message || 'Invalid verification code.';
+        error?.response?.data?.message || i18n.t('auth.invalidVerificationCode');
       set({ error: message, isLoading: false });
       throw error;
     }
@@ -354,7 +468,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: false });
     } catch (error: any) {
       const message =
-        error?.response?.data?.message || 'Password reset failed.';
+        error?.response?.data?.message || i18n.t('auth.passwordResetFailed');
       set({ error: message, isLoading: false });
       throw error;
     }
@@ -412,6 +526,20 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           tenantColor: tenantColor || null,
           showWelcome: false,
         });
+        // Fire-and-forget: correct a stale/missing studentId from the server
+        // without blocking startup (see resolveStudentId).
+        const restoredUser = user;
+        resolveStudentId(restoredUser)
+          .then((fixed) => {
+            // The user may have logged out (or switched account) while this was in
+            // flight — never write the old profile back over a cleared session.
+            if (get().token !== token) return;
+            if (fixed.studentId !== restoredUser.studentId) {
+              set({ user: fixed });
+              AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(fixed)).catch(() => {});
+            }
+          })
+          .catch(() => {});
         // Fire-and-forget: SignalR must NEVER block startup. Schedule it on the
         // next tick so the auth state update flushes first.
         setTimeout(() => {
@@ -433,18 +561,5 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 }));
 
 setOnUnauthorized(() => {
-  signalRService.stopConnection().catch(() => {});
-  useAuthStore.setState({
-    user: null,
-    token: null,
-    domain: null,
-    isAuthenticated: false,
-    isLoading: false,
-    error: null,
-    pendingTenants: null,
-    pendingCredentials: null,
-    tenantName: null,
-    tenantLogo: null,
-    showWelcome: false,
-  });
+  clearSession({ removePushToken: true }).catch(() => {});
 });

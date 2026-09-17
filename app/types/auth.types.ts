@@ -105,6 +105,7 @@ export interface TenantInfo {
   tenantName: string;
   logoUrl: string;
   roles: TRole[];
+  domain?: string | null;
   primaryColor?: string | null;
 }
 
@@ -113,16 +114,6 @@ export interface MobileLoginResponse {
   authResponse: LoginResponse | null;
   tenants: TenantInfo[] | null;
   message: string | null;
-}
-
-export interface GoogleSignInPayload {
-  id: string;
-  email: string;
-  name: string;
-  givenName: string;
-  familyName: string;
-  picture: string;
-  accessToken: string;
-  returnUrl: string;
-  Domain: string;
+  // Tenant domain lives at the top level, not inside authResponse.
+  domain?: string | null;
 }

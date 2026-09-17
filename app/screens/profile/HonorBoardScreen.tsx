@@ -22,7 +22,7 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, typography } from '../../theme/typography';
 import { honorBoardApi, type HonorBoardEntry } from '../../services/api/honor-board.api';
 import { studentsApi, type TopStudent } from '../../services/api/students.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
@@ -220,7 +220,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
         >
           <View style={[
             styles.emptyRankBadge,
-            { backgroundColor: medal?.border || (theme.dark ? theme.colors.surface : bgColor) },
+            { backgroundColor: medal?.border || (theme.dark ? theme.colors.background : bgColor) },
           ]}>
             <Text style={[styles.emptyRankText, { color: medal ? '#fff' : theme.colors.textMuted }]}>
               {rank}
@@ -253,7 +253,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
             {imageUrl ? (
               <Image source={{ uri: imageUrl }} style={styles.topAvatarImg} />
             ) : (
-              <View style={[styles.topAvatarFallback, { backgroundColor: medal!.bg }]}>
+              <View style={[styles.topAvatarFallback, { backgroundColor: theme.dark ? medal!.border + '33' : medal!.bg }]}>
                 <Text style={[styles.topInitial, { color: medal!.icon }]}>{initial}</Text>
               </View>
             )}
@@ -263,7 +263,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
           </View>
 
           {/* Name */}
-          <Text style={styles.topName} numberOfLines={1}>{entry.studentName}</Text>
+          <Text style={[styles.topName, { color: theme.colors.text }]} numberOfLines={1}>{entry.studentName}</Text>
 
           {/* Trophy for rank 1 */}
           {rank === 1 && (
@@ -289,7 +289,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
           {imageUrl ? (
             <Image source={{ uri: imageUrl }} style={styles.lowerAvatarImg} />
           ) : (
-            <View style={[styles.lowerAvatarFallback, { backgroundColor: bgColor }]}>
+            <View style={[styles.lowerAvatarFallback, { backgroundColor: theme.dark ? theme.colors.primary + '26' : bgColor }]}>
               <Text style={[styles.lowerInitialText, { color: theme.colors.primary }]}>{initial}</Text>
             </View>
           )}
@@ -429,7 +429,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
                 <TextInput
                   style={[modalStyles.searchInput, { color: theme.colors.text }]}
                   placeholder={t('common.search')}
-                  placeholderTextColor={theme.colors.textMuted}
+                  placeholderTextColor={theme.colors.inputPlaceholder}
                   value={studentSearch}
                   onChangeText={setStudentSearch}
                 />
@@ -464,7 +464,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
                   );
                 }}
                 ListEmptyComponent={
-                  <Text style={{ color: theme.colors.textMuted, textAlign: 'center', padding: spacing.xl }}>
+                  <Text style={{ color: theme.colors.textMuted, fontFamily: 'Cairo_400Regular', textAlign: 'center', padding: spacing.xl }}>
                     {t('common.noResults')}
                   </Text>
                 }
@@ -477,7 +477,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
                 onPress={handleAddStudent}
               >
                 {adding ? (
-                  <Spinner size="small" />
+                  <Spinner size="small" color="#fff" style={{ padding: 0 }} />
                 ) : (
                   <Text style={modalStyles.addBtnText}>{t('common.save')}</Text>
                 )}
@@ -512,11 +512,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
+    ...typography.headerTitle,
     flex: 1,
     textAlign: 'center',
-    fontSize: fontSize.lg,
-    fontFamily: 'Cairo_700Bold',
     color: '#fff',
+    marginHorizontal: spacing.sm,
   },
 
   // Month Switcher
@@ -574,7 +574,6 @@ const styles = StyleSheet.create({
     minWidth: 80,
     flex: 1,
     maxWidth: 110,
-    
   },
   rankCardTop: {
     backgroundColor: 'transparent',
@@ -621,7 +620,6 @@ const styles = StyleSheet.create({
   topName: {
     fontSize: 12,
     fontFamily: 'Cairo_600SemiBold',
-    color: '#444',
     maxWidth: 90,
     textAlign: 'center',
     marginTop: 2,
@@ -641,6 +639,7 @@ const styles = StyleSheet.create({
   },
   emptyLabel: {
     fontSize: 12,
+    fontFamily: 'Cairo_400Regular',
     marginTop: 4,
   },
 
@@ -706,8 +705,7 @@ const modalStyles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sheetTitle: {
-    fontSize: fontSize.lg,
-    fontFamily: 'Cairo_700Bold',
+    ...typography.headerTitle,
   },
   label: {
     fontSize: fontSize.sm,
@@ -720,7 +718,7 @@ const modalStyles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.xs,
+    marginEnd: spacing.xs,
   },
   searchRow: {
     flexDirection: 'row',
@@ -735,6 +733,7 @@ const modalStyles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: fontSize.sm,
+    fontFamily: 'Cairo_400Regular',
     paddingVertical: 0,
   },
   studentRow: {
@@ -759,7 +758,7 @@ const modalStyles = StyleSheet.create({
   },
   addBtn: {
     borderRadius: 16,
-    height: 50,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: spacing.md,

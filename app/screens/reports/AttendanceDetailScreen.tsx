@@ -47,7 +47,8 @@ export default function AttendanceDetailScreen({ navigation, route }: Props) {
     }, [load])
   );
 
-  const percentColor = (value: number) => (value >= 75 ? '#34C38F' : value >= 50 ? '#F5A623' : '#EF4444');
+  const percentColor = (value: number) =>
+    value >= 75 ? theme.colors.success : value >= 50 ? theme.colors.warning : theme.colors.danger;
 
   const renderRow = ({ item }: { item: AttendanceStudentRow }) => {
     const color = percentColor(item.attendancePercentage);
@@ -71,7 +72,7 @@ export default function AttendanceDetailScreen({ navigation, route }: Props) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
       <ScreenHeader title={groupName} onBack={() => navigation.goBack()} />
 
       {loading && items.length === 0 ? (

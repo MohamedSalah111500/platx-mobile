@@ -50,22 +50,23 @@ export function Button({
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
+      gap: spacing.sm,
     };
 
     const sizeStyles: Record<ButtonSize, ViewStyle> = {
-      small: { paddingVertical: spacing.sm, paddingHorizontal: spacing.lg },
-      medium: { paddingVertical: spacing.md + 2, paddingHorizontal: spacing.xl },
-      large: { paddingVertical: spacing.lg, paddingHorizontal: spacing['2xl'] },
+      small: { paddingVertical: 6, paddingHorizontal: spacing.md },
+      medium: { paddingVertical: 10, paddingHorizontal: spacing.lg + 2 },
+      large: { paddingVertical: spacing.md, paddingHorizontal: spacing.xl },
     };
 
     const variantStyles: Record<ButtonVariant, ViewStyle> = {
       primary: {
         backgroundColor: theme.colors.primary,
         shadowColor: theme.colors.primary,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: theme.dark ? 0.25 : 0.3,
-        shadowRadius: 12,
-        elevation: 4,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: theme.dark ? 0.2 : 0.25,
+        shadowRadius: 8,
+        elevation: 3,
       },
       secondary: { backgroundColor: theme.colors.surface },
       outline: {
@@ -88,9 +89,10 @@ export function Button({
 
   const getTextStyle = (): TextStyle => {
     const sizeStyles: Record<ButtonSize, TextStyle> = {
-      small: { ...typography.buttonSmall },
-      medium: { ...typography.button },
-      large: { ...typography.button, fontSize: 18 },
+      // lineHeight >= 1.4 x fontSize, otherwise Cairo clips.
+      small: { ...typography.buttonSmall, fontSize: 13, lineHeight: 19 },
+      medium: { ...typography.button, fontSize: 15, lineHeight: 21 },
+      large: { ...typography.button, fontSize: 16, lineHeight: 23 },
     };
 
     const variantStyles: Record<ButtonVariant, TextStyle> = {
@@ -112,7 +114,13 @@ export function Button({
     if (loading) {
       return (
         <ActivityIndicator
-          color={variant === 'outline' || variant === 'ghost' ? theme.colors.primary : '#ffffff'}
+          color={
+            variant === 'outline' || variant === 'ghost'
+              ? theme.colors.primary
+              : variant === 'secondary'
+                ? theme.colors.text
+                : '#ffffff'
+          }
         />
       );
     }
@@ -120,14 +128,7 @@ export function Button({
     return (
       <>
         {icon && iconPosition === 'left' && icon}
-        <Text
-          style={[
-            getTextStyle(),
-            icon && iconPosition === 'left' ? { marginLeft: spacing.sm } : undefined,
-            icon && iconPosition === 'right' ? { marginRight: spacing.sm } : undefined,
-            textStyle,
-          ]}
-        >
+        <Text style={[getTextStyle(), textStyle]}>
           {title}
         </Text>
         {icon && iconPosition === 'right' && icon}

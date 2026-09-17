@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,6 @@ import {
   Modal,
   TextInput,
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
-import * as AuthSession from 'expo-auth-session';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -25,15 +23,20 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { GradientBackground } from '../../components/ui/GradientBackground';
 
-WebBrowser.maybeCompleteAuthSession();
-
-const GOOGLE_WEB_CLIENT_ID = '997004801769-ni3d4vb3d1g551vrj4ku9fsr99k1mhr6.apps.googleusercontent.com';
-
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export default function LoginScreen({ navigation }: Props) {
   const { theme } = useTheme();
-  const { login, googleLogin, isLoading, error, clearError, pendingTenants } = useAuthStore();
+  const {
+    login,
+    googleLogin,
+    isLoading,
+    error,
+    clearError,
+    pendingTenants,
+    pendingEmailConfirmation,
+    clearPendingEmailConfirmation,
+  } = useAuthStore();
   const { t } = useRTL();
 
   const [userName, setUserName] = useState('');
@@ -44,24 +47,6 @@ export default function LoginScreen({ navigation }: Props) {
   const [domainModalVisible, setDomainModalVisible] = useState(false);
   const [domainInput, setDomainInput] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
-  const pendingDomainRef = useRef<string>('');
-
-  const discovery = {
-    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-  };
-
-  const redirectUri = AuthSession.makeRedirectUri();
-
-  const [request, response, promptAsync] = AuthSession.useAuthRequest(
-    {
-      clientId: GOOGLE_WEB_CLIENT_ID,
-      scopes: ['profile', 'email'],
-      responseType: AuthSession.ResponseType.Token,
-      redirectUri,
-      usePKCE: false,
-    },
-    discovery,
-  );
 
   // Navigate to tenant selection when pendingTenants is set
   useEffect(() => {
@@ -70,50 +55,18 @@ export default function LoginScreen({ navigation }: Props) {
     }
   }, [pendingTenants, navigation]);
 
-  // Handle Google OAuth response
+  // Correct credentials but unconfirmed email: verify via OTP (then auto-login).
   useEffect(() => {
-    if (response?.type === 'success') {
-      const accessToken = (response as any).params?.access_token;
-      if (accessToken) {
-        handleGoogleResponse(accessToken);
-      } else {
-        setGoogleLoading(false);
-      }
-    } else if (response?.type === 'error' || response?.type === 'dismiss') {
-      setGoogleLoading(false);
-    }
-  }, [response]);
-
-  const handleGoogleResponse = async (accessToken: string) => {
-    try {
-      // Fetch user info from Google
-      const userInfoRes = await fetch('https://www.googleapis.com/userinfo/v2/me', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const userInfo = await userInfoRes.json();
-
-      if (!userInfo?.id) throw new Error('Failed to get Google user info');
-
-      await googleLogin(
-        {
-          id: userInfo.id,
-          email: userInfo.email || '',
-          name: userInfo.name || '',
-          givenName: userInfo.given_name || '',
-          familyName: userInfo.family_name || '',
-          picture: userInfo.picture || '',
-          accessToken,
-          returnUrl: '',
-          Domain: pendingDomainRef.current,
-        },
-        pendingDomainRef.current,
-      );
-    } catch (err: any) {
-      // Error shown via store
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
+    if (!pendingEmailConfirmation) return;
+    const { email, domain, password: pendingPassword } = pendingEmailConfirmation;
+    clearPendingEmailConfirmation();
+    navigation.navigate('OTPVerification', {
+      email,
+      domain,
+      type: 'email_confirm',
+      password: pendingPassword,
+    });
+  }, [pendingEmailConfirmation, navigation, clearPendingEmailConfirmation]);
 
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
@@ -142,10 +95,13 @@ export default function LoginScreen({ navigation }: Props) {
   const confirmDomainAndSignIn = async () => {
     const domain = domainInput.trim();
     if (!domain) return;
-    pendingDomainRef.current = domain;
     setDomainModalVisible(false);
     setGoogleLoading(true);
-    await promptAsync();
+    try {
+      await googleLogin(domain);
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const styles = createStyles(theme);
@@ -218,7 +174,7 @@ export default function LoginScreen({ navigation }: Props) {
           <TouchableOpacity
             style={[styles.googleButton, (googleLoading || isLoading) && { opacity: 0.6 }]}
             onPress={handleGoogleSignIn}
-            disabled={googleLoading || isLoading || !request}
+            disabled={googleLoading || isLoading}
             activeOpacity={0.7}
           >
             <Ionicons name="logo-google" size={20} color="#DB4437" />
@@ -255,9 +211,9 @@ export default function LoginScreen({ navigation }: Props) {
             </Text>
             <TextInput
               style={[styles.domainInput, {
-                borderColor: theme.colors.border,
+                borderColor: theme.colors.inputBorder,
                 backgroundColor: theme.colors.inputBackground,
-                color: theme.colors.text,
+                color: theme.colors.inputText,
               }]}
               placeholder={t('auth.domainPlaceholder') || 'e.g. school'}
               placeholderTextColor={theme.colors.inputPlaceholder}
@@ -328,6 +284,7 @@ function createStyles(theme: any) {
     },
     footer: {
       flexDirection: 'row',
+      alignItems: 'center',
       justifyContent: 'center',
       marginTop: spacing['2xl'],
       paddingBottom: spacing['2xl'],
@@ -359,6 +316,7 @@ function createStyles(theme: any) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
+      gap: spacing.md,
       backgroundColor: theme.colors.card,
       borderRadius: borderRadius['2xl'],
       paddingVertical: spacing.md,
@@ -369,7 +327,6 @@ function createStyles(theme: any) {
     googleButtonText: {
       ...typography.button,
       color: theme.colors.text,
-      marginLeft: spacing.md,
     },
     // Domain Modal
     modalOverlay: {
@@ -385,8 +342,7 @@ function createStyles(theme: any) {
       padding: spacing['2xl'],
     },
     modalTitle: {
-      fontFamily: 'Cairo_700Bold',
-      fontSize: 18,
+      ...typography.headerTitle,
       marginBottom: spacing.xs,
     },
     modalSubtitle: {
@@ -413,6 +369,7 @@ function createStyles(theme: any) {
       borderRadius: 12,
       borderWidth: 1,
       alignItems: 'center',
+      justifyContent: 'center',
     },
     modalBtnPrimary: {
       borderWidth: 0,

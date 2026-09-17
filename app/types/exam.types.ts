@@ -64,6 +64,8 @@ export interface StudentExamSubmissionPayload {
   questionAnswers: {
     questionId: number;
     answersId: number[];
+    // Essay questions (type 4) send free text instead of answer ids.
+    textAnswer?: string | null;
   }[];
 }
 
@@ -77,12 +79,16 @@ export interface ExamAnswerResult {
 
 export interface ExamQuestionResult {
   questionId: number;
-  questionBody: string;
+  questionText: string;
   typeId: number;
   questionScore: number;
   earnedScore: number;
   isCorrect: boolean;
   answers: ExamAnswerResult[];
+  // Essay questions only: the student's text and whether the teacher still has
+  // to grade it (until then isCorrect is false and earnedScore 0).
+  textAnswer?: string | null;
+  isPendingReview?: boolean;
 }
 
 export interface ExamResult {

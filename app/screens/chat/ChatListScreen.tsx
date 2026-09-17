@@ -132,10 +132,10 @@ export default function ChatListScreen({ navigation }: Props) {
         activeOpacity={0.7}
       >
         <View style={styles.avatarWrap}>
-          <View style={[styles.avatarCircle, { backgroundColor: palette.bg }]}>
+          <View style={[styles.avatarCircle, { backgroundColor: theme.dark ? palette.color + '26' : palette.bg }]}>
             <Text style={[styles.avatarLetter, { color: palette.color }]}>{initial}</Text>
           </View>
-          <View style={[styles.onlineDot, { borderColor: theme.colors.card }]} />
+          <View style={[styles.onlineDot, { borderColor: theme.colors.card, backgroundColor: theme.colors.success }]} />
         </View>
         <View style={styles.cardInfo}>
           <Text style={[styles.cardName, { color: theme.colors.text }]} numberOfLines={1}>
@@ -164,13 +164,14 @@ export default function ChatListScreen({ navigation }: Props) {
           navigation.navigate('ChatRoom', {
             groupId: item.id,
             groupName: item.name,
+            membersCount: item.studentsCount,
             chatType: 'group',
           });
         }}
         activeOpacity={0.7}
       >
         <View style={styles.avatarWrap}>
-          <View style={[styles.avatarCircle, { backgroundColor: palette.bg }]}>
+          <View style={[styles.avatarCircle, { backgroundColor: theme.dark ? palette.color + '26' : palette.bg }]}>
             <Ionicons name="people" size={22} color={palette.color} />
           </View>
         </View>
@@ -191,7 +192,11 @@ export default function ChatListScreen({ navigation }: Props) {
 
   const renderSubGroupItem = ({ item }: { item: SubGroupLookup }) => (
     <TouchableOpacity
-      style={[styles.card, styles.subGroupCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+      style={[
+        styles.card,
+        styles.subGroupCard,
+        { backgroundColor: theme.colors.surface, borderColor: theme.colors.divider },
+      ]}
       onPress={() => {
         play('tap');
         navigation.navigate('ChatRoom', {
@@ -204,7 +209,13 @@ export default function ChatListScreen({ navigation }: Props) {
       activeOpacity={0.7}
     >
       <View style={styles.avatarWrap}>
-        <View style={[styles.avatarCircle, styles.subGroupAvatar, { backgroundColor: theme.colors.primaryLight }]}>
+        <View
+          style={[
+            styles.avatarCircle,
+            styles.subGroupAvatar,
+            { backgroundColor: theme.dark ? theme.colors.primary + '26' : theme.colors.primaryLight },
+          ]}
+        >
           <Ionicons name="git-branch-outline" size={19} color={theme.colors.primary} />
         </View>
       </View>
@@ -288,8 +299,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   title: {
-    ...typography.h2,
-    fontFamily: 'Cairo_700Bold',
+    ...typography.screenTitle,
     flex: 1,
   },
   countBadge: {
@@ -327,7 +337,7 @@ const styles = StyleSheet.create({
   },
   avatarWrap: {
     position: 'relative',
-    marginRight: spacing.md,
+    marginEnd: spacing.md,
   },
   avatarCircle: {
     width: 52,
@@ -343,11 +353,10 @@ const styles = StyleSheet.create({
   onlineDot: {
     position: 'absolute',
     bottom: 0,
-    right: 0,
+    end: 0,
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: '#34C38F',
     borderWidth: 2.5,
   },
   cardInfo: {

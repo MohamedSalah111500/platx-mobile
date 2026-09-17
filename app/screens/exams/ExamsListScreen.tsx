@@ -21,7 +21,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { spacing } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, typography } from '../../theme/typography';
 import { examApi } from '../../services/api/exam.api';
 import { API_CONFIG } from '../../config';
 import type { ExamsStackParamList } from '../../types/navigation.types';
@@ -43,6 +43,7 @@ export default function ExamsListScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const loadingMoreRef = useRef(false);
 
   const loadExams = useCallback(async (p = 1, refresh = false) => {
     try {
@@ -109,9 +110,11 @@ export default function ExamsListScreen({ navigation }: Props) {
   };
 
   const handleLoadMore = () => {
-    if (!loading && hasMore) {
-      loadExams(page + 1);
-    }
+    if (loadingMoreRef.current || loading || !hasMore) return;
+    loadingMoreRef.current = true;
+    loadExams(page + 1).finally(() => {
+      loadingMoreRef.current = false;
+    });
   };
 
   const handleExamPress = (exam: OnlineExamListItem) => {
@@ -198,7 +201,7 @@ export default function ExamsListScreen({ navigation }: Props) {
         </View>
         {isStudent ? (
           isAnswered ? (
-            <Ionicons name="checkmark-circle" size={20} color="#34C38F" />
+            <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
           ) : (
             <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
           )
@@ -212,11 +215,11 @@ export default function ExamsListScreen({ navigation }: Props) {
               <Ionicons name="share-outline" size={16} color={theme.colors.primary} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: '#FEE2E2' }]}
+              style={[styles.actionBtn, { backgroundColor: theme.colors.danger + '1A' }]}
               onPress={() => handleDeleteExam(item)}
               activeOpacity={0.7}
             >
-              <Ionicons name="trash-outline" size={16} color="#EF4444" />
+              <Ionicons name="trash-outline" size={16} color={theme.colors.danger} />
             </TouchableOpacity>
           </View>
         )}
@@ -226,7 +229,7 @@ export default function ExamsListScreen({ navigation }: Props) {
 
   const renderHistoryCard = ({ item }: { item: ExamHistoryItem }) => {
     const passed = item.percentage >= 50;
-    const accent = passed ? '#34C38F' : '#EF4444';
+    const accent = passed ? theme.colors.success : theme.colors.danger;
     return (
       <View style={[styles.examCard, { backgroundColor: theme.colors.card }]}>
         <View style={[styles.examIconWrap, { backgroundColor: accent + '15' }]}>
@@ -373,8 +376,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   headerTitle: {
-    fontSize: fontSize.xl,
-    fontFamily: 'Cairo_700Bold',
+    ...typography.screenTitle,
   },
   tabRow: {
     flexDirection: 'row',
@@ -387,6 +389,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   tabButtonText: {
     fontSize: fontSize.sm,

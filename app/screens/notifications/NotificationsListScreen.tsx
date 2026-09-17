@@ -13,10 +13,12 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { useRTL } from '../../i18n/RTLProvider';
-import { useNotificationsStore } from '../../store/notifications.store';
+import { useNotificationsStore, getNotificationOwnerId } from '../../store/notifications.store';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Spinner } from '../../components/ui/Spinner';
-import type { NotificationItem } from '../../types/notification.types';
+import { NOTIFICATION_ENTITY_TYPE, type NotificationItem } from '../../types/notification.types';
+import { typography } from '../../theme/typography';
+import { parseServerDate } from '../../utils/date';
 
 
 export default function NotificationsListScreen() {
@@ -33,40 +35,53 @@ export default function NotificationsListScreen() {
     fetch,
     loadMore,
     markAsRead,
+    markAllAsRead,
+    fetchUnreadCount,
   } = useNotificationsStore();
 
-  const studentId = isStudent ? user?.studentId : undefined;
+  // Student.Id for students, Staff.Id for staff (backend filters on it).
+  const ownerId = getNotificationOwnerId(role, user);
   const canFetch = !!user;
 
   useEffect(() => {
-    if (canFetch) fetch(role, 1, undefined, studentId);
-  }, [canFetch, role, studentId]);
+    if (!canFetch) return;
+    fetch(role, 1, undefined, ownerId);
+    if (isStudent) fetchUnreadCount();
+  }, [canFetch, role, ownerId, isStudent]);
 
   const onRefresh = useCallback(() => {
-    if (canFetch) fetch(role, 1, undefined, studentId);
-  }, [canFetch, role, studentId]);
+    if (canFetch) fetch(role, 1, undefined, ownerId);
+  }, [canFetch, role, ownerId]);
 
   const loadingMoreRef = useRef(false);
   const handleEndReached = useCallback(() => {
     if (loadingMoreRef.current || !canFetch) return;
     loadingMoreRef.current = true;
-    loadMore(role, studentId).finally(() => {
+    loadMore(role, ownerId).finally(() => {
       loadingMoreRef.current = false;
     });
-  }, [canFetch, role, studentId]);
+  }, [canFetch, role, ownerId]);
+
+  const hasCourseTarget = (item: NotificationItem) =>
+    item.entityType === NOTIFICATION_ENTITY_TYPE.Course && !!item.entityId;
 
   const handleNotificationPress = useCallback(async (item: NotificationItem) => {
     if (!item.isReaded && isStudent) {
       await markAsRead(item.id);
     }
-  }, [isStudent, markAsRead]);
+    if (hasCourseTarget(item)) {
+      navigation.navigate('CourseDetail', { courseId: item.entityId });
+    }
+  }, [isStudent, markAsRead, navigation]);
 
   const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const renderItem = useCallback(({ item }: { item: NotificationItem }) => {
-    const date = new Date(item.createdDate);
+    const date = parseServerDate(item.createdDate);
     const timeAgo = getTimeAgo(date, t);
-    const isUnread = !item.isReaded;
+    // Admin/staff notification DTOs have no IsReaded — render them as read.
+    const isUnread = isStudent && !item.isReaded;
+    const isCourse = hasCourseTarget(item);
 
     return (
       <TouchableOpacity
@@ -77,7 +92,7 @@ export default function NotificationsListScreen() {
         {/* Icon */}
         <View style={[styles.iconCircle, isUnread && styles.iconCircleUnread]}>
           <Ionicons
-            name={isUnread ? 'notifications' : 'notifications-outline'}
+            name={isCourse ? (isUnread ? 'book' : 'book-outline') : (isUnread ? 'notifications' : 'notifications-outline')}
             size={20}
             color={isUnread ? '#fff' : theme.colors.primary}
           />
@@ -97,13 +112,19 @@ export default function NotificationsListScreen() {
           <Text style={styles.cardBody} numberOfLines={2}>
             {item.body}
           </Text>
+          {isCourse && (
+            <View style={styles.openRow}>
+              <Text style={styles.openText}>{t('notifications.openCourse')}</Text>
+              <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={14} color={theme.colors.primary} />
+            </View>
+          )}
         </View>
 
         {/* Unread dot */}
         {isUnread && <View style={styles.unreadDot} />}
       </TouchableOpacity>
     );
-  }, [styles, theme, t, handleNotificationPress]);
+  }, [styles, theme, t, isRTL, isStudent, handleNotificationPress]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -114,10 +135,17 @@ export default function NotificationsListScreen() {
             <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('notifications.title')}</Text>
-          {unreadCount > 0 && (
+          {isStudent && unreadCount > 0 && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{unreadCount}</Text>
             </View>
+          )}
+          <View style={{ flex: 1 }} />
+          {isStudent && unreadCount > 0 && (
+            <TouchableOpacity style={styles.markAll} onPress={markAllAsRead} activeOpacity={0.7} hitSlop={8}>
+              <Ionicons name="checkmark-done-outline" size={18} color={theme.colors.primary} />
+              <Text style={styles.markAllText}>{t('notifications.markAllRead')}</Text>
+            </TouchableOpacity>
           )}
         </View>
       </View>
@@ -201,8 +229,7 @@ function createStyles(theme: any, isDark: boolean) {
       marginStart: -6,
     },
     headerTitle: {
-      fontSize: 28,
-      fontFamily: 'Cairo_700Bold',
+      ...typography.screenTitle,
       color: theme.colors.text,
     },
     badge: {
@@ -218,6 +245,31 @@ function createStyles(theme: any, isDark: boolean) {
       color: '#fff',
       fontSize: 12,
       fontFamily: 'Cairo_700Bold',
+    },
+    markAll: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 999,
+      backgroundColor: isDark ? theme.colors.primary + '26' : theme.colors.primaryLight,
+    },
+    markAllText: {
+      fontSize: 12,
+      fontFamily: 'Cairo_600SemiBold',
+      color: theme.colors.primary,
+    },
+    openRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+      marginTop: 6,
+    },
+    openText: {
+      fontSize: 12,
+      fontFamily: 'Cairo_600SemiBold',
+      color: theme.colors.primary,
     },
     listContent: {
       paddingHorizontal: 16,
@@ -249,7 +301,6 @@ function createStyles(theme: any, isDark: boolean) {
     },
     cardContent: {
       flex: 1,
-      paddingTop: 2,
     },
     cardTopRow: {
       flexDirection: 'row',
@@ -270,11 +321,13 @@ function createStyles(theme: any, isDark: boolean) {
     },
     cardBody: {
       fontSize: 14,
-      lineHeight: 20,
+      lineHeight: 21,
+      fontFamily: 'Cairo_400Regular',
       color: theme.colors.textMuted,
     },
     cardTime: {
       fontSize: 12,
+      fontFamily: 'Cairo_400Regular',
       color: theme.colors.textMuted,
     },
     unreadDot: {

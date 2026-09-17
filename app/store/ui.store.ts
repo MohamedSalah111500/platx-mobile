@@ -1,12 +1,20 @@
 import { create } from 'zustand';
 
+export interface UpdateRequiredInfo {
+  storeUrl: string;
+  latestVersion: string;
+  currentVersion: string;
+}
+
 interface UIState {
+  updateRequired: UpdateRequiredInfo | null;
   isGlobalLoading: boolean;
   toastMessage: string | null;
   toastType: 'success' | 'error' | 'info' | 'warning' | null;
 }
 
 interface UIActions {
+  setUpdateRequired: (info: UpdateRequiredInfo | null) => void;
   setGlobalLoading: (loading: boolean) => void;
   showToast: (
     message: string,
@@ -18,9 +26,12 @@ interface UIActions {
 type UIStore = UIState & UIActions;
 
 export const useUIStore = create<UIStore>((set) => ({
+  updateRequired: null,
   isGlobalLoading: false,
   toastMessage: null,
   toastType: null,
+
+  setUpdateRequired: (info: UpdateRequiredInfo | null) => set({ updateRequired: info }),
 
   setGlobalLoading: (loading: boolean) => set({ isGlobalLoading: loading }),
 

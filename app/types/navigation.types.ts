@@ -2,7 +2,12 @@ export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
   LiveClassroom: { roomId: number; isTeacher: boolean };
-  LessonPlayer: { lessonId: number; courseId: number };
+  LessonPlayer: {
+    lessonId: number;
+    courseId: number;
+    isCompleted?: boolean;
+    isEnrolled?: boolean;
+  };
 };
 
 export type AuthStackParamList = {
@@ -32,6 +37,7 @@ export type CheckoutParams = {
   title?: string;
   price?: number;
   discountPrice?: number;
+  currencyCode?: string;
   image?: string;
 };
 
@@ -42,10 +48,19 @@ export type HomeStackParamList = {
   CoursesList: { search?: string } | undefined;
   CourseDetail: { courseId: number };
   Checkout: CheckoutParams;
-  LessonPlayer: { lessonId: number; courseId: number };
+  LessonPlayer: {
+    lessonId: number;
+    courseId: number;
+    isCompleted?: boolean;
+    isEnrolled?: boolean;
+  };
   Homework: undefined;
   NotificationsList: undefined;
   EnrollStudent: { courseId: number; courseName?: string };
+  CourseSettings: { courseId: number; courseName?: string };
+  CourseStudents: { courseId: number; courseName?: string };
+  EnrollmentRequests: { courseId?: number; courseName?: string } | undefined;
+  SendNotification: undefined;
 };
 
 export type CoursesStackParamList = {
@@ -53,7 +68,12 @@ export type CoursesStackParamList = {
   CourseDetail: { courseId: number };
   Checkout: CheckoutParams;
   MyCourses: undefined;
-  LessonPlayer: { lessonId: number; courseId: number };
+  LessonPlayer: {
+    lessonId: number;
+    courseId: number;
+    isCompleted?: boolean;
+    isEnrolled?: boolean;
+  };
 };
 
 export type ChatStackParamList = {
@@ -61,6 +81,7 @@ export type ChatStackParamList = {
   ChatRoom: {
     groupId: number;
     groupName: string;
+    membersCount?: number;
     studentId?: number;
     staffId?: number;
     staffName?: string;

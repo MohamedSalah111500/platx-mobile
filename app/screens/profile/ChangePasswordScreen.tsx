@@ -102,7 +102,7 @@ export default function ChangePasswordScreen({ navigation }: Props) {
               {t('auth.currentPassword')}
             </Text>
             <View style={[styles.inputRow, {
-              backgroundColor: theme.dark ? theme.colors.inputBackground : '#F8F9FB',
+              backgroundColor: theme.colors.inputBackground,
               borderColor: theme.colors.inputBorder,
             }]}>
               <Ionicons name="key-outline" size={18} color={theme.colors.textMuted} />
@@ -124,7 +124,7 @@ export default function ChangePasswordScreen({ navigation }: Props) {
               {t('auth.newPassword')}
             </Text>
             <View style={[styles.inputRow, {
-              backgroundColor: theme.dark ? theme.colors.inputBackground : '#F8F9FB',
+              backgroundColor: theme.colors.inputBackground,
               borderColor: theme.colors.inputBorder,
             }]}>
               <Ionicons name="lock-closed-outline" size={18} color={theme.colors.textMuted} />
@@ -146,7 +146,7 @@ export default function ChangePasswordScreen({ navigation }: Props) {
               {t('auth.confirmPassword')}
             </Text>
             <View style={[styles.inputRow, {
-              backgroundColor: theme.dark ? theme.colors.inputBackground : '#F8F9FB',
+              backgroundColor: theme.colors.inputBackground,
               borderColor: theme.colors.inputBorder,
             }]}>
               <Ionicons name="shield-checkmark-outline" size={18} color={theme.colors.textMuted} />
@@ -167,7 +167,7 @@ export default function ChangePasswordScreen({ navigation }: Props) {
               disabled={loading}
               activeOpacity={0.7}
             >
-              <Ionicons name="checkmark-circle" size={22} color="#fff" style={{ marginRight: spacing.sm }} />
+              <Ionicons name="checkmark-circle" size={22} color="#fff" />
               <Text style={styles.submitText}>
                 {loading ? t('common.loading') : t('auth.changePassword')}
               </Text>
@@ -195,10 +195,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    ...typography.h3,
-    fontFamily: 'Cairo_700Bold',
+    ...typography.headerTitle,
     flex: 1,
     textAlign: 'center',
+    marginHorizontal: spacing.sm,
   },
   iconWrap: {
     alignItems: 'center',
@@ -216,7 +216,6 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xl,
     borderRadius: 22,
     padding: spacing.xl,
-    
   },
   label: {
     fontSize: fontSize.sm,
@@ -235,13 +234,16 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 50,
     fontSize: fontSize.base,
+    fontFamily: 'Cairo_400Regular',
+    paddingVertical: 0,
   },
   submitBtn: {
     borderRadius: 16,
-    paddingVertical: spacing.lg,
+    paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
     marginTop: spacing['2xl'],
   },
   submitBtnDisabled: { opacity: 0.6 },

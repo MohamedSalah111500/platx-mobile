@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -12,9 +13,12 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { Spinner } from '../../components/ui/Spinner';
+import { ErrorRetry } from '../../components/ui/ErrorRetry';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { eventsApi } from '../../services/api/events.api';
+import { useAuth } from '../../hooks/useAuth';
 import type { HomeStackParamList } from '../../types/navigation.types';
 import type { EventDetail } from '../../types/event.types';
 
@@ -23,23 +27,24 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'EventDetail'>;
 export default function EventDetailScreen({ navigation, route }: Props) {
   const { eventId } = route.params;
   const { theme } = useTheme();
-  const { t, isRTL } = useRTL();
+  const { t } = useRTL();
+  const { isStudent } = useAuth();
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadEvent();
-  }, [eventId]);
+  }, [eventId, isStudent]);
 
   const [error, setError] = useState<string | null>(null);
 
   const loadEvent = async () => {
     try {
       setError(null);
-      const data = await eventsApi.getSingle(eventId);
+      const data = await eventsApi.getSingle(eventId, isStudent);
       setEvent(data);
     } catch (err: any) {
-      setError(err?.userMessage || 'Failed to load event.');
+      setError(err?.userMessage || t('events.failedToLoadEvent'));
     } finally {
       setLoading(false);
     }
@@ -49,23 +54,6 @@ export default function EventDetailScreen({ navigation, route }: Props) {
     container: {
       flex: 1,
       backgroundColor: theme.colors.background,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: spacing.xl,
-      paddingVertical: spacing.lg,
-    },
-    backButton: {
-      marginRight: spacing.md,
-    },
-    backText: {
-      ...typography.h4,
-      color: theme.colors.text,
-    },
-    headerTitle: {
-      ...typography.h4,
-      color: theme.colors.text,
     },
     content: {
       paddingHorizontal: spacing.xl,
@@ -94,15 +82,13 @@ export default function EventDetailScreen({ navigation, route }: Props) {
     infoRow: {
       flexDirection: 'row',
       alignItems: 'center',
+      gap: spacing.sm,
       marginBottom: spacing.md,
-    },
-    infoIcon: {
-      fontSize: 18,
-      marginRight: spacing.sm,
     },
     infoText: {
       ...typography.body,
       color: theme.colors.textSecondary,
+      flexShrink: 1,
     },
     description: {
       ...typography.body,
@@ -114,29 +100,41 @@ export default function EventDetailScreen({ navigation, route }: Props) {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('events.event')}</Text>
-        </View>
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+        <ScreenHeader title={t('events.event')} onBack={() => navigation.goBack()} />
         <Spinner />
       </SafeAreaView>
     );
   }
 
+  if (error || !event) {
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+        <ScreenHeader title={t('events.eventDetails')} onBack={() => navigation.goBack()} />
+        <ErrorRetry
+          message={error || t('events.failedToLoadEvent')}
+          onRetry={() => {
+            setLoading(true);
+            loadEvent();
+          }}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  const openMeetingLink = () => {
+    const link = event?.meetingLink?.trim();
+    if (!link) return;
+    const url = /^https?:\/\//i.test(link) ? link : `https://${link}`;
+    Linking.openURL(url).catch(() => {});
+  };
+
   const startDate = event?.startDate ? new Date(event.startDate) : null;
   const endDate = event?.endDate ? new Date(event.endDate) : null;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('events.eventDetails')}</Text>
-      </View>
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <ScreenHeader title={t('events.eventDetails')} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.content}>
         {startDate && (
@@ -152,7 +150,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
 
         {startDate && (
           <View style={styles.infoRow}>
-            <Ionicons name="time-outline" size={20} color={theme.colors.primary} style={{ marginRight: spacing.sm }} />
+            <Ionicons name="time-outline" size={20} color={theme.colors.primary} />
             <Text style={styles.infoText}>
               {startDate.toLocaleTimeString('en', {
                 hour: '2-digit',
@@ -169,18 +167,18 @@ export default function EventDetailScreen({ navigation, route }: Props) {
 
         {event?.location && (
           <View style={styles.infoRow}>
-            <Ionicons name="location-outline" size={20} color={theme.colors.primary} style={{ marginRight: spacing.sm }} />
+            <Ionicons name="location-outline" size={20} color={theme.colors.primary} />
             <Text style={styles.infoText}>{event.location}</Text>
           </View>
         )}
 
         {event?.isOnline && event.meetingLink && (
-          <View style={styles.infoRow}>
-            <Ionicons name="link-outline" size={20} color={theme.colors.primary} style={{ marginRight: spacing.sm }} />
+          <TouchableOpacity style={styles.infoRow} onPress={openMeetingLink} activeOpacity={0.7}>
+            <Ionicons name="link-outline" size={20} color={theme.colors.primary} />
             <Text style={[styles.infoText, { color: theme.colors.primary }]}>
               {t('common.joinOnlineMeeting')}
             </Text>
-          </View>
+          </TouchableOpacity>
         )}
 
         {event?.description && (

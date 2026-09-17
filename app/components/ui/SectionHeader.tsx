@@ -39,8 +39,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   title: {
-    ...typography.h4,
-    fontFamily: 'Cairo_700Bold',
+    ...typography.sectionTitle,
+    flex: 1,
   },
   seeAll: {
     ...typography.bodySmall,

@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#ffffff',
     fontFamily: 'monospace',
-    lineHeight: 16,
+    lineHeight: 17,
   },
   button: {
     backgroundColor: '#7c63fd',

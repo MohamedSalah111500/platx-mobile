@@ -13,7 +13,6 @@ export const AUTH_URLS = {
   SEND_CONFIRM_EMAIL: `${BASE}api/Auth/send-confirmation-email`,
   VERIFY_OTP_RESET_PASSWORD: `${BASE}api/Auth/verify-otp-reset-password`,
   CHANGE_PASSWORD: `${BASE}api/Auth/change-password`,
-  GOOGLE_SIGNIN: `${BASE}api/Auth/google-signin`,
   MOBILE_LOGIN: `${BASE}api/auth/mobile-login`,
   MOBILE_SELECT_TENANT: `${BASE}api/auth/mobile-select-tenant`,
 };
@@ -41,9 +40,6 @@ export const NEWS_URLS = {
   GET_SINGLE: (id: number | string, domain: string) => domain
     ? `${BASE}api/News/${id}?domain=${encodeURIComponent(domain)}`
     : `${BASE}api/News/${id}`,
-  GET_SINGLE_STUDENT: (id: number | string, domain: string) => domain
-    ? `${BASE}api/News/GetNewsByIdForStudent/${id}?domain=${encodeURIComponent(domain)}`
-    : `${BASE}api/News/GetNewsByIdForStudent/${id}`,
   CREATE: `${BASE}api/News`,
   UPDATE: `${BASE}api/News`,
   DELETE: (id: number | string) => `${BASE}api/News/${id}`,
@@ -63,6 +59,8 @@ export const NOTIFICATIONS_URLS = {
   CREATE: `${BASE}api/Notification`,
   DELETE: (id: number) => `${BASE}api/Notification/${id}`,
   MARK_READ: `${BASE}api/Notification/MarkNotificationAsReadAsync`,
+  MARK_ALL_READ: `${BASE}api/Notification/MarkAllNotificationsAsReadAsync`,
+  UNREAD_COUNT: `${BASE}api/Notification/UnreadCount`,
 };
 
 // Chat endpoints
@@ -93,11 +91,16 @@ export const CHAT_URLS = {
 export const COURSES_URLS = {
   GET_ALL: `${BASE}api/Course/`,
   GET_SINGLE: (id: number) => `${BASE}api/Course/${id}`,
-  GET_PUBLIC: (domain: string, page: number, size: number) => {
+  GET_PUBLIC: (domain: string, page: number, size: number, search?: string) => {
     const params = [`page=${page}`, `size=${size}`];
     if (domain) params.unshift(`domain=${encodeURIComponent(domain)}`);
+    if (search) params.push(`search=${encodeURIComponent(search)}`);
     return `${BASE}api/Course/GetCourseForStudent?${params.join('&')}`;
   },
+  SET_ACTIVE: (id: number, isActive: boolean) =>
+    `${BASE}api/Course/ActiveCourse/${id}?IsActive=${isActive}`,
+  UPDATE_SCHEDULE: (id: number) => `${BASE}api/Course/${id}/schedule`,
+  ENROLLMENT_HISTORY: `${BASE}api/Learning/enrollment-history`,
   GET_STUDENT_ENROLLMENTS: (studentId: number) =>
     `${BASE}api/Learning/student/${studentId}/enrollments`,
   GET_ENROLLMENT: (studentId: number, courseId: number) =>
@@ -121,7 +124,9 @@ export const CERTIFICATE_URLS = {
 };
 
 export const FILE_MANAGER_URLS = {
-  DOWNLOAD_FILE: (id: number) => `${BASE}api/FileManager/DownloadFile/${id}`,
+  // Lesson attachments live on AttachementsController (there is no api/FileManager route).
+  DOWNLOAD_FILE: (id: number) => `${BASE}api/Attachements/DownloadFile/${id}`,
+  PREVIEW_FILE: (id: number) => `${BASE}api/Attachements/PreviewFile/${id}`,
 };
 
 // Online course endpoints.
@@ -205,8 +210,10 @@ export const EVENT_URLS = {
 // Students endpoints
 export const STUDENTS_URLS = {
   GET_ALL: `${BASE}api/Students`,
+  // Logged-in student's own profile — the only reliable source of Student.Id
+  // (the JWT carries the Identity user GUID, not the student id).
+  ME: `${BASE}api/Students/me`,
   GET_BY_ID: (id: number) => `${BASE}api/Students/${id}`,
-  GET_TOP_STUDENTS: `${BASE}api/Students/GetTopStudents`,
   UPDATE: `${BASE}api/Students`,
   DELETE: (id: number) => `${BASE}api/Students/${id}`,
 };
@@ -256,6 +263,7 @@ export const DASHBOARD_URLS = {
 // Reservations endpoints
 export const RESERVATIONS_URLS = {
   CREATE: `${BASE}api/Reservations`,
+  MY: (studentId: number) => `${BASE}api/Reservations/student/${studentId}`,
   PENDING: `${BASE}api/admin/AdminReservations/pending`,
   APPROVE: (id: number | string) => `${BASE}api/admin/AdminReservations/${id}/approve`,
   REJECT: (id: number | string) => `${BASE}api/admin/AdminReservations/${id}/reject`,
@@ -323,3 +331,8 @@ export function withPagination(
   const separator = url.includes('?') ? '&' : '?';
   return `${url}${separator}${parts.join('&')}`;
 }
+
+export const APP_VERSION_URLS = {
+  CHECK: (platform: 'android' | 'ios', version: string) =>
+    `${BASE}api/AppVersion?platform=${platform}&version=${encodeURIComponent(version)}`,
+};

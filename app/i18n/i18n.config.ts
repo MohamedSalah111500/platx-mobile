@@ -20,12 +20,11 @@ try {
 const supportedLocales = ['en', 'ar'];
 const defaultLocale = 'ar';
 
-// Force RTL immediately — wrapped because I18nManager calls can crash on some Android OEMs
+// Only allow RTL here. Which direction to use depends on the saved locale, which
+// is read asynchronously in RTLProvider — forcing RTL at module load put an
+// English user back into an RTL layout on every launch.
 try {
-  if (defaultLocale === 'ar' && !I18nManager.isRTL) {
-    I18nManager.allowRTL(true);
-    I18nManager.forceRTL(true);
-  }
+  I18nManager.allowRTL(true);
 } catch {}
 
 try {

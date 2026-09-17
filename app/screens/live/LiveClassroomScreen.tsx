@@ -22,6 +22,7 @@ import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../hooks/useAuth';
 import { useRTL } from '../../i18n/RTLProvider';
+import { useTheme } from '../../theme/ThemeProvider';
 import { Spinner } from '../../components/ui/Spinner';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -47,7 +48,8 @@ import type { LiveSession, LiveParticipant, LiveMessage } from '../../types/live
 
 type Props = NativeStackScreenProps<RootStackParamList, 'LiveClassroom'>;
 
-// Dark video-call theme (always dark regardless of app theme)
+// Dark video-call theme (always dark regardless of app theme) — used for the
+// video stage, top bar, controls and chat overlay. Sheets/modals follow the app theme.
 const DARK = {
   bg: '#0f0f1a',
   surface: '#1a1a2e',
@@ -68,6 +70,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   const { roomId, isTeacher } = route.params;
   const { user, isStudent } = useAuth();
   const { t, isRTL } = useRTL();
+  const { theme } = useTheme();
 
   // Block screenshots/screen recording during live sessions, to protect the
   // classroom feed from being captured.
@@ -105,6 +108,13 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   const [submittingPayment, setSubmittingPayment] = useState(false);
 
   const chatListRef = useRef<FlatList>(null);
+
+  // Numeric id used for hub calls (same id JoinClassroom is invoked with).
+  const hubUserId = user?.studentId ?? 0;
+  const hubUserIdRef = useRef(hubUserId);
+  hubUserIdRef.current = hubUserId;
+  const fullNameRef = useRef('');
+  fullNameRef.current = user ? `${user.firstName} ${user.lastName}` : '';
 
   // ─── Load Room ───────────────────────────────
   useEffect(() => {
@@ -358,8 +368,10 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   }, [joined, room?.channelName]);
 
   // ─── SignalR Setup ───────────────────────────
+  // Connect while waiting for approval too, so the StudentApproved event reaches us.
+  const signalRActive = joined || pendingApproval;
   useEffect(() => {
-    if (!joined || !user) return;
+    if (!signalRActive || !user) return;
     let mounted = true;
 
     const setupSignalR = async () => {
@@ -371,11 +383,18 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
         //    (server sends ParticipantList immediately on join)
         signalRService.onReceiveMessage((msg: any) => {
           if (!mounted) return;
+          // Own messages are already added locally when sent; skip the hub echo.
+          if (
+            Number(msg.senderId) === hubUserIdRef.current &&
+            msg.senderName === fullNameRef.current
+          ) {
+            return;
+          }
           const message: LiveMessage = {
             senderId: msg.senderId,
             senderName: msg.senderName,
             message: msg.message,
-            timestamp: msg.timestamp || new Date().toISOString(),
+            timestamp: msg.timestamp || msg.sentAt || new Date().toISOString(),
           };
           setMessages((prev) => [...prev, message]);
           setUnreadCount((prev) => prev + 1);
@@ -386,18 +405,31 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           setParticipants(Array.isArray(list) ? list : []);
         });
 
-        signalRService.onStudentJoined((student: any) => {
+        // Hub payload is { userId, connectionId, joinedAt } (no name), so
+        // refresh the participant list, keeping live hand/mute/video flags.
+        signalRService.onStudentJoined(async () => {
           if (!mounted) return;
-          setParticipants((prev) => {
-            if (prev.find((p) => p.studentId === student.studentId)) return prev;
-            return [...prev, student];
-          });
+          try {
+            const list = await liveApi.getParticipants(roomId);
+            if (!mounted || !Array.isArray(list)) return;
+            setParticipants((prev) =>
+              list.map((p) => {
+                const old = prev.find((o) => o.studentId === p.studentId);
+                return old
+                  ? { ...p, isHandRaised: old.isHandRaised, isMuted: old.isMuted, isVideoOff: old.isVideoOff }
+                  : p;
+              }),
+            );
+          } catch {
+            // Non-critical
+          }
         });
 
         signalRService.onStudentLeft((data: any) => {
           if (!mounted) return;
+          const leftId = Number(data?.userId ?? data?.studentId);
           setParticipants((prev) =>
-            prev.filter((p) => p.studentId !== data.studentId),
+            prev.filter((p) => p.studentId !== leftId),
           );
         });
 
@@ -438,7 +470,18 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           setParticipants((prev) =>
             prev.map((p) =>
               p.studentId === data.studentId
-                ? { ...p, isHandRaised: data.isRaised ?? true }
+                ? { ...p, isHandRaised: true }
+                : p,
+            ),
+          );
+        });
+
+        signalRService.onHandLowered((data: any) => {
+          if (!mounted) return;
+          setParticipants((prev) =>
+            prev.map((p) =>
+              p.studentId === data?.studentId
+                ? { ...p, isHandRaised: false }
                 : p,
             ),
           );
@@ -459,11 +502,11 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
     return () => {
       mounted = false;
       signalRService
-        .leaveClassroom(roomId, parseInt(user!.userId))
+        .leaveClassroom(roomId, hubUserIdRef.current)
         .catch(() => {});
       signalRService.stopLiveClassroomConnection().catch(() => {});
     };
-  }, [joined]);
+  }, [signalRActive]);
 
   // ─── Handlers ────────────────────────────────
   const handleToggleMic = () => {
@@ -471,7 +514,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
     setIsMuted(newMuted);
     AgoraService.toggleMic(newMuted);
     signalRService
-      .toggleMute(roomId, parseInt(user!.userId), newMuted)
+      .toggleMute(roomId, hubUserId, newMuted)
       .catch(() => {});
   };
 
@@ -480,7 +523,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
     setIsVideoOff(newOff);
     AgoraService.toggleCamera(newOff);
     signalRService
-      .toggleVideo(roomId, parseInt(user!.userId), newOff)
+      .toggleVideo(roomId, hubUserId, newOff)
       .catch(() => {});
   };
 
@@ -490,10 +533,10 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
     const fullName = `${user!.firstName} ${user!.lastName}`;
     if (newRaised) {
       signalRService
-        .raiseHand(roomId, parseInt(user!.userId), fullName)
+        .raiseHand(roomId, hubUserId, fullName)
         .catch(() => {});
     } else {
-      signalRService.lowerHand(roomId, parseInt(user!.userId)).catch(() => {});
+      signalRService.lowerHand(roomId, hubUserId).catch(() => {});
     }
   };
 
@@ -655,35 +698,25 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   // ─── Render: Participant Row ─────────────────
   const renderParticipant = useCallback(
     ({ item }: { item: LiveParticipant }) => (
-      <View style={styles.participantRow}>
-        <View style={styles.participantAvatar}>
-          <Ionicons name="person" size={16} color={DARK.accent} />
+      <View style={[styles.participantRow, { borderBottomColor: theme.colors.divider }]}>
+        <View style={[styles.participantAvatar, { backgroundColor: theme.colors.primaryLight }]}>
+          <Ionicons name="person" size={16} color={theme.colors.primary} />
         </View>
-        <Text style={styles.participantName} numberOfLines={1}>
+        <Text style={[styles.participantName, { color: theme.colors.text }]} numberOfLines={1}>
           {item.studentName}
         </Text>
         {item.isHandRaised && (
-          <Ionicons
-            name="hand-left"
-            size={16}
-            color={DARK.warning}
-            style={{ marginRight: 8 }}
-          />
+          <Ionicons name="hand-left" size={16} color={theme.colors.warning} />
         )}
         {item.isMuted && (
-          <Ionicons
-            name="mic-off"
-            size={16}
-            color={DARK.textSecondary}
-            style={{ marginRight: 8 }}
-          />
+          <Ionicons name="mic-off" size={16} color={theme.colors.textSecondary} />
         )}
         {isTeacher && item.status === 'pending' && (
           <TouchableOpacity
             onPress={() => handleApproveStudent(item.studentId)}
             style={styles.approveBtn}
           >
-            <Ionicons name="checkmark-circle" size={22} color={DARK.success} />
+            <Ionicons name="checkmark-circle" size={22} color={theme.colors.success} />
           </TouchableOpacity>
         )}
         {isTeacher && item.status === 'approved' && (
@@ -691,12 +724,12 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
             onPress={() => handleRemoveStudent(item.studentId)}
             style={styles.removeBtn}
           >
-            <Ionicons name="remove-circle" size={22} color={DARK.danger} />
+            <Ionicons name="remove-circle" size={22} color={theme.colors.danger} />
           </TouchableOpacity>
         )}
       </View>
     ),
-    [isTeacher],
+    [isTeacher, theme],
   );
 
   // ─── Loading State ───────────────────────────
@@ -854,7 +887,12 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
                 onSubmitEditing={handleSendMessage}
               />
               <TouchableOpacity onPress={handleSendMessage} style={styles.chatSendBtn}>
-                <Ionicons name="send" size={20} color={DARK.accent} />
+                <Ionicons
+                  name="send"
+                  size={20}
+                  color={DARK.accent}
+                  style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
+                />
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
@@ -961,15 +999,15 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
         onRequestClose={() => setParticipantsVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.participantsPanel}>
+          <View style={[styles.participantsPanel, { backgroundColor: theme.colors.card }]}>
             <View style={styles.panelHeader}>
-              <Text style={styles.panelTitle}>
+              <Text style={[styles.panelTitle, { color: theme.colors.text }]}>
                 {t('live.participants')} ({participants.length})
               </Text>
               <TouchableOpacity
                 onPress={() => setParticipantsVisible(false)}
               >
-                <Ionicons name="close" size={24} color={DARK.text} />
+                <Ionicons name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
             <FlatList
@@ -978,7 +1016,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
               renderItem={renderParticipant}
               contentContainerStyle={{ paddingBottom: 20 }}
               ListEmptyComponent={
-                <Text style={styles.emptyPanelText}>
+                <Text style={[styles.emptyPanelText, { color: theme.colors.textSecondary }]}>
                   {t('live.noActiveSessions')}
                 </Text>
               }
@@ -998,17 +1036,17 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           style={styles.modalOverlay}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <View style={styles.participantsPanel}>
+          <View style={[styles.participantsPanel, { backgroundColor: theme.colors.card }]}>
             <View style={styles.panelHeader}>
-              <Text style={styles.panelTitle}>{t('live.paymentProofRequired')}</Text>
+              <Text style={[styles.panelTitle, { color: theme.colors.text }]}>{t('live.paymentProofRequired')}</Text>
               <TouchableOpacity onPress={() => setPaymentModalVisible(false)}>
-                <Ionicons name="close" size={24} color={DARK.text} />
+                <Ionicons name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.emptyPanelText}>{t('live.sessionRequiresPayment')}</Text>
+            <Text style={[styles.emptyPanelText, { color: theme.colors.textSecondary }]}>{t('live.sessionRequiresPayment')}</Text>
 
             <TouchableOpacity
-              style={styles.proofPicker}
+              style={[styles.proofPicker, { borderColor: theme.colors.border, backgroundColor: theme.colors.inputBackground }]}
               onPress={pickPaymentProof}
               activeOpacity={0.8}
             >
@@ -1016,30 +1054,37 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
                 <Image source={{ uri: paymentProof.uri }} style={styles.proofPreview} resizeMode="cover" />
               ) : (
                 <View style={styles.proofEmpty}>
-                  <Ionicons name="cloud-upload-outline" size={28} color={DARK.accent} />
-                  <Text style={styles.proofEmptyText}>{t('live.attachReceipt')}</Text>
+                  <Ionicons name="cloud-upload-outline" size={28} color={theme.colors.primary} />
+                  <Text style={[styles.proofEmptyText, { color: theme.colors.textSecondary }]}>{t('live.attachReceipt')}</Text>
                 </View>
               )}
             </TouchableOpacity>
             {paymentProof && (
               <TouchableOpacity onPress={pickPaymentProof}>
-                <Text style={styles.changeProofText}>{t('live.changeReceipt')}</Text>
+                <Text style={[styles.changeProofText, { color: theme.colors.primary }]}>{t('live.changeReceipt')}</Text>
               </TouchableOpacity>
             )}
 
-            <Text style={[styles.emptyPanelText, { marginTop: spacing.md, marginBottom: spacing.xs }]}>
+            <Text style={[styles.emptyPanelText, { color: theme.colors.textSecondary, marginTop: spacing.md, marginBottom: spacing.xs }]}>
               {t('live.paymentTransactionId')}
             </Text>
             <TextInput
-              style={styles.paymentInput}
+              style={[
+                styles.paymentInput,
+                {
+                  borderColor: theme.colors.inputBorder,
+                  backgroundColor: theme.colors.inputBackground,
+                  color: theme.colors.inputText,
+                },
+              ]}
               placeholder={t('live.enterPaymentTransactionId')}
-              placeholderTextColor={DARK.textSecondary}
+              placeholderTextColor={theme.colors.inputPlaceholder}
               value={paymentTransactionId}
               onChangeText={setPaymentTransactionId}
             />
 
             <TouchableOpacity
-              style={[styles.submitPaymentBtn, submittingPayment && { opacity: 0.6 }]}
+              style={[styles.submitPaymentBtn, { backgroundColor: theme.colors.primary }, submittingPayment && { opacity: 0.6 }]}
               onPress={submitPayment}
               disabled={submittingPayment}
               activeOpacity={0.8}
@@ -1071,24 +1116,27 @@ const styles = StyleSheet.create({
     backgroundColor: DARK.surface,
   },
   backBtn: {
-    padding: 6,
-    marginRight: 4,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginEnd: 4,
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
     backgroundColor: DARK.danger + '25',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
-    marginRight: 8,
+    marginEnd: 8,
   },
   liveDot: {
     width: 7,
     height: 7,
     borderRadius: 4,
     backgroundColor: DARK.danger,
-    marginRight: 4,
   },
   liveText: {
     ...typography.caption,
@@ -1109,13 +1157,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 16,
-    marginLeft: 8,
+    marginStart: 8,
+    gap: 4,
   },
   participantCountText: {
     ...typography.caption,
     color: DARK.text,
     fontFamily: 'Cairo_600SemiBold',
-    marginLeft: 4,
   },
 
   // Video Area
@@ -1175,7 +1223,7 @@ const styles = StyleSheet.create({
   unreadBadge: {
     position: 'absolute',
     top: -2,
-    right: -2,
+    end: -2,
     backgroundColor: DARK.danger,
     width: 18,
     height: 18,
@@ -1192,7 +1240,7 @@ const styles = StyleSheet.create({
   // Chat Overlay
   chatOverlay: {
     position: 'absolute',
-    left: 0,
+    start: 0,
     bottom: 0,
     width: SCREEN_WIDTH * 0.75,
     maxHeight: '55%',
@@ -1240,8 +1288,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   chatSendBtn: {
-    padding: 6,
-    marginLeft: 4,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginStart: 4,
   },
 
   // Participants Modal
@@ -1251,7 +1302,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   participantsPanel: {
-    backgroundColor: DARK.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '65%',
@@ -1265,41 +1315,36 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   panelTitle: {
-    ...typography.h4,
-    color: DARK.text,
+    ...typography.sectionTitle,
+    flex: 1,
   },
   participantRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
     paddingVertical: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: DARK.surfaceLight,
   },
   participantAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: DARK.surfaceLight,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
+    marginEnd: spacing.xs,
   },
   participantName: {
     ...typography.body,
-    color: DARK.text,
     flex: 1,
   },
   approveBtn: {
     padding: 4,
-    marginLeft: 4,
   },
   removeBtn: {
     padding: 4,
-    marginLeft: 4,
   },
   emptyPanelText: {
     ...typography.body,
-    color: DARK.textSecondary,
     textAlign: 'center',
     marginTop: 20,
   },
@@ -1307,8 +1352,6 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: DARK.surfaceLight,
-    backgroundColor: DARK.surfaceLight,
     overflow: 'hidden',
     marginTop: spacing.md,
   },
@@ -1324,26 +1367,20 @@ const styles = StyleSheet.create({
   },
   proofEmptyText: {
     ...typography.bodySmall,
-    color: DARK.textSecondary,
   },
   changeProofText: {
     ...typography.bodySmall,
-    color: DARK.accent,
     textAlign: 'center',
     marginTop: spacing.xs,
   },
   paymentInput: {
     borderWidth: 1,
-    borderColor: DARK.surfaceLight,
-    backgroundColor: DARK.surfaceLight,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    color: DARK.text,
     ...typography.body,
   },
   submitPaymentBtn: {
-    backgroundColor: DARK.accent,
     borderRadius: borderRadius.md,
     paddingVertical: spacing.md,
     alignItems: 'center',

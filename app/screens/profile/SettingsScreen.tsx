@@ -15,7 +15,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import type { ThemeMode } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { useRTL } from '../../i18n/RTLProvider';
-import { SUPPORTED_LANGUAGES } from '../../config/constants';
+import { SUPPORTED_LANGUAGES, RTL_LANGUAGES } from '../../config/constants';
 import { spacing } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import type { ProfileStackParamList } from '../../types/navigation.types';
@@ -27,6 +27,8 @@ export default function SettingsScreen({ navigation }: Props) {
   const { logout } = useAuth();
   const { locale, setLocale, t, isRTL } = useRTL();
   const bgColor = theme.colors.background;
+  // Light pastel icon fills glare in dark mode — use a translucent tint of the icon colour there.
+  const tint = (lightBg: string, color: string) => (theme.dark ? color + '26' : lightBg);
 
   const handleLogout = () => {
     Alert.alert(t('auth.signOut'), t('auth.signOutConfirm'), [
@@ -37,8 +39,11 @@ export default function SettingsScreen({ navigation }: Props) {
 
   const handleLanguageChange = async (langCode: string) => {
     if (langCode === locale) return;
+    const directionChanges = RTL_LANGUAGES.includes(langCode) !== isRTL;
     await setLocale(langCode);
-    if (langCode === 'ar') {
+    // Switching either way flips the layout direction, and RN only applies that
+    // on the next launch.
+    if (directionChanges) {
       Alert.alert(
         t('settings.restartRequired'),
         t('settings.restartMessage'),
@@ -124,7 +129,7 @@ export default function SettingsScreen({ navigation }: Props) {
           </Text>
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
             <View style={styles.cardRow}>
-              <View style={[styles.settingIcon, { backgroundColor: '#E8F4FD' }]}>
+              <View style={[styles.settingIcon, { backgroundColor: tint('#E8F4FD', '#3B82F6') }]}>
                 <Ionicons name="globe" size={20} color="#3B82F6" />
               </View>
               <View style={styles.settingInfo}>
@@ -154,7 +159,7 @@ export default function SettingsScreen({ navigation }: Props) {
           </Text>
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
             <View style={[styles.cardRow, { paddingBottom: 0 }]}>
-              <View style={[styles.settingIcon, { backgroundColor: '#E8F8F0' }]}>
+              <View style={[styles.settingIcon, { backgroundColor: tint('#E8F8F0', '#34C38F') }]}>
                 <Ionicons name="information-circle" size={20} color="#34C38F" />
               </View>
               <View style={styles.settingInfo}>
@@ -199,17 +204,17 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: spacing.sm,
-    marginLeft: spacing.xs,
+    marginStart: spacing.xs,
   },
   card: {
     borderRadius: 20,
     padding: spacing.lg,
-    
   },
   cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingBottom: spacing.md,
+    gap: spacing.md,
   },
   settingIcon: {
     width: 42,
@@ -217,7 +222,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
   },
   settingInfo: {
     flex: 1,
@@ -228,6 +232,7 @@ const styles = StyleSheet.create({
   },
   settingDesc: {
     fontSize: fontSize.xs,
+    fontFamily: 'Cairo_400Regular',
     marginTop: 2,
   },
   chipRow: {
@@ -239,6 +244,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
   },
   chipText: {
@@ -255,9 +261,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: spacing.sm,
   },
   logoutText: {
     ...typography.button,
-    marginLeft: spacing.sm,
   },
 });

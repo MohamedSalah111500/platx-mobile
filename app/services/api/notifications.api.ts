@@ -50,24 +50,15 @@ function extractItems(data: any): { items: NotificationItem[]; totalCount: numbe
 }
 
 export const notificationsApi = {
+  // `userId` is Student.Id for students and Staff.Id for staff (the backend binds
+  // `studentId` / `staffId` as non-nullable ints, so omitting it filters on 0).
   getByRole: async (
     role: TRole,
     page = 1,
     size = 10,
-    studentId?: number,
+    userId?: number,
   ): Promise<NotificationResponse> => {
-    // Build URL with query params
-    const buildUrl = (endpoint: string, includeStudentId: boolean) => {
-      const params: string[] = [];
-      if (includeStudentId && studentId) {
-        params.push(`studentId=${studentId}`);
-      }
-      params.push(`page=${page}`);
-      params.push(`size=${size}`);
-      const separator = endpoint.includes('?') ? '&' : '?';
-      return `${endpoint}${separator}${params.join('&')}`;
-    };
-
+    const params: string[] = [];
     let url: string;
     switch (role) {
       case 'SuperAdmin':
@@ -76,43 +67,22 @@ export const notificationsApi = {
         break;
       case 'Staff':
         url = NOTIFICATIONS_URLS.GET_STAFF;
+        if (userId) params.push(`staffId=${userId}`);
         break;
       case 'Student':
       default:
         url = NOTIFICATIONS_URLS.GET_STUDENT;
+        if (userId) params.push(`studentId=${userId}`);
         break;
     }
+    params.push(`page=${page}`);
+    params.push(`size=${size}`);
+    const separator = url.includes('?') ? '&' : '?';
 
-    const fullUrl = buildUrl(url, role === 'Student');
-
-    try {
-      const { data } = await apiClient.get<any>(fullUrl);
-      const result = extractItems(data);
-
-      // If we got results or this isn't a student, return as-is
-      if (result.items.length > 0 || role !== 'Student') {
-        return result;
-      }
-
-      // Student endpoint returned empty — try admin endpoint as fallback
-      const fallbackUrl = buildUrl(NOTIFICATIONS_URLS.GET_ADMIN, false);
-      const { data: fbData } = await apiClient.get<any>(fallbackUrl);
-      const fbResult = extractItems(fbData);
-      return fbResult;
-    } catch (err: any) {
-      // If student endpoint errored, try admin endpoint as fallback
-      if (role === 'Student') {
-        try {
-          const fallbackUrl = buildUrl(NOTIFICATIONS_URLS.GET_ADMIN, false);
-          const { data: fbData } = await apiClient.get<any>(fallbackUrl);
-          const fbResult = extractItems(fbData);
-              return fbResult;
-        } catch {
-          // admin fallback also failed, throw original error
-        }
-      }
-      throw err;
-    }
+    // No admin-endpoint fallback: GetNotificationListAsync is Admin-only (403 for
+    // students) and would show tenant-wide notifications.
+    const { data } = await apiClient.get<any>(`${url}${separator}${params.join('&')}`);
+    return extractItems(data);
   },
 
   create: async (payload: {
@@ -127,6 +97,15 @@ export const notificationsApi = {
 
   markAsRead: async (id: number): Promise<void> => {
     await apiClient.post(NOTIFICATIONS_URLS.MARK_READ, { id });
+  },
+
+  markAllAsRead: async (): Promise<void> => {
+    await apiClient.post(NOTIFICATIONS_URLS.MARK_ALL_READ, {});
+  },
+
+  getUnreadCount: async (): Promise<number> => {
+    const { data } = await apiClient.get<number>(NOTIFICATIONS_URLS.UNREAD_COUNT);
+    return typeof data === 'number' ? data : Number(data) || 0;
   },
 
   delete: async (id: number): Promise<void> => {

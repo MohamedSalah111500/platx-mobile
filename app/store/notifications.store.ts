@@ -1,7 +1,16 @@
 import { create } from 'zustand';
 import { notificationsApi } from '../services/api/notifications.api';
 import type { NotificationItem } from '../types/notification.types';
-import type { TRole } from '../types/auth.types';
+import type { TRole, User } from '../types/auth.types';
+
+// The id the role's notification endpoint filters on: Student.Id for students,
+// Staff.Id for staff, nothing for admins.
+export function getNotificationOwnerId(role: TRole, user: User | null | undefined): number | undefined {
+  if (!user) return undefined;
+  if (role === 'Student') return user.studentId;
+  if (role === 'Staff') return user.staffId;
+  return undefined;
+}
 
 interface NotificationsState {
   notifications: NotificationItem[];
@@ -13,10 +22,12 @@ interface NotificationsState {
 }
 
 interface NotificationsActions {
-  fetch: (role: TRole, page?: number, size?: number, studentId?: number) => Promise<void>;
-  loadMore: (role: TRole, studentId?: number) => Promise<void>;
-  addNotification: (notification: NotificationItem) => void;
+  fetch: (role: TRole, page?: number, size?: number, ownerId?: number) => Promise<void>;
+  loadMore: (role: TRole, ownerId?: number) => Promise<void>;
+  addNotification: (notification: NotificationItem, countAsUnread?: boolean) => void;
   markAsRead: (id: number) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  fetchUnreadCount: () => Promise<void>;
   remove: (id: number) => Promise<void>;
   clear: () => void;
 }
@@ -33,12 +44,14 @@ export const useNotificationsStore = create<NotificationsStore>((set, get) => ({
   page: 1,
   hasMore: true,
 
-  fetch: async (role: TRole, page = 1, size = PAGE_SIZE, studentId?: number) => {
+  fetch: async (role: TRole, page = 1, size = PAGE_SIZE, ownerId?: number) => {
     set({ isLoading: true });
     try {
-      const response = await notificationsApi.getByRole(role, page, size, studentId);
+      const response = await notificationsApi.getByRole(role, page, size, ownerId);
       const allItems = page === 1 ? response.items : [...get().notifications, ...response.items];
-      const unread = allItems.filter((n) => !n.isReaded).length;
+      // Only the student DTO carries IsReaded; the student count comes from
+      // UnreadCount. Admin/staff notifications have no read state -> no badge.
+      const unread = role === 'Student' ? get().unreadCount : 0;
       set({
         notifications: allItems,
         unreadCount: unread,
@@ -48,20 +61,23 @@ export const useNotificationsStore = create<NotificationsStore>((set, get) => ({
         isLoading: false,
       });
     } catch {
-      set({ isLoading: false, hasMore: false });
+      // Don't keep showing a previous (possibly other user's) list on refresh failure.
+      set(page === 1
+        ? { notifications: [], totalCount: 0, isLoading: false, hasMore: false }
+        : { isLoading: false, hasMore: false });
     }
   },
 
-  loadMore: async (role: TRole, studentId?: number) => {
+  loadMore: async (role: TRole, ownerId?: number) => {
     const { page, hasMore, isLoading } = get();
     if (!hasMore || isLoading) return;
-    await get().fetch(role, page + 1, PAGE_SIZE, studentId);
+    await get().fetch(role, page + 1, PAGE_SIZE, ownerId);
   },
 
-  addNotification: (notification: NotificationItem) => {
+  addNotification: (notification: NotificationItem, countAsUnread = true) => {
     set((state) => ({
       notifications: [notification, ...state.notifications],
-      unreadCount: state.unreadCount + 1,
+      unreadCount: countAsUnread ? state.unreadCount + 1 : state.unreadCount,
       totalCount: state.totalCount + 1,
     }));
   },
@@ -77,6 +93,27 @@ export const useNotificationsStore = create<NotificationsStore>((set, get) => ({
       }));
     } catch {
       // silently fail
+    }
+  },
+
+  markAllAsRead: async () => {
+    try {
+      await notificationsApi.markAllAsRead();
+      set((state) => ({
+        notifications: state.notifications.map((n) => ({ ...n, isReaded: true })),
+        unreadCount: 0,
+      }));
+    } catch {
+      // silently fail
+    }
+  },
+
+  fetchUnreadCount: async () => {
+    try {
+      const unreadCount = await notificationsApi.getUnreadCount();
+      set({ unreadCount });
+    } catch {
+      // keep the last known count
     }
   },
 
@@ -97,6 +134,7 @@ export const useNotificationsStore = create<NotificationsStore>((set, get) => ({
       notifications: [],
       unreadCount: 0,
       totalCount: 0,
+      isLoading: false,
       page: 1,
       hasMore: true,
     });

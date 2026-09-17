@@ -12,7 +12,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Audio } from 'expo-av';
+import {
+  createAudioPlayer,
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+  type AudioPlayer,
+  type AudioStatus,
+} from 'expo-audio';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
@@ -52,6 +60,7 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
   const [questionScores, setQuestionScores] = useState<Record<number, string>>({});
   const [audioFileId, setAudioFileId] = useState<number | null>(null);
   const [audioUri, setAudioUri] = useState<string | null>(null);
+  const [voiceUploading, setVoiceUploading] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -97,7 +106,7 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
   };
 
   const publish = async () => {
-    if (!review) return;
+    if (!review || voiceUploading) return;
     const total = review.totalScore ?? 0;
     const grade = hasQuestions ? questionsTotal : Number(finalGrade);
     if (finalGrade === '' && !hasQuestions) {
@@ -135,7 +144,7 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
         <ScreenHeader title={studentName || t('homework.review')} onBack={() => navigation.goBack()} />
         <Spinner />
       </SafeAreaView>
@@ -143,7 +152,7 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
   }
   if (error || !review) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
         <ScreenHeader title={studentName || t('homework.review')} onBack={() => navigation.goBack()} />
         <ErrorRetry message={error || t('homework.notFound')} onRetry={load} />
       </SafeAreaView>
@@ -154,7 +163,7 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
   const grade = hasQuestions ? questionsTotal : Number(finalGrade) || 0;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
       <ScreenHeader title={studentName || review.homeworkName} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Grade summary */}
@@ -191,7 +200,7 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
                     onChangeText={v => setScore(q, v)}
                     keyboardType="numeric"
                     placeholder="0"
-                    placeholderTextColor={theme.colors.textMuted}
+                    placeholderTextColor={theme.colors.inputPlaceholder}
                   />
                   <Text style={[styles.scoreMax, { color: theme.colors.textMuted }]}>/ {q.maxScore}</Text>
                 </View>
@@ -215,18 +224,20 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
                         style={[
                           styles.answer,
                           {
-                            borderColor: correct ? '#34C38F' : selected ? '#EF4444' : theme.colors.border,
-                            backgroundColor: correct ? '#34C38F10' : selected ? '#EF444410' : 'transparent',
+                            borderColor: correct ? theme.colors.success : selected ? theme.colors.danger : theme.colors.border,
+                            backgroundColor: correct ? theme.colors.success + '10' : selected ? theme.colors.danger + '10' : 'transparent',
                           },
                         ]}
                       >
-                        <Ionicons
-                          name={correct ? 'checkmark-circle' : selected ? 'close-circle' : 'ellipse-outline'}
-                          size={16}
-                          color={correct ? '#34C38F' : selected ? '#EF4444' : theme.colors.textMuted}
-                        />
+                        <View style={styles.answerIcon}>
+                          <Ionicons
+                            name={correct ? 'checkmark-circle' : selected ? 'close-circle' : 'ellipse-outline'}
+                            size={16}
+                            color={correct ? theme.colors.success : selected ? theme.colors.danger : theme.colors.textMuted}
+                          />
+                        </View>
                         <Text style={[styles.answerText, { color: theme.colors.text }]}>{stripHtml(a.answerBody)}</Text>
-                        {selected && <Text style={styles.selectedTag}>{t('homework.studentChose')}</Text>}
+                        {selected && <Text style={[styles.selectedTag, { color: theme.colors.danger }]}>{t('homework.studentChose')}</Text>}
                       </View>
                     );
                   })}
@@ -265,7 +276,7 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
                 onChangeText={v => setFinalGrade(v.replace(/[^0-9.]/g, ''))}
                 keyboardType="numeric"
                 placeholder="0"
-                placeholderTextColor={theme.colors.textMuted}
+                placeholderTextColor={theme.colors.inputPlaceholder}
               />
               <Text style={[styles.gradeInputMax, { color: theme.colors.textMuted }]}>/ {review.totalScore}</Text>
             </View>
@@ -276,7 +287,7 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
         <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
           <View style={styles.feedbackHead}>
             <Text style={[styles.sectionLabel, { color: theme.colors.textMuted }]}>{t('homework.writtenFeedback')}</Text>
-            <Text style={[styles.counter, { color: feedbackText.length > MAX_FEEDBACK ? '#EF4444' : theme.colors.textMuted }]}>
+            <Text style={[styles.counter, { color: feedbackText.length > MAX_FEEDBACK ? theme.colors.danger : theme.colors.textMuted }]}>
               {feedbackText.length}/{MAX_FEEDBACK}
             </Text>
           </View>
@@ -286,7 +297,7 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
             onChangeText={setFeedbackText}
             multiline
             placeholder={t('homework.feedbackPlaceholder')}
-            placeholderTextColor={theme.colors.textMuted}
+            placeholderTextColor={theme.colors.inputPlaceholder}
           />
         </View>
 
@@ -299,13 +310,14 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
             existingUri={audioUri}
             onUploaded={(id, uri) => { setAudioFileId(id); setAudioUri(uri); }}
             onCleared={() => { setAudioFileId(null); setAudioUri(null); }}
+            onUploadingChange={setVoiceUploading}
           />
         </View>
 
         <TouchableOpacity
-          style={[styles.publishBtn, { backgroundColor: theme.colors.primary }, saving && { opacity: 0.6 }]}
+          style={[styles.publishBtn, { backgroundColor: theme.colors.primary }, (saving || voiceUploading) && { opacity: 0.6 }]}
           onPress={publish}
-          disabled={saving}
+          disabled={saving || voiceUploading}
           activeOpacity={0.7}
         >
           <Ionicons name="checkmark-done" size={18} color="#fff" />
@@ -323,35 +335,36 @@ function VoiceComment({
   existingUri,
   onUploaded,
   onCleared,
+  onUploadingChange,
 }: {
   theme: any;
   t: (k: string, o?: any) => string;
   existingUri: string | null;
   onUploaded: (fileId: number, uri: string) => void;
   onCleared: () => void;
+  onUploadingChange: (uploading: boolean) => void;
 }) {
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [isRecording, setIsRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uri, setUri] = useState<string | null>(existingUri);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [sound, setSound] = useState<AudioPlayer | null>(null);
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => setUri(existingUri), [existingUri]);
-  useEffect(() => () => { sound?.unloadAsync(); }, [sound]);
+  useEffect(() => onUploadingChange(uploading), [uploading]);
+  useEffect(() => () => { sound?.remove(); }, [sound]);
 
   const startRecording = async () => {
     try {
-      const perm = await Audio.requestPermissionsAsync();
+      const perm = await requestRecordingPermissionsAsync();
       if (!perm.granted) {
         Alert.alert(t('common.error'), t('homework.micPermission'));
         return;
       }
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const rec = new Audio.Recording();
-      await rec.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      await rec.startAsync();
-      setRecording(rec);
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
       setIsRecording(true);
     } catch {
       Alert.alert(t('common.error'), t('homework.recordFailed'));
@@ -359,12 +372,12 @@ function VoiceComment({
   };
 
   const stopRecording = async () => {
-    if (!recording) return;
+    if (!isRecording) return;
     try {
       setIsRecording(false);
-      await recording.stopAndUnloadAsync();
-      const recUri = recording.getURI();
-      setRecording(null);
+      await recorder.stop();
+      await setAudioModeAsync({ allowsRecording: false });
+      const recUri = recorder.uri;
       if (!recUri) return;
       setUri(recUri);
       // Upload immediately so we have a file id for grading.
@@ -376,6 +389,8 @@ function VoiceComment({
       });
       onUploaded(uploaded.id, recUri);
     } catch {
+      // Upload failed: drop the local recording so we don't show "voice ready" without a file.
+      setUri(existingUri);
       Alert.alert(t('common.error'), t('homework.uploadFailed'));
     } finally {
       setUploading(false);
@@ -386,15 +401,16 @@ function VoiceComment({
     if (!uri) return;
     try {
       if (sound) {
-        if (playing) { await sound.pauseAsync(); setPlaying(false); }
-        else { await sound.playAsync(); setPlaying(true); }
+        if (playing) { sound.pause(); setPlaying(false); }
+        else { sound.play(); setPlaying(true); }
         return;
       }
-      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-      const { sound: s } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
-      s.setOnPlaybackStatusUpdate((st: any) => {
-        if (st.isLoaded && st.didJustFinish) { setPlaying(false); s.setPositionAsync(0); }
+      await setAudioModeAsync({ playsInSilentMode: true });
+      const s = createAudioPlayer({ uri });
+      s.addListener('playbackStatusUpdate', (st: AudioStatus) => {
+        if (st.didJustFinish) { setPlaying(false); s.pause(); s.seekTo(0); }
       });
+      s.play();
       setSound(s);
       setPlaying(true);
     } catch {
@@ -403,7 +419,7 @@ function VoiceComment({
   };
 
   const remove = async () => {
-    await sound?.unloadAsync();
+    sound?.remove();
     setSound(null);
     setPlaying(false);
     setUri(null);
@@ -412,9 +428,9 @@ function VoiceComment({
 
   if (isRecording) {
     return (
-      <TouchableOpacity style={[styles.recBtn, { backgroundColor: '#EF444415' }]} onPress={stopRecording} activeOpacity={0.7}>
-        <View style={styles.recDot} />
-        <Text style={[styles.recText, { color: '#EF4444' }]}>{t('homework.stopRecording')}</Text>
+      <TouchableOpacity style={[styles.recBtn, { backgroundColor: theme.colors.danger + '15', borderColor: theme.colors.danger }]} onPress={stopRecording} activeOpacity={0.7}>
+        <View style={[styles.recDot, { backgroundColor: theme.colors.danger }]} />
+        <Text style={[styles.recText, { color: theme.colors.danger }]}>{t('homework.stopRecording')}</Text>
       </TouchableOpacity>
     );
   }
@@ -430,7 +446,7 @@ function VoiceComment({
           {uploading && <ActivityIndicator size="small" color={theme.colors.primary} />}
         </TouchableOpacity>
         <TouchableOpacity onPress={remove} hitSlop={8} style={styles.removeVoice}>
-          <Ionicons name="trash-outline" size={18} color="#EF4444" />
+          <Ionicons name="trash-outline" size={18} color={theme.colors.danger} />
         </TouchableOpacity>
       </View>
     );
@@ -465,9 +481,11 @@ const styles = StyleSheet.create({
   essayBox: { borderWidth: 1, borderRadius: 12, padding: spacing.md },
   essayText: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', lineHeight: 22 },
   answers: { gap: spacing.sm },
-  answer: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: 12, borderRadius: 12, borderWidth: 1.5 },
-  answerText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium' },
-  selectedTag: { fontSize: 10, fontFamily: 'Cairo_600SemiBold', color: '#EF4444' },
+  // flex-start + answerIcon height == answerText lineHeight keeps the icon on the first line when the answer wraps.
+  answer: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: 12, borderRadius: 12, borderWidth: 1.5 },
+  answerIcon: { height: 20, justifyContent: 'center' },
+  answerText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', lineHeight: 20 },
+  selectedTag: { fontSize: 10, fontFamily: 'Cairo_600SemiBold', lineHeight: 20 },
   fileRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: 10, paddingHorizontal: spacing.md, paddingVertical: 10 },
   fileName: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium' },
   gradeInputRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
@@ -478,11 +496,11 @@ const styles = StyleSheet.create({
   feedbackInput: { minHeight: 90, borderWidth: 1.5, borderRadius: 12, padding: spacing.md, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlignVertical: 'top' },
   recBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderWidth: 1.5, borderRadius: 12, paddingVertical: 13 },
   recText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
-  recDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#EF4444' },
+  recDot: { width: 12, height: 12, borderRadius: 6 },
   voiceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   playBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: 12, borderRadius: 12 },
   playText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
   removeVoice: { padding: 10 },
-  publishBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderRadius: 14, paddingVertical: 16, marginTop: spacing.sm },
+  publishBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderRadius: 14, paddingVertical: 12, marginTop: spacing.sm },
   publishText: { ...typography.button, color: '#fff', fontSize: fontSize.base },
 });

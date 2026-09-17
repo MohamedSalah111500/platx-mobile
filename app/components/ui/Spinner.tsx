@@ -29,7 +29,7 @@ export function Spinner({
       padding: spacing.lg,
     },
     fullScreen: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: theme.colors.background,
       zIndex: 999,
     },

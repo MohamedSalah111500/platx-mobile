@@ -20,20 +20,23 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import { newsApi } from '../../services/api/news.api';
-import { eventsApi } from '../../services/api/events.api';
+import { eventsApi, CALENDAR_VIEW_TYPE } from '../../services/api/events.api';
 import { coursesApi } from '../../services/api/courses.api';
 import { dashboardApi, type DashboardStats } from '../../services/api/dashboard.api';
 import type { HomeStackParamList } from '../../types/navigation.types';
 import type { NewsItem } from '../../types/news.types';
 import type { EventItem } from '../../types/event.types';
-import type { Course } from '../../types/course.types';
+import type { Course, Enrollment } from '../../types/course.types';
 import { getFullImageUrl } from '../../utils/imageUrl';
+import { toLocalDateString } from '../../utils/date';
 import { useSound } from '../../hooks/useSound';
 import { GradientBackground } from '../../components/ui/GradientBackground';
-import { studentsApi, type TopStudent } from '../../services/api/students.api';
+import { studentsApi } from '../../services/api/students.api';
 import { honorBoardApi, type HonorBoardEntry } from '../../services/api/honor-board.api';
 import { reportsApi } from '../../services/api/reports.api';
+import { effectivePrice, formatPrice } from '../../utils/price';
 import SectionHeader from '../../components/ui/SectionHeader';
+import { useNotificationsStore } from '../../store/notifications.store';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -50,23 +53,29 @@ const ACCENT_COLORS = [
 export default function HomeScreen({ navigation }: Props) {
   const { theme, isDark } = useTheme();
   const { user, role, domain, isStudent, isStaff, isAdmin, can } = useAuth();
-  const { t, isRTL } = useRTL();
+  const { t, isRTL, locale } = useRTL();
   const { play } = useSound();
   const insets = useSafeAreaInsets();
 
   const [news, setNews] = useState<NewsItem[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [newsError, setNewsError] = useState<string | null>(null);
   const [coursesError, setCoursesError] = useState<string | null>(null);
-  const [topStudents, setTopStudents] = useState<TopStudent[]>([]);
   const [honorTop3, setHonorTop3] = useState<HonorBoardEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [reportsSummary, setReportsSummary] = useState<{ avgAttendance: number; avgExamScore: number; groupsCount: number; examsCount: number } | null>(null);
 
   const isTeacherOrAdmin = isStaff || isAdmin;
+  const unreadCount = useNotificationsStore((s) => s.unreadCount);
+  const fetchUnreadCount = useNotificationsStore((s) => s.fetchUnreadCount);
+
+  useEffect(() => {
+    if (isStudent) fetchUnreadCount();
+  }, [isStudent, fetchUnreadCount]);
   const canReports = can('REPORTS');
 
   // ------------------------------------------------------------------ data
@@ -122,19 +131,13 @@ export default function HomeScreen({ navigation }: Props) {
       setCourses([]);
     }
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = toLocalDateString(new Date());
       const eventsRes = isTeacherOrAdmin
-        ? await eventsApi.getAll(today, 0)
-        : await eventsApi.getAllForStudent(today, 0);
+        ? await eventsApi.getAll(today, CALENDAR_VIEW_TYPE.Month)
+        : await eventsApi.getAllForStudent(today, CALENDAR_VIEW_TYPE.Month);
       setEvents(Array.isArray(eventsRes) ? eventsRes.slice(0, 3) : []);
     } catch {
       // events may not be available
-    }
-    try {
-      const top = await studentsApi.getTopStudents();
-      setTopStudents(top.slice(0, 5));
-    } catch {
-      // honor board may not be available
     }
     try {
       const now = new Date();
@@ -145,13 +148,41 @@ export default function HomeScreen({ navigation }: Props) {
     }
   };
 
+  // Only students own courses. The student id is resolved from /Students/me
+  // after login, so this re-runs once it arrives.
+  const loadEnrollments = async () => {
+    if (!isStudent || !user?.studentId) {
+      setEnrollments([]);
+      return;
+    }
+    try {
+      setEnrollments(await coursesApi.getStudentEnrollments(user.studentId));
+    } catch {
+      setEnrollments([]);
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, []);
 
+  useEffect(() => {
+    loadEnrollments();
+  }, [isStudent, user?.studentId]);
+
+  // Enrollment rows embed the course; fall back to the enrollment's own
+  // lesson count when the nested course doesn't carry it.
+  const enrolledCourses: Course[] = enrollments
+    .filter((e) => e.course)
+    .map((e) => ({
+      ...(e.course as Course),
+      id: e.courseId,
+      totalLessons: e.course?.totalLessons ?? e.totalLessons,
+    }));
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadData();
+    await Promise.all([loadData(), loadEnrollments()]);
     setRefreshing(false);
   };
 
@@ -176,6 +207,9 @@ export default function HomeScreen({ navigation }: Props) {
   const PRIMARY = theme.colors.primary;
   const DARK_CARD = isDark ? '#3D2196' : '#1B1464';
   const LIGHT_CARD = isDark ? theme.colors.surface : theme.colors.primaryLight;
+  const SOFT_BORDER = isDark ? theme.colors.border : theme.colors.divider;
+  // Pastel accent fills glare on dark cards — use a translucent tint there.
+  const accentBg = (p: { bg: string; accent: string }) => (isDark ? p.accent + '26' : p.bg);
 
   const CARD_WIDTH = SCREEN_WIDTH * 0.42;
 
@@ -223,7 +257,7 @@ export default function HomeScreen({ navigation }: Props) {
     },
     headerTextBlock: {
       flex: 1,
-      marginLeft: spacing.md,
+      marginStart: spacing.md,
     },
     headerWelcome: {
       ...typography.caption,
@@ -234,7 +268,6 @@ export default function HomeScreen({ navigation }: Props) {
       ...typography.h4,
       color: theme.colors.text,
       fontFamily: 'Cairo_700Bold',
-      marginTop: 1,
     },
     bellButton: {
       width: 46,
@@ -258,10 +291,8 @@ export default function HomeScreen({ navigation }: Props) {
 
     /* ── Main Heading ─────────────────────────────────────────── */
     mainHeading: {
-      fontSize: fontSize['2xl'],
-      fontFamily: 'Cairo_700Bold',
+      ...typography.screenTitle,
       color: theme.colors.text,
-      lineHeight: 32,
       paddingHorizontal: spacing.xl,
       marginTop: spacing.lg,
       marginBottom: spacing.lg,
@@ -280,10 +311,8 @@ export default function HomeScreen({ navigation }: Props) {
       paddingHorizontal: spacing.lg,
       height: 50,
       borderWidth: 1,
-      borderColor: isDark ? theme.colors.border : '#F0F0F0',
-    },
-    searchIcon: {
-      marginRight: spacing.sm,
+      borderColor: SOFT_BORDER,
+      gap: spacing.sm,
     },
     searchInput: {
       flex: 1,
@@ -346,7 +375,6 @@ export default function HomeScreen({ navigation }: Props) {
       ...typography.caption,
       fontSize: 10,
       fontFamily: 'Cairo_500Medium',
-      marginTop: 1,
     },
 
     /* ── Teacher / Admin 3-column stats ───────────────────────── */
@@ -394,6 +422,7 @@ export default function HomeScreen({ navigation }: Props) {
       marginBottom: spacing['2xl'],
       padding: spacing.lg,
       alignItems: 'center',
+      gap: spacing.md,
     },
     reportsWidgetIcon: {
       width: 44,
@@ -401,7 +430,6 @@ export default function HomeScreen({ navigation }: Props) {
       borderRadius: 14,
       justifyContent: 'center',
       alignItems: 'center',
-      marginRight: spacing.md,
     },
     reportsWidgetMetrics: {
       flex: 1,
@@ -409,7 +437,8 @@ export default function HomeScreen({ navigation }: Props) {
       gap: spacing.lg,
     },
     reportsWidgetMetric: {
-      alignItems: isRTL ? 'flex-end' : 'flex-start',
+      // flex-start already follows the layout direction (right edge in RTL).
+      alignItems: 'flex-start',
     },
     reportsWidgetValue: {
       fontSize: fontSize.lg,
@@ -420,13 +449,12 @@ export default function HomeScreen({ navigation }: Props) {
       fontSize: 10,
       fontFamily: 'Cairo_500Medium',
       color: theme.colors.textSecondary,
-      marginTop: 1,
     },
 
     /* ── Quick Actions (horizontal slider) ────────────────────── */
     quickActionsScroll: {
-      paddingLeft: spacing.xl,
-      paddingRight: spacing.md,
+      paddingStart: spacing.xl,
+      paddingEnd: spacing.md,
       marginBottom: spacing['2xl'],
     },
     quickActionPill: {
@@ -436,10 +464,10 @@ export default function HomeScreen({ navigation }: Props) {
       borderRadius: borderRadius.full,
       paddingVertical: spacing.md,
       paddingHorizontal: spacing.lg,
-      marginRight: spacing.sm,
+      marginEnd: spacing.sm,
       gap: 8,
       borderWidth: 1,
-      borderColor: isDark ? theme.colors.border : '#F0F0F0',
+      borderColor: SOFT_BORDER,
     },
     quickActionIconSmall: {
       width: 30,
@@ -452,25 +480,23 @@ export default function HomeScreen({ navigation }: Props) {
       ...typography.caption,
       fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.text,
-      textAlign: 'left',
     },
 
     /* ── Horizontal Course Cards ──────────────────────────────── */
     courseScrollContent: {
-      paddingLeft: spacing.xl,
-      paddingRight: spacing.md,
+      paddingStart: spacing.xl,
+      paddingEnd: spacing.md,
     },
     courseCard: {
       width: CARD_WIDTH,
       backgroundColor: CARD_BG,
       borderRadius: borderRadius['3xl'],
-      marginRight: spacing.md,
+      marginEnd: spacing.md,
       overflow: 'hidden',
-      
     },
     courseImageWrapper: {
       height: 120,
-      backgroundColor: ACCENT_COLORS[0].bg,
+      backgroundColor: accentBg(ACCENT_COLORS[0]),
       justifyContent: 'center',
       alignItems: 'center',
       overflow: 'hidden',
@@ -545,7 +571,7 @@ export default function HomeScreen({ navigation }: Props) {
     newsImagePlaceholder: {
       width: '100%',
       height: '100%',
-      backgroundColor: ACCENT_COLORS[0].bg,
+      backgroundColor: accentBg(ACCENT_COLORS[0]),
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -562,7 +588,7 @@ export default function HomeScreen({ navigation }: Props) {
     newsSubtitle: {
       ...typography.caption,
       color: theme.colors.textSecondary,
-      marginTop: 3,
+      marginTop: 2,
     },
     newsDate: {
       ...typography.caption,
@@ -585,10 +611,10 @@ export default function HomeScreen({ navigation }: Props) {
       width: 54,
       height: 54,
       borderRadius: borderRadius.xl,
-      backgroundColor: ACCENT_COLORS[0].bg,
+      backgroundColor: accentBg(ACCENT_COLORS[0]),
       justifyContent: 'center',
       alignItems: 'center',
-      marginRight: spacing.md,
+      marginEnd: spacing.md,
     },
     eventDay: {
       fontSize: fontSize.lg,
@@ -800,7 +826,7 @@ export default function HomeScreen({ navigation }: Props) {
                 size={22}
                 color={theme.colors.text}
               />
-              <View style={styles.bellDot} />
+              {unreadCount > 0 && <View style={styles.bellDot} />}
             </TouchableOpacity>
           </View>
         </View>
@@ -817,7 +843,6 @@ export default function HomeScreen({ navigation }: Props) {
               name="search"
               size={20}
               color={theme.colors.textMuted}
-              style={styles.searchIcon}
             />
             <TextInput
               style={[styles.searchInput, { color: theme.colors.text }]}
@@ -848,21 +873,21 @@ export default function HomeScreen({ navigation }: Props) {
           /* Teacher / Admin: 3-column stats */
           <View style={styles.adminStatsRow}>
             <View style={styles.adminStatCard}>
-              <View style={[styles.adminStatIconCircle, { backgroundColor: ACCENT_COLORS[0].bg }]}>
+              <View style={[styles.adminStatIconCircle, { backgroundColor: accentBg(ACCENT_COLORS[0]) }]}>
                 <Ionicons name="people" size={17} color={ACCENT_COLORS[0].accent} />
               </View>
               <Text style={styles.adminStatValue}>{stats?.totalStudents ?? '-'}</Text>
               <Text style={styles.adminStatLabel}>{t('home.students')}</Text>
             </View>
             <View style={styles.adminStatCard}>
-              <View style={[styles.adminStatIconCircle, { backgroundColor: ACCENT_COLORS[1].bg }]}>
+              <View style={[styles.adminStatIconCircle, { backgroundColor: accentBg(ACCENT_COLORS[1]) }]}>
                 <Ionicons name="school" size={17} color={ACCENT_COLORS[1].accent} />
               </View>
               <Text style={styles.adminStatValue}>{stats?.totalLecturers ?? '-'}</Text>
               <Text style={styles.adminStatLabel}>{t('home.lecturers')}</Text>
             </View>
             <View style={styles.adminStatCard}>
-              <View style={[styles.adminStatIconCircle, { backgroundColor: ACCENT_COLORS[2].bg }]}>
+              <View style={[styles.adminStatIconCircle, { backgroundColor: accentBg(ACCENT_COLORS[2]) }]}>
                 <Ionicons name="book" size={17} color={ACCENT_COLORS[2].accent} />
               </View>
               <Text style={styles.adminStatValue}>{stats?.totalOnlineCourses ?? '-'}</Text>
@@ -878,7 +903,7 @@ export default function HomeScreen({ navigation }: Props) {
             activeOpacity={0.8}
             onPress={() => {
               play('tap');
-              navigation.getParent()?.navigate('ProfileTab', { screen: 'Reports' });
+              navigation.getParent()?.navigate('ProfileTab', { screen: 'Reports', initial: false });
             }}
           >
             <View style={[styles.reportsWidgetIcon, { backgroundColor: theme.colors.primaryLight }]}>
@@ -907,7 +932,7 @@ export default function HomeScreen({ navigation }: Props) {
               activeOpacity={0.85}
               onPress={() => {
                 play('tap');
-                navigation.getParent()?.navigate('ProfileTab', { screen: 'HonorBoard' });
+                navigation.getParent()?.navigate('ProfileTab', { screen: 'HonorBoard', initial: false });
               }}
             >
               <View style={styles.statIconRow}>
@@ -981,7 +1006,7 @@ export default function HomeScreen({ navigation }: Props) {
               </View>
               <View>
                 <Text style={[styles.statValue, { color: isDark ? theme.colors.text : theme.colors.primaryDark }]}>
-                  {courses.reduce((sum, c) => sum + (c.totalHours || 0), 0)}h
+                  {enrolledCourses.reduce((sum, c) => sum + (c.totalHours || 0), 0)}h
                 </Text>
                 <Text style={[styles.statLabel, { color: isDark ? theme.colors.textSecondary : '#74788D' }]}>
                   {t('courses.duration')}
@@ -1002,7 +1027,7 @@ export default function HomeScreen({ navigation }: Props) {
             activeOpacity={0.7}
             onPress={() => { play('pop'); navigation.navigate('CoursesList'); }}
           >
-            <View style={[styles.quickActionIconSmall, { backgroundColor: ACCENT_COLORS[0].bg }]}>
+            <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[0]) }]}>
               <Ionicons name="book-outline" size={16} color={ACCENT_COLORS[0].accent} />
             </View>
             <Text style={styles.quickActionText}>{t('courses.title')}</Text>
@@ -1013,7 +1038,7 @@ export default function HomeScreen({ navigation }: Props) {
             activeOpacity={0.7}
             onPress={() => { play('pop'); navigation.navigate('Homework'); }}
           >
-            <View style={[styles.quickActionIconSmall, { backgroundColor: ACCENT_COLORS[2].bg }]}>
+            <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[2]) }]}>
               <Ionicons name="document-text-outline" size={16} color={ACCENT_COLORS[2].accent} />
             </View>
             <Text style={styles.quickActionText}>{t('homework.title')}</Text>
@@ -1024,7 +1049,7 @@ export default function HomeScreen({ navigation }: Props) {
             activeOpacity={0.7}
             onPress={() => { play('pop'); navigation.getParent()?.navigate('ChatTab'); }}
           >
-            <View style={[styles.quickActionIconSmall, { backgroundColor: ACCENT_COLORS[1].bg }]}>
+            <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[1]) }]}>
               <Ionicons name="chatbubbles-outline" size={16} color={ACCENT_COLORS[1].accent} />
             </View>
             <Text style={styles.quickActionText}>{t('chat.title')}</Text>
@@ -1035,10 +1060,10 @@ export default function HomeScreen({ navigation }: Props) {
             activeOpacity={0.7}
             onPress={() => {
               play('pop');
-              navigation.getParent()?.navigate('ProfileTab', { screen: 'Groups' });
+              navigation.getParent()?.navigate('ProfileTab', { screen: 'Groups', initial: false });
             }}
           >
-            <View style={[styles.quickActionIconSmall, { backgroundColor: ACCENT_COLORS[2].bg }]}>
+            <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[2]) }]}>
               <Ionicons name="people-outline" size={16} color={ACCENT_COLORS[2].accent} />
             </View>
             <Text style={styles.quickActionText}>{t('groups.title')}</Text>
@@ -1049,25 +1074,51 @@ export default function HomeScreen({ navigation }: Props) {
             activeOpacity={0.7}
             onPress={() => {
               play('pop');
-              navigation.getParent()?.navigate('ProfileTab', { screen: 'LiveSessions' });
+              navigation.getParent()?.navigate('ProfileTab', { screen: 'LiveSessions', initial: false });
             }}
           >
-            <View style={[styles.quickActionIconSmall, { backgroundColor: ACCENT_COLORS[3].bg }]}>
+            <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[3]) }]}>
               <Ionicons name="videocam-outline" size={16} color={ACCENT_COLORS[3].accent} />
             </View>
             <Text style={styles.quickActionText}>{t('home.live')}</Text>
           </TouchableOpacity>
+
+          {isTeacherOrAdmin && (
+            <>
+              <TouchableOpacity
+                style={styles.quickActionPill}
+                activeOpacity={0.7}
+                onPress={() => { play('pop'); navigation.navigate('EnrollmentRequests'); }}
+              >
+                <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[1]) }]}>
+                  <Ionicons name="mail-unread-outline" size={16} color={ACCENT_COLORS[1].accent} />
+                </View>
+                <Text style={styles.quickActionText}>{t('enrollmentRequests.title')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.quickActionPill}
+                activeOpacity={0.7}
+                onPress={() => { play('pop'); navigation.navigate('SendNotification'); }}
+              >
+                <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[0]) }]}>
+                  <Ionicons name="megaphone-outline" size={16} color={ACCENT_COLORS[0].accent} />
+                </View>
+                <Text style={styles.quickActionText}>{t('sendNotification.title')}</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </ScrollView>
 
         {/* ────────────── ENROLLED COURSES (list) ────────────── */}
-        {courses.length > 0 && (
+        {isStudent && enrolledCourses.length > 0 && (
           <View style={styles.sectionSpacing}>
             <SectionHeader
               title={t('home.enrolledCourses')}
               onSeeAll={() => navigation.navigate('CoursesList')}
             />
 
-            {courses.slice(0, 3).map((course, idx) => {
+            {enrolledCourses.slice(0, 3).map((course, idx) => {
               const palette = ACCENT_COLORS[idx % ACCENT_COLORS.length];
               const imageUrl = getFullImageUrl(course.previewImageUrl);
               return (
@@ -1092,7 +1143,7 @@ export default function HomeScreen({ navigation }: Props) {
                     style={{
                       width: 100,
                       height: 100,
-                      backgroundColor: palette.bg,
+                      backgroundColor: accentBg(palette),
                       justifyContent: 'center',
                       alignItems: 'center',
                     }}
@@ -1121,13 +1172,13 @@ export default function HomeScreen({ navigation }: Props) {
                       {course.title || course.name}
                     </Text>
                     {course.instructorName ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}>
                         <Ionicons name="person-outline" size={12} color={theme.colors.textSecondary} />
                         <Text
                           style={{
                             ...typography.caption,
                             color: theme.colors.textSecondary,
-                            marginLeft: 4,
+                            flexShrink: 1,
                           }}
                           numberOfLines={1}
                         >
@@ -1155,7 +1206,7 @@ export default function HomeScreen({ navigation }: Props) {
                     </View>
                   </View>
                   {/* Arrow */}
-                  <View style={{ justifyContent: 'center', paddingRight: spacing.md }}>
+                  <View style={{ justifyContent: 'center', paddingEnd: spacing.md }}>
                     <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
                   </View>
                 </TouchableOpacity>
@@ -1192,7 +1243,7 @@ export default function HomeScreen({ navigation }: Props) {
                       navigation.navigate('CourseDetail', { courseId: course.id });
                     }}
                   >
-                    <View style={[styles.courseImageWrapper, { backgroundColor: palette.bg }]}>
+                    <View style={[styles.courseImageWrapper, { backgroundColor: accentBg(palette) }]}>
                       {imageUrl ? (
                         <Image
                           source={{ uri: imageUrl }}
@@ -1213,7 +1264,7 @@ export default function HomeScreen({ navigation }: Props) {
                         <View style={[styles.courseImageOverlay]}>
                           <View style={styles.courseBadge}>
                             <Text style={styles.courseBadgeText}>
-                              ${course.discountPrice ?? course.price}
+                              {formatPrice(effectivePrice(course.price, course.discountPrice), course.currencyCode, locale)}
                             </Text>
                           </View>
                         </View>
@@ -1290,59 +1341,6 @@ export default function HomeScreen({ navigation }: Props) {
                     size={18}
                     color={theme.colors.textMuted}
                   />
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        {/* ────────────── HONOR BOARD (top 5) ────────────── */}
-        {topStudents.length > 0 && (
-          <View style={[styles.sectionSpacing, { marginTop: spacing['2xl'] }]}>
-            <SectionHeader
-              title={t('honorBoard.title')}
-              onSeeAll={() => {
-                play('pop');
-                navigation.getParent()?.navigate('ProfileTab', { screen: 'HonorBoard' });
-              }}
-            />
-            {topStudents.map((student, idx) => {
-              const name = `${student.firstName || ''} ${student.lastName || ''}`.trim();
-              const initial = (student.firstName?.[0] || '?').toUpperCase();
-              const imageUrl = getFullImageUrl(student.profileImage);
-              const medalColor = idx === 0 ? '#FFD54F' : idx === 1 ? '#BDBDBD' : idx === 2 ? '#FFB74D' : ACCENT_COLORS[idx % ACCENT_COLORS.length].accent;
-              const medalBg = idx === 0 ? '#FFF8E1' : idx === 1 ? '#F5F5F5' : idx === 2 ? '#FFF3E0' : ACCENT_COLORS[idx % ACCENT_COLORS.length].bg;
-              return (
-                <TouchableOpacity
-                  key={student.id}
-                  style={[styles.honorCard, { backgroundColor: CARD_BG }]}
-                  activeOpacity={0.85}
-                  onPress={() => {
-                    play('tap');
-                    navigation.getParent()?.navigate('ProfileTab', { screen: 'HonorBoard' });
-                  }}
-                >
-                  <View style={[styles.honorRank, { backgroundColor: isDark ? theme.colors.surface : medalBg }]}>
-                    {idx < 3 ? (
-                      <Ionicons name="trophy" size={14} color={medalColor} />
-                    ) : (
-                      <Text style={[styles.honorRankText, { color: theme.colors.text }]}>{idx + 1}</Text>
-                    )}
-                  </View>
-                  <View style={styles.honorAvatar}>
-                    {imageUrl ? (
-                      <Image source={{ uri: imageUrl }} style={styles.honorAvatarImg} />
-                    ) : (
-                      <View style={[styles.honorAvatarFallback, { backgroundColor: medalBg }]}>
-                        <Text style={[styles.honorInitial, { color: medalColor }]}>{initial}</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={[styles.honorName, { color: theme.colors.text }]} numberOfLines={1}>{name}</Text>
-                  <View style={[styles.honorScore, { backgroundColor: isDark ? theme.colors.surface : '#FFF8E1' }]}>
-                    <Ionicons name="star" size={11} color="#F5A623" />
-                    <Text style={styles.honorScoreText}>{student.totalPoints ?? student.completedLessons ?? 0}</Text>
-                  </View>
                 </TouchableOpacity>
               );
             })}

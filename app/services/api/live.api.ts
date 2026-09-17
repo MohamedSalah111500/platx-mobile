@@ -1,5 +1,5 @@
 import apiClient from './client';
-import { LIVE_URLS } from './endpoints';
+import { LIVE_URLS, withPagination } from './endpoints';
 import type {
   LiveSession,
   LiveParticipant,
@@ -45,8 +45,9 @@ export const liveApi = {
     return data;
   },
 
-  getActive: async (): Promise<LiveSession[]> => {
-    const { data } = await apiClient.get<any>(LIVE_URLS.ACTIVE);
+  // Backend defaults to size=10; ask for a page large enough to list them all.
+  getActive: async (page = 1, size = 100): Promise<LiveSession[]> => {
+    const { data } = await apiClient.get<any>(withPagination(LIVE_URLS.ACTIVE, page, size));
     // Handle both array and paginated response { data: [], totalCount }
     if (Array.isArray(data)) return data;
     if (data?.data && Array.isArray(data.data)) return data.data;

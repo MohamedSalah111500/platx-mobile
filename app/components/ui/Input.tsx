@@ -67,7 +67,7 @@ export function Input({
         style={[
           styles.inputContainer,
           {
-            backgroundColor: theme.dark ? theme.colors.inputBackground : '#fff',
+            backgroundColor: theme.dark ? theme.colors.inputBackground : theme.colors.card,
             borderColor,
             borderWidth: isFocused ? 1.5 : 1,
           },
@@ -83,6 +83,7 @@ export function Input({
           style={{
             flex: 1,
             height: 50,
+            paddingVertical: 0,
             fontSize: fontSize.base,
             fontFamily: 'Cairo_400Regular',
             color: theme.colors.inputText,
@@ -121,7 +122,7 @@ export function Input({
       </View>
 
       {error && (
-        <Text style={styles.error}>
+        <Text style={[styles.error, { color: theme.colors.danger }]}>
           {error}
         </Text>
       )}
@@ -142,7 +143,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
     marginBottom: spacing.sm,
-    textAlign: 'left',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -152,14 +152,11 @@ const styles = StyleSheet.create({
   },
   error: {
     ...typography.caption,
-    color: '#F46A6A',
     marginTop: spacing.xs,
-    textAlign: 'left',
   },
   hint: {
     ...typography.caption,
     marginTop: spacing.xs,
-    textAlign: 'left',
   },
 });
 

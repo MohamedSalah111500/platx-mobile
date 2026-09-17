@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as DocumentPicker from 'expo-document-picker';
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync, type AudioPlayer, type AudioStatus } from 'expo-audio';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
@@ -203,7 +203,7 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
         <ScreenHeader title={t('homework.title')} onBack={() => navigation.goBack()} />
         <Spinner />
       </SafeAreaView>
@@ -212,7 +212,7 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
 
   if (error || !hw) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
         <ScreenHeader title={t('homework.title')} onBack={() => navigation.goBack()} />
         <ErrorRetry message={error || t('homework.notFound')} onRetry={load} />
       </SafeAreaView>
@@ -220,16 +220,16 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
       <ScreenHeader title={hw.name} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Grade banner */}
         {isGraded && (
-          <View style={[styles.banner, { backgroundColor: '#34C38F15' }]}>
-            <Ionicons name="ribbon" size={20} color="#34C38F" />
+          <View style={[styles.banner, { backgroundColor: theme.colors.success + '15' }]}>
+            <Ionicons name="ribbon" size={20} color={theme.colors.success} />
             <View style={{ flex: 1 }}>
-              <Text style={[styles.bannerTitle, { color: '#34C38F' }]}>{t('homework.graded')}</Text>
+              <Text style={[styles.bannerTitle, { color: theme.colors.success }]}>{t('homework.graded')}</Text>
               <Text style={[styles.bannerText, { color: theme.colors.text }]}>
                 {hw.submission?.finalGrade ?? 0} / {hw.totalScore}
               </Text>
@@ -237,15 +237,15 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
           </View>
         )}
         {!isGraded && isSubmitted && (
-          <View style={[styles.banner, { backgroundColor: '#3B82F615' }]}>
-            <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
-            <Text style={[styles.bannerTitle, { color: '#3B82F6' }]}>{t('homework.submittedBanner')}</Text>
+          <View style={[styles.banner, { backgroundColor: theme.colors.info + '15' }]}>
+            <Ionicons name="checkmark-circle" size={20} color={theme.colors.info} />
+            <Text style={[styles.bannerTitle, { color: theme.colors.info }]}>{t('homework.submittedBanner')}</Text>
           </View>
         )}
         {hw.isClosed && !isSubmitted && (
-          <View style={[styles.banner, { backgroundColor: '#EF444415' }]}>
-            <Ionicons name="lock-closed" size={18} color="#EF4444" />
-            <Text style={[styles.bannerTitle, { color: '#EF4444' }]}>{t('homework.closed')}</Text>
+          <View style={[styles.banner, { backgroundColor: theme.colors.danger + '15' }]}>
+            <Ionicons name="lock-closed" size={18} color={theme.colors.danger} />
+            <Text style={[styles.bannerTitle, { color: theme.colors.danger }]}>{t('homework.closed')}</Text>
           </View>
         )}
 
@@ -330,7 +330,7 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
                 </Text>
                 {!readOnly && (
                   <TouchableOpacity onPress={() => removeFile(f.id)} hitSlop={8}>
-                    <Ionicons name="close-circle" size={18} color="#EF4444" />
+                    <Ionicons name="close-circle" size={18} color={theme.colors.danger} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -366,18 +366,18 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
         {!readOnly && (
           <View style={styles.actions}>
             <TouchableOpacity
-              style={[styles.draftBtn, { borderColor: theme.colors.border }, saving && { opacity: 0.6 }]}
+              style={[styles.draftBtn, { borderColor: theme.colors.border }, (saving || uploading) && { opacity: 0.6 }]}
               onPress={() => save(true)}
-              disabled={saving}
+              disabled={saving || uploading}
               activeOpacity={0.7}
             >
               <Ionicons name="save-outline" size={18} color={theme.colors.text} />
               <Text style={[styles.draftBtnText, { color: theme.colors.text }]}>{t('homework.saveDraft')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.submitBtn, { backgroundColor: theme.colors.primary }, saving && { opacity: 0.6 }]}
+              style={[styles.submitBtn, { backgroundColor: theme.colors.primary }, (saving || uploading) && { opacity: 0.6 }]}
               onPress={confirmSubmit}
-              disabled={saving}
+              disabled={saving || uploading}
               activeOpacity={0.7}
             >
               <Ionicons name="checkmark-circle" size={18} color="#fff" />
@@ -390,7 +390,7 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
   );
 }
 
-// Plays the teacher's voice-note feedback (expo-av).
+// Plays the teacher's voice-note feedback (expo-audio).
 function AudioFeedback({
   url,
   theme,
@@ -400,13 +400,13 @@ function AudioFeedback({
   theme: any;
   t: (k: string) => string;
 }) {
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [sound, setSound] = useState<AudioPlayer | null>(null);
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     return () => {
-      sound?.unloadAsync();
+      sound?.remove();
     };
   }, [sound]);
 
@@ -414,23 +414,25 @@ function AudioFeedback({
     try {
       if (sound) {
         if (playing) {
-          await sound.pauseAsync();
+          sound.pause();
           setPlaying(false);
         } else {
-          await sound.playAsync();
+          sound.play();
           setPlaying(true);
         }
         return;
       }
       setLoading(true);
-      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-      const { sound: s } = await Audio.Sound.createAsync({ uri: url }, { shouldPlay: true });
-      s.setOnPlaybackStatusUpdate((st: any) => {
-        if (st.isLoaded && st.didJustFinish) {
+      await setAudioModeAsync({ playsInSilentMode: true });
+      const s = createAudioPlayer({ uri: url });
+      s.addListener('playbackStatusUpdate', (st: AudioStatus) => {
+        if (st.didJustFinish) {
           setPlaying(false);
-          s.setPositionAsync(0);
+          s.pause();
+          s.seekTo(0);
         }
       });
+      s.play();
       setSound(s);
       setPlaying(true);
     } catch {
@@ -514,7 +516,7 @@ function QuestionCard({
           editable={!readOnly}
           multiline
           placeholder={t('homework.writeAnswer')}
-          placeholderTextColor={theme.colors.textMuted}
+          placeholderTextColor={theme.colors.inputPlaceholder}
         />
       ) : (
         <View style={styles.answers}>
@@ -587,7 +589,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  instructions: { ...typography.body, lineHeight: 22 },
+  instructions: { ...typography.body },
   audioBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -621,7 +623,9 @@ const styles = StyleSheet.create({
   answers: { gap: spacing.sm },
   answer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    // flex-start + indicator height == answerText lineHeight keeps the
+    // radio/checkbox centred on the first line when the answer wraps.
+    alignItems: 'flex-start',
     gap: spacing.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 13,
@@ -678,7 +682,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     borderWidth: 1.5,
     borderRadius: 14,
-    paddingVertical: 15,
+    paddingVertical: 12,
   },
   draftBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
   submitBtn: {
@@ -688,7 +692,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
     borderRadius: 14,
-    paddingVertical: 15,
+    paddingVertical: 12,
   },
   submitBtnText: { ...typography.button, color: '#fff', fontSize: fontSize.base },
 });

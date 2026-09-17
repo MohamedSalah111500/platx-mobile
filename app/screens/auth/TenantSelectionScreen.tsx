@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -25,7 +26,8 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'TenantSelection'>;
 export default function TenantSelectionScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { pendingTenants, selectTenant, clearPendingTenants, isLoading, error } = useAuthStore();
-  const { t } = useRTL();
+  const { t, isRTL } = useRTL();
+  const insets = useSafeAreaInsets();
 
   const handleSelect = async (tenantId: string) => {
     try {
@@ -74,7 +76,7 @@ export default function TenantSelectionScreen({ navigation }: Props) {
               {item.roles?.join(', ') || 'Member'}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
+          <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color={theme.colors.textMuted} />
         </View>
       </TouchableOpacity>
     );
@@ -83,18 +85,23 @@ export default function TenantSelectionScreen({ navigation }: Props) {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.dark ? theme.colors.background : '#FFFFFF',
+      backgroundColor: theme.colors.background,
     },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingTop: spacing['2xl'] + 20,
+      // Real status-bar/notch inset, not a fixed guess — the back button sat
+      // under the notch on tall devices.
+      paddingTop: insets.top + spacing.sm,
       paddingHorizontal: spacing.lg,
       paddingBottom: spacing.md,
     },
     backButton: {
-      padding: spacing.sm,
-      marginRight: spacing.sm,
+      width: 40,
+      height: 40,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginEnd: spacing.sm,
     },
     content: {
       flex: 1,
@@ -136,7 +143,8 @@ export default function TenantSelectionScreen({ navigation }: Props) {
     },
     tenantInfo: {
       flex: 1,
-      marginLeft: spacing.md,
+      marginStart: spacing.md,
+      marginEnd: spacing.sm,
     },
     tenantName: {
       ...typography.body,
@@ -157,7 +165,7 @@ export default function TenantSelectionScreen({ navigation }: Props) {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+          <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={24} color={theme.colors.text} />
         </TouchableOpacity>
       </View>
 

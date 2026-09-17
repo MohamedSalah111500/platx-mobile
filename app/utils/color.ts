@@ -39,3 +39,27 @@ export function darken(hex: string, amount: number): string {
   const t = Math.max(0, Math.min(100, amount)) / 100;
   return rgbToHex(r * (1 - t), g * (1 - t), b * (1 - t));
 }
+
+function relativeLuminance(hex: string): number {
+  const [r, g, b] = hexToRgb(hex).map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** WCAG contrast ratio between two colors (1-21). */
+export function contrastRatio(a: string, b: string): number {
+  const la = relativeLuminance(a);
+  const lb = relativeLuminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+/** Lightens `hex` until it reaches `minRatio` contrast against `background`. */
+export function ensureContrastOn(hex: string, background: string, minRatio = 4.5): string {
+  let color = hex;
+  for (let amount = 0; amount <= 100 && contrastRatio(color, background) < minRatio; amount += 4) {
+    color = lighten(hex, amount);
+  }
+  return color;
+}

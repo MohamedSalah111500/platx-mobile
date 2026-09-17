@@ -1,13 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
-import {
-  useFonts,
-  Cairo_400Regular,
-  Cairo_500Medium,
-  Cairo_600SemiBold,
-  Cairo_700Bold,
-} from '@expo-google-fonts/cairo';
+import { useFonts } from 'expo-font';
 
 import { logger } from './app/services/logger';
 import { ThemeProvider } from './app/theme/ThemeProvider';
@@ -36,7 +30,7 @@ setTimeout(() => {
 // This catches uncaught throws and unhandled promise rejections so they
 // reach Crashlytics even when no React component is mounted.
 try {
-  const eu: any = (global as any).ErrorUtils;
+  const eu: any = (globalThis as any).ErrorUtils;
   const previous = eu?.getGlobalHandler?.();
   eu?.setGlobalHandler?.((error: Error, isFatal?: boolean) => {
     logger.log(`Global JS error fatal=${isFatal}`);
@@ -46,11 +40,16 @@ try {
 } catch {}
 
 // ─── Font loading config ──────────────────────────────────────────────────
+// Cairo with re-centred vertical metrics. The stock files reserve far more
+// space above the baseline than below (1303/571), so Arabic text renders
+// ~0.15em below the centre of its box and never lines up with icons.
+// assets/fonts keeps the same total line height with the box centred on the
+// glyphs. Family names stay the same, so every style keeps working.
 const FONTS = {
-  Cairo_400Regular,
-  Cairo_500Medium,
-  Cairo_600SemiBold,
-  Cairo_700Bold,
+  Cairo_400Regular: require('./assets/fonts/Cairo_400Regular.ttf'),
+  Cairo_500Medium: require('./assets/fonts/Cairo_500Medium.ttf'),
+  Cairo_600SemiBold: require('./assets/fonts/Cairo_600SemiBold.ttf'),
+  Cairo_700Bold: require('./assets/fonts/Cairo_700Bold.ttf'),
 };
 const FONTS_TIMEOUT_MS = 5000;
 

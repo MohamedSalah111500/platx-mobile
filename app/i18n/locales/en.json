@@ -25,7 +25,11 @@
     "ok": "OK",
     "validation": "Validation",
     "info": "Info",
-    "continue": "Continue"
+    "continue": "Continue",
+    "justNow": "Just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
   },
   "tabs": {
     "home": "Home",
@@ -192,7 +196,14 @@
     "voiceMicDenied": "Microphone permission is required to fill your details by voice.",
     "voiceRecordFailed": "Could not start recording, please try again.",
     "voiceFailed": "Could not process your voice, please try again or fill the fields manually.",
-    "voiceDomainFirst": "Please enter your academy domain first."
+    "voiceDomainFirst": "Please enter your academy domain first.",
+    "loginFailedCheckCredentials": "Login failed. Please check your credentials.",
+    "tenantSelectionFailed": "Academy selection failed.",
+    "registrationFailed": "Registration failed.",
+    "emailConfirmationFailed": "Email confirmation failed.",
+    "sendResetCodeFailed": "Failed to send reset code.",
+    "invalidVerificationCode": "Invalid verification code.",
+    "passwordResetFailed": "Password reset failed."
   },
   "welcome": {
     "greeting": "Welcome 👋",
@@ -220,7 +231,11 @@
     "loadFailed": "Failed to load payment methods.",
     "selectMethodFirst": "Please select a payment method.",
     "proofRequired": "Please upload a screenshot of your payment.",
-    "permissionDenied": "Photo library permission is required to upload a screenshot."
+    "permissionDenied": "Photo library permission is required to upload a screenshot.",
+    "requestTitle": "Request to Join",
+    "requestNotice": "Send a request to join this course. The academy will review it and contact you to complete your enrollment.",
+    "sendRequest": "Send Request",
+    "requestSubmitted": "Your request has been sent. The academy will contact you and you'll get access once it is approved."
   },
   "enrollStudent": {
     "title": "Enroll Student",
@@ -264,6 +279,11 @@
     "allCourses": "All Courses",
     "enroll": "Enroll Now",
     "buyNow": "Buy Now",
+    "pendingRequest": "Purchase request under review",
+    "lang": "Language",
+    "total": "Duration",
+    "discountOff": "{{pct}}% off",
+    "requestRejected": "Your previous request was rejected. You can submit a new one.",
     "enrolled": "Enrolled",
     "continue": "Continue Learning",
     "lessons": "Lessons",
@@ -306,7 +326,43 @@
     "link": "Link",
     "certificateIncluded": "Certificate of completion",
     "updated": "Updated",
-    "viewCertificate": "View Certificate"
+    "viewCertificate": "View Certificate",
+    "availability": {
+      "upcoming": "Coming soon",
+      "expired": "Ended",
+      "open": "Open to students",
+      "lockedUpcoming": "Locked for students · not started yet",
+      "lockedExpired": "Locked for students · period ended"
+    },
+    "locked": {
+      "upcomingTitle": "This course hasn't started yet",
+      "upcomingBody": "This course's period hasn't opened yet, so enrolling and accessing its content isn't possible right now.",
+      "expiredTitle": "This course is currently suspended",
+      "expiredBody": "This course was suspended by the platform administration, so its content is not accessible right now. Your enrollment and data are kept as they are.",
+      "contact": "For more information, contact the platform administration"
+    },
+    "manage": {
+      "title": "Manage course",
+      "settings": "Course settings",
+      "settingsSub": "Activation and schedule",
+      "students": "Enrolled students",
+      "studentsSub": "Enrollment dates and progress",
+      "requests": "Enrollment requests",
+      "requestsSub": "Approve or reject purchase requests",
+      "active": "Course is active",
+      "activeHint": "Turning it off hides the course from students immediately.",
+      "schedule": "Limited period",
+      "scheduleHint": "Turn on if the course is only available within a set period. Leave it off and it stays available forever.",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "dateFormatHint": "Format: YYYY-MM-DD. The course opens at the start of the start day and closes at the end of the end day.",
+      "invalidDate": "Invalid date",
+      "endBeforeStart": "End date cannot be before the start date",
+      "preview": "Current state:",
+      "save": "Save schedule",
+      "saved": "Course settings saved",
+      "saveFailed": "Couldn't save. Please try again."
+    }
   },
   "quiz": {
     "completeToContinue": "Complete the quiz to unlock the next lessons.",
@@ -341,7 +397,11 @@
     "openDocument": "Open document",
     "openLink": "Open link",
     "markComplete": "Done",
-    "lessonCompleted": "Lesson marked as complete!"
+    "lessonCompleted": "Lesson marked as complete!",
+    "downloadFile": "Download file",
+    "downloading": "Downloading…",
+    "downloadFailed": "Couldn't download the file. Please try again.",
+    "noAppToOpen": "No app found to open this file. Use Download to save it."
   },
   "live": {
     "title": "Live Sessions",
@@ -451,7 +511,11 @@
     "paymentSubmitSuccess": "Payment submitted, waiting for approval.",
     "paymentSubmitFailed": "Failed to submit payment.",
     "transactionIdRequired": "Please enter the transaction ID.",
-    "receiptImageRequired": "Please attach a receipt image."
+    "receiptImageRequired": "Please attach a receipt image.",
+    "agoraNotAvailable": "Live not available",
+    "permissionsRequired": "Permissions required",
+    "permissionsExplanation": "Camera and microphone access are required to join.",
+    "invalidTokenResponse": "Failed to get live session token."
   },
   "reports": {
     "title": "Reports",
@@ -485,7 +549,8 @@
     "justNow": "Just now",
     "minutesAgo": "{{count}}m ago",
     "hoursAgo": "{{count}}h ago",
-    "daysAgo": "{{count}}d ago"
+    "daysAgo": "{{count}}d ago",
+    "openCourse": "Open course"
   },
   "chat": {
     "title": "Messages",
@@ -497,6 +562,7 @@
     "noConversations": "No Conversations",
     "joinGroupToChat": "Join a group to start chatting.",
     "members": "members",
+    "groupChat": "Group chat",
     "sendFirstMessage": "Send the first message.",
     "failedToSend": "Failed to send message.",
     "staff": "Staff",
@@ -538,7 +604,9 @@
     "noSubGroups": "No sub-groups yet",
     "subGroupDetails": "Sub-Group Details",
     "addToSubGroup": "Add Student to Sub-Group",
-    "yourSubGroup": "Your Sub-Group"
+    "yourSubGroup": "Your Sub-Group",
+    "fileUrlMissing": "File URL is missing",
+    "cannotOpenFile": "Cannot open this file type"
   },
   "news": {
     "title": "News",
@@ -684,12 +752,74 @@
     "percentage": "Percentage",
     "correct": "Correct",
     "incorrect": "Incorrect",
+    "pendingReview": "Awaiting teacher review",
     "timeTaken": "Time Taken",
     "questionDetails": "Question Details",
     "yourAnswer": "Your Answer",
     "preview": "Preview",
     "deleteExam": "Delete Exam",
     "deleteExamConfirm": "Are you sure you want to delete this exam?",
-    "deleteFailed": "Failed to delete exam."
+    "deleteFailed": "Failed to delete exam.",
+    "essay": "Essay",
+    "trueFalse": "True / False"
+  },
+  "courseStudents": {
+    "title": "Enrolled students",
+    "search": "Search by name or email...",
+    "count": "{{count}} students",
+    "enrolledOn": "Enrolled on",
+    "loadFailed": "Failed to load students.",
+    "empty": "No enrolled students",
+    "emptyHint": "Students will appear here once they enroll.",
+    "status": {
+      "active": "Active",
+      "completed": "Completed",
+      "suspended": "Suspended",
+      "cancelled": "Cancelled"
+    }
+  },
+  "enrollmentRequests": {
+    "title": "Enrollment requests",
+    "empty": "No pending requests",
+    "emptyHint": "New course purchase requests will show up here.",
+    "loadFailed": "Failed to load requests.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "confirmApproveTitle": "Confirm approval",
+    "confirmApprove": "Approve {{name}} for \"{{course}}\"? They will be enrolled immediately.",
+    "confirmRejectTitle": "Confirm rejection",
+    "confirmReject": "Reject the request from {{name}} for \"{{course}}\"?",
+    "approved": "Request approved and the student is enrolled.",
+    "rejected": "Request rejected.",
+    "failed": "Couldn't complete the action. Please try again.",
+    "paymentMethod": "Payment method",
+    "vodafone": "Vodafone Cash",
+    "instapay": "InstaPay",
+    "unknownStudent": "Student"
+  },
+  "sendNotification": {
+    "title": "Send notification",
+    "titleLabel": "Title",
+    "titlePlaceholder": "A short, clear title",
+    "bodyLabel": "Message",
+    "bodyPlaceholder": "Write the message students will receive...",
+    "sendToAll": "Send to all students",
+    "sendToAllHint": "Turn off to pick specific groups.",
+    "chooseGroups": "Choose groups",
+    "noGroups": "No groups yet.",
+    "chooseAtLeastOne": "Choose at least one group",
+    "required": "This field is required",
+    "send": "Send",
+    "sent": "Notification sent.",
+    "failed": "Couldn't send. Please try again."
+  },
+  "updateRequired": {
+    "title": "Update required",
+    "body": "This version is no longer supported. Update the app from the store to continue and get the latest features.",
+    "current": "Your version",
+    "latest": "Latest version",
+    "update": "Update now",
+    "hint": "Open the app again after updating.",
+    "storeFailed": "Couldn't open the store."
   }
 }

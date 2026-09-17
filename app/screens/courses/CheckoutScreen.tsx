@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   TextInput,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -22,9 +23,10 @@ import { Button } from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Spinner';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, typography } from '../../theme/typography';
 import { reservationsApi } from '../../services/api/reservations.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
+import { CoursePrice } from '../../components/course/CoursePrice';
 import {
   PAYMENT_METHOD_VODAFONE,
   PAYMENT_METHOD_INSTAPAY,
@@ -34,11 +36,16 @@ import {
 
 type Props = {
   navigation: NativeStackScreenProps<any, any>['navigation'];
-  route: { params: { courseId: number; title?: string; price?: number; discountPrice?: number; image?: string } };
+  route: { params: { courseId: number; title?: string; price?: number; discountPrice?: number; currencyCode?: string; image?: string } };
 };
 
+// On iOS the app never collects or describes an external payment for course
+// access (App Store Review Guideline 3.1.1). Students only send a join request;
+// the academy handles enrollment on its own channels.
+export const REQUEST_ONLY = Platform.OS === 'ios';
+
 export default function CheckoutScreen({ navigation, route }: Props) {
-  const { courseId, title, price, discountPrice, image } = route.params;
+  const { courseId, title, price, discountPrice, currencyCode, image } = route.params;
   const { theme } = useTheme();
   const { user } = useAuth();
   const { t, isRTL } = useRTL();
@@ -59,6 +66,13 @@ export default function CheckoutScreen({ navigation, route }: Props) {
   useEffect(() => { loadMethods(); }, []);
 
   const loadMethods = async () => {
+    // iOS: enrollment is arranged by the academy outside the app (App Store
+    // rules do not allow collecting external payments for in-app content), so
+    // the screen is a plain "request to join" form with no payment details.
+    if (REQUEST_ONLY) {
+      setLoading(false);
+      return;
+    }
     try {
       setError(null);
       setLoading(true);
@@ -91,11 +105,11 @@ export default function CheckoutScreen({ navigation, route }: Props) {
       Alert.alert(t('common.error'), t('courses.missingStudentId'));
       return;
     }
-    if (!selectedMethod) {
+    if (!REQUEST_ONLY && !selectedMethod) {
       Alert.alert(t('common.error'), t('checkout.selectMethodFirst'));
       return;
     }
-    if (!proof) {
+    if (!REQUEST_ONLY && !proof) {
       Alert.alert(t('common.error'), t('checkout.proofRequired'));
       return;
     }
@@ -105,11 +119,11 @@ export default function CheckoutScreen({ navigation, route }: Props) {
         studentId: user.studentId,
         courseId,
         studentMessage: message.trim(),
-        paymentMethod: selectedMethod,
-        proofImage: proof,
+        paymentMethod: REQUEST_ONLY ? undefined : selectedMethod ?? undefined,
+        proofImage: REQUEST_ONLY ? undefined : proof ?? undefined,
       });
       play('success');
-      Alert.alert(t('common.success'), t('checkout.submitted'), [
+      Alert.alert(t('common.success'), t(REQUEST_ONLY ? 'checkout.requestSubmitted' : 'checkout.submitted'), [
         { text: t('common.ok'), onPress: () => navigation.goBack() },
       ]);
     } catch (err: any) {
@@ -119,7 +133,6 @@ export default function CheckoutScreen({ navigation, route }: Props) {
     }
   };
 
-  const displayPrice = discountPrice || price || 0;
   const coverUrl = getFullImageUrl(image);
 
   const renderMethodTab = (methodValue: number, label: string, available: boolean) => {
@@ -130,7 +143,7 @@ export default function CheckoutScreen({ navigation, route }: Props) {
         key={methodValue}
         style={[
           styles.methodTab,
-          { borderColor: active ? theme.colors.primary : theme.colors.divider, backgroundColor: active ? theme.colors.primary + '15' : theme.colors.card },
+          { borderColor: active ? theme.colors.primary : theme.colors.border, backgroundColor: active ? theme.colors.primary + '15' : theme.colors.card },
         ]}
         onPress={() => { play('tap'); setSelectedMethod(methodValue); }}
         activeOpacity={0.75}
@@ -168,7 +181,9 @@ export default function CheckoutScreen({ navigation, route }: Props) {
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={22} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{t('checkout.title')}</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>
+          {t(REQUEST_ONLY ? 'checkout.requestTitle' : 'checkout.title')}
+        </Text>
         <View style={{ width: 22 }} />
       </View>
 
@@ -190,15 +205,23 @@ export default function CheckoutScreen({ navigation, route }: Props) {
               <Text style={[styles.summaryTitle, { color: theme.colors.text }]} numberOfLines={2}>
                 {title || t('courses.untitled')}
               </Text>
-              <View style={styles.priceRow}>
-                <Text style={[styles.priceValue, { color: theme.colors.primary }]}>${displayPrice}</Text>
-                {discountPrice != null && price != null && discountPrice < price && (
-                  <Text style={[styles.priceOld, { color: theme.colors.textMuted }]}>${price}</Text>
-                )}
-              </View>
+              <CoursePrice
+                price={price}
+                discountPrice={discountPrice}
+                currencyCode={currencyCode}
+                size="sm"
+                style={styles.priceRow}
+              />
             </View>
           </View>
 
+          {REQUEST_ONLY ? (
+            <View style={[styles.noticeCard, { backgroundColor: theme.colors.card }]}>
+              <Ionicons name="information-circle-outline" size={20} color={theme.colors.primary} />
+              <Text style={[styles.noticeText, { color: theme.colors.textSecondary }]}>{t('checkout.requestNotice')}</Text>
+            </View>
+          ) : (
+          <>
           <Text style={[styles.sectionLabel, { color: theme.colors.text }]}>{t('checkout.paymentMethod')}</Text>
 
           {vodafone.length === 0 && instapay.length === 0 ? (
@@ -222,7 +245,7 @@ export default function CheckoutScreen({ navigation, route }: Props) {
 
           <Text style={[styles.sectionLabel, { color: theme.colors.text }]}>{t('checkout.proofOfPayment')}</Text>
           <TouchableOpacity
-            style={[styles.proofPicker, { borderColor: theme.colors.divider, backgroundColor: theme.colors.card }]}
+            style={[styles.proofPicker, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}
             onPress={pickProof}
             activeOpacity={0.8}
           >
@@ -240,14 +263,16 @@ export default function CheckoutScreen({ navigation, route }: Props) {
               <Text style={[styles.changeProofText, { color: theme.colors.primary }]}>{t('checkout.changeImage')}</Text>
             </TouchableOpacity>
           )}
+          </>
+          )}
 
           <Text style={[styles.sectionLabel, { color: theme.colors.text }]}>
             {t('checkout.message')} <Text style={{ color: theme.colors.textMuted }}>({t('checkout.optional')})</Text>
           </Text>
           <TextInput
-            style={[styles.messageInput, { backgroundColor: theme.colors.card, color: theme.colors.text, borderColor: theme.colors.divider, textAlign: isRTL ? 'right' : 'left' }]}
+            style={[styles.messageInput, { backgroundColor: theme.colors.card, color: theme.colors.text, borderColor: theme.colors.border, textAlign: isRTL ? 'right' : 'left' }]}
             placeholder={t('checkout.messagePlaceholder')}
-            placeholderTextColor={theme.colors.textMuted}
+            placeholderTextColor={theme.colors.inputPlaceholder}
             value={message}
             onChangeText={setMessage}
             multiline
@@ -257,9 +282,9 @@ export default function CheckoutScreen({ navigation, route }: Props) {
       )}
 
       {!loading && (
-        <View style={[styles.stickyBar, { backgroundColor: theme.colors.card, paddingBottom: insets.bottom + spacing.md, borderTopColor: theme.colors.divider }]}>
+        <View style={[styles.stickyBar, { backgroundColor: theme.colors.card, paddingBottom: insets.bottom + spacing.md, borderTopColor: theme.dark ? theme.colors.border : theme.colors.divider }]}>
           <Button
-            title={t('checkout.submitRequest')}
+            title={t(REQUEST_ONLY ? 'checkout.sendRequest' : 'checkout.submitRequest')}
             onPress={handleSubmit}
             loading={submitting}
             fullWidth
@@ -283,8 +308,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
   },
-  backBtn: { width: 22, alignItems: 'flex-start' },
-  headerTitle: { fontSize: fontSize.lg, fontFamily: 'Cairo_700Bold' },
+  backBtn: { width: 22, height: 32, justifyContent: 'center', alignItems: 'flex-start' },
+  headerTitle: { ...typography.headerTitle, flex: 1, textAlign: 'center', marginHorizontal: spacing.sm },
 
   summaryCard: {
     flexDirection: 'row',
@@ -295,12 +320,10 @@ const styles = StyleSheet.create({
   },
   summaryCover: { width: 84, height: 84, borderRadius: borderRadius.lg },
   summaryInfo: { flex: 1, justifyContent: 'center' },
-  summaryTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', lineHeight: 22 },
-  priceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
-  priceValue: { fontSize: fontSize.lg, fontFamily: 'Cairo_700Bold' },
-  priceOld: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textDecorationLine: 'line-through' },
+  summaryTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', lineHeight: 23 },
+  priceRow: { marginTop: spacing.xs },
 
-  sectionLabel: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', marginBottom: spacing.md, marginTop: spacing.sm },
+  sectionLabel: { ...typography.sectionTitle, marginBottom: spacing.md, marginTop: spacing.sm },
 
   methodTabs: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   methodTab: {
@@ -309,6 +332,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     borderWidth: 1.5,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   methodTabText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
 
@@ -357,8 +381,8 @@ const styles = StyleSheet.create({
   stickyBar: {
     position: 'absolute',
     bottom: 0,
-    left: 0,
-    right: 0,
+    start: 0,
+    end: 0,
     paddingTop: spacing.md,
     paddingHorizontal: spacing.xl,
     borderTopWidth: 1,

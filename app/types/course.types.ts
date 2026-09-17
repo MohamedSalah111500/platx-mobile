@@ -1,3 +1,18 @@
+export const COURSE_AVAILABILITY = {
+  Available: 1,
+  Upcoming: 2,
+  Expired: 3,
+} as const;
+export type CourseAvailability = (typeof COURSE_AVAILABILITY)[keyof typeof COURSE_AVAILABILITY];
+
+export const ENROLLMENT_STATUS = {
+  Active: 0,
+  Completed: 1,
+  Suspended: 2,
+  Cancelled: 3,
+} as const;
+export type EnrollmentStatus = (typeof ENROLLMENT_STATUS)[keyof typeof ENROLLMENT_STATUS];
+
 export interface Course {
   id: number;
   title?: string;
@@ -23,6 +38,10 @@ export interface Course {
   sections?: Section[];
   createdAt?: string;
   updateTime?: string;
+  isEnabled?: boolean;
+  startDate?: string | null;
+  endDate?: string | null;
+  availability?: CourseAvailability;
 }
 
 export interface Section {
@@ -85,4 +104,18 @@ export interface Quiz {
   name: string;
   passMark: number | null;
   questions: QuizQuestion[];
+}
+
+export interface EnrollmentHistoryItem {
+  id: number;
+  studentId: number;
+  studentName: string;
+  studentEmail?: string | null;
+  courseId: number;
+  courseName: string;
+  enrollmentDate: string;
+  status: EnrollmentStatus;
+  source?: number;
+  progressPercentage: number;
+  courseAvailability?: CourseAvailability;
 }

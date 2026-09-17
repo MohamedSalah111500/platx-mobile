@@ -64,7 +64,8 @@ export default function ReportsListScreen({ navigation }: Props) {
     load(tab);
   };
 
-  const percentColor = (value: number) => (value >= 75 ? '#34C38F' : value >= 50 ? '#F5A623' : '#EF4444');
+  const percentColor = (value: number) =>
+    value >= 75 ? theme.colors.success : value >= 50 ? theme.colors.warning : theme.colors.danger;
 
   const renderAttendanceRow = ({ item }: { item: AttendanceReportRow }) => {
     const color = percentColor(item.attendancePercentage);
@@ -125,7 +126,7 @@ export default function ReportsListScreen({ navigation }: Props) {
   const listEmpty = data.length === 0;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
       <ScreenHeader title={t('reports.title')} onBack={() => navigation.goBack()} />
 
       <View style={styles.tabRow}>
@@ -195,6 +196,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   tabButtonText: {
     fontSize: fontSize.sm,

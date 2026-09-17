@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 
 const sounds = {
   tap: require('../../assets/sounds/tap.wav'),
@@ -11,15 +11,15 @@ const sounds = {
 export type SoundName = keyof typeof sounds;
 
 // Preloaded sound cache (shared across hook instances)
-const cache = new Map<SoundName, Audio.Sound>();
+const cache = new Map<SoundName, AudioPlayer>();
 let audioReady = false;
 
 async function ensureAudio() {
   if (audioReady) return;
   try {
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: false,
-      shouldDuckAndroid: true,
+    await setAudioModeAsync({
+      playsInSilentMode: false,
+      interruptionMode: 'duckOthers',
     });
     audioReady = true;
   } catch {
@@ -34,8 +34,9 @@ async function preloadAll() {
     entries.map(async ([name, source]) => {
       if (cache.has(name)) return;
       try {
-        const { sound } = await Audio.Sound.createAsync(source, { shouldPlay: false, volume: 0.5 });
-        cache.set(name, sound);
+        const player = createAudioPlayer(source);
+        player.volume = 0.5;
+        cache.set(name, player);
       } catch {
         // Skip if loading fails
       }
@@ -55,10 +56,10 @@ export function useSound() {
 
   const play = useCallback(async (name: SoundName) => {
     try {
-      const sound = cache.get(name);
-      if (sound) {
-        await sound.setPositionAsync(0);
-        await sound.playAsync();
+      const player = cache.get(name);
+      if (player) {
+        await player.seekTo(0);
+        player.play();
       }
     } catch {
       // Silently fail – sound is non-critical

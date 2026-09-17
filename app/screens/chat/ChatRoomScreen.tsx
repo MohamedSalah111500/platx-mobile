@@ -24,6 +24,7 @@ import { chatApi } from '../../services/api/chat.api';
 import { useSound } from '../../hooks/useSound';
 import type { ChatStackParamList } from '../../types/navigation.types';
 import type { ChatMessage } from '../../types/chat.types';
+import { isOwnMessage as checkIsOwnMessage } from './isOwnMessage';
 
 type Props = NativeStackScreenProps<ChatStackParamList, 'ChatRoom'>;
 
@@ -38,7 +39,8 @@ const AVATAR_COLORS = [
 type ListItem = { type: 'date'; label: string; key: string } | { type: 'msg'; data: ChatMessage; key: string };
 
 export default function ChatRoomScreen({ navigation, route }: Props) {
-  const { groupId, groupName, staffId, staffName, subGroupId, chatType } = route.params;
+  const { groupId, groupName, staffId, staffName, subGroupId, chatType, membersCount } =
+    route.params;
   const { theme } = useTheme();
   const { user, isStudent } = useAuth();
   const { t, isRTL } = useRTL();
@@ -112,7 +114,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
 
   const isOwnMessage = (message: ChatMessage) => {
     if (isStaffChat) return !!message.senderStudentId && !message.senderStaffId;
-    return String(message.senderId ?? '') === String(user?.userId ?? '');
+    return checkIsOwnMessage(message, user, isStudent);
   };
 
   const getSenderName = (message: ChatMessage): string => {
@@ -189,7 +191,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
       <View style={[styles.msgRow, own ? styles.msgRowOwn : styles.msgRowOther]}>
         {/* Avatar for other's messages */}
         {!own && (
-          <View style={[styles.msgAvatar, { backgroundColor: palette.bg }]}>
+          <View style={[styles.msgAvatar, { backgroundColor: theme.dark ? palette.color + '26' : palette.bg }]}>
             <Text style={[styles.msgAvatarText, { color: palette.color }]}>{initial}</Text>
           </View>
         )}
@@ -242,7 +244,13 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
             {headerTitle}
           </Text>
           <Text style={[styles.headerSub, { color: theme.colors.textMuted }]}>
-            {isStaffChat ? t('chat.staff') : isSubGroupChat ? t('groups.subGroups') : t('chat.members')}
+            {isStaffChat
+              ? t('chat.staff')
+              : isSubGroupChat
+                ? t('groups.subGroups')
+                : membersCount != null
+                  ? `${membersCount} ${t('chat.members')}`
+                  : t('chat.groupChat')}
           </Text>
         </View>
       </View>
@@ -298,7 +306,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
             {sending ? (
               <Ionicons name="hourglass-outline" size={20} color="#fff" />
             ) : (
-              <Ionicons name="send" size={18} color="#fff" />
+              <Ionicons name="send" size={18} color="#fff" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
             )}
           </TouchableOpacity>
         </View>
@@ -368,8 +376,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.xs,
-    marginBottom: 2,
+    marginEnd: spacing.xs,
   },
   msgAvatarText: { fontSize: 12, fontFamily: 'Cairo_700Bold' },
   msgContent: { maxWidth: '78%' },
@@ -379,7 +386,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_700Bold',
     marginBottom: 2,
-    marginLeft: 4,
+    marginStart: 4,
   },
   bubble: {
     paddingHorizontal: spacing.md,
@@ -387,14 +394,13 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
   },
   bubbleOwn: {
-    borderBottomRightRadius: borderRadius.sm,
+    borderBottomEndRadius: borderRadius.sm,
   },
   bubbleOther: {
-    borderBottomLeftRadius: borderRadius.sm,
+    borderBottomStartRadius: borderRadius.sm,
   },
   bubbleText: {
     ...typography.body,
-    lineHeight: 22,
   },
   bubbleTextOwn: { color: '#fff' },
   timeInBubble: {
@@ -413,16 +419,22 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     gap: spacing.sm,
   },
+  // minHeight matches the send button so a single-line input is centred with it;
+  // the bar stays bottom-aligned so the button hugs the last line as the input grows.
   inputWrap: {
     flex: 1,
+    minHeight: 44,
+    justifyContent: 'center',
     borderRadius: borderRadius['2xl'],
     paddingHorizontal: spacing.md,
-    paddingVertical: Platform.OS === 'ios' ? spacing.sm : 0,
   },
   input: {
     fontSize: fontSize.base,
+    lineHeight: 24,
     maxHeight: 100,
-    paddingVertical: Platform.OS === 'ios' ? 6 : spacing.sm,
+    paddingTop: 10,
+    paddingBottom: 10,
+    textAlignVertical: 'center',
   },
   sendBtn: {
     width: 44,
@@ -430,11 +442,8 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Platform.OS === 'ios' ? 2 : 0,
-    
   },
   sendBtnDisabled: {
     opacity: 0.4,
-    
   },
 });

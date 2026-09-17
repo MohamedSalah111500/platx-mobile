@@ -3,7 +3,8 @@ import { LogBox, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { HUB_URLS } from '../api/endpoints';
 import { useAuthStore } from '../../store/auth.store';
-import { useNotificationsStore } from '../../store/notifications.store';
+import { useNotificationsStore, getNotificationOwnerId } from '../../store/notifications.store';
+import { getUserRole } from '../../utils/permissions';
 import { registerBackgroundNotifications } from './backgroundNotifications';
 import { registerForPushNotifications } from './pushNotifications';
 import { logger } from '../logger';
@@ -38,7 +39,6 @@ if (Platform.OS === 'android') {
     name: 'Default',
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
-    sound: 'default',
     enableVibrate: true,
     showBadge: true,
   }).catch(() => {});
@@ -61,6 +61,8 @@ async function ensureNotificationPermissions(): Promise<boolean> {
 class SignalRService {
   private notificationHub: signalR.HubConnection | null = null;
   private liveClassroomHub: signalR.HubConnection | null = null;
+  // Set by stopConnection() (logout) so onclose/retry timers don't reconnect.
+  private notificationStopped = false;
 
   // --- Notifications Hub ---
   async startNotificationConnection(): Promise<void> {
@@ -75,6 +77,7 @@ class SignalRService {
 
     const token = useAuthStore.getState().token;
     if (!token) return;
+    this.notificationStopped = false;
 
     if (this.notificationHub) {
       const stale = this.notificationHub;
@@ -83,28 +86,33 @@ class SignalRService {
     }
 
     await ensureNotificationPermissions();
+    // The permission prompt can sit open for a long time — the user may have logged
+    // out (or another start may have created a hub) meanwhile.
+    if (this.notificationStopped || !useAuthStore.getState().token || this.notificationHub) return;
     registerForPushNotifications().then((pushOk) => {
       if (!pushOk) registerBackgroundNotifications();
     });
 
-    this.notificationHub = new signalR.HubConnectionBuilder()
+    const hub = new signalR.HubConnectionBuilder()
       .withUrl(HUB_URLS.NOTIFICATIONS, {
         accessTokenFactory: () => useAuthStore.getState().token || '',
       })
       .withAutomaticReconnect([0, 2000, 5000, 10000, 30000, 60000])
       .configureLogging(signalR.LogLevel.None)
       .build();
+    this.notificationHub = hub;
 
-    this.notificationHub.serverTimeoutInMilliseconds = 120000;
-    this.notificationHub.keepAliveIntervalInMilliseconds = 30000;
+    hub.serverTimeoutInMilliseconds = 120000;
+    hub.keepAliveIntervalInMilliseconds = 30000;
 
     // Handle real-time notifications
-    this.notificationHub.on('UpdateCatalog', async (notificationJson: string) => {
+    hub.on('UpdateCatalog', async (notificationJson: string) => {
       // Refresh notification list
       const { user } = useAuthStore.getState();
-      if (user) {
-        const role = user.roles?.[0] as any;
-        useNotificationsStore.getState().fetch(role, 1, 15, user.studentId);
+      const role = user ? getUserRole(user.roles ?? []) : null;
+      if (user && role) {
+        useNotificationsStore.getState().fetch(role, 1, 15, getNotificationOwnerId(role, user));
+        if (role === 'Student') useNotificationsStore.getState().fetchUnreadCount();
       }
 
       // Parse and show push notification
@@ -122,10 +130,14 @@ class SignalRService {
         if (parsed && typeof parsed === 'object') {
           title = String(parsed.title || 'PlatX');
           body = String(parsed.body || parsed.message || body);
-          useNotificationsStore.getState().addNotification({
-            ...parsed,
-            createdDate: parsed.createdDate || parsed.createdAt || new Date().toISOString(),
-          });
+          useNotificationsStore.getState().addNotification(
+            {
+              ...parsed,
+              createdDate: parsed.createdDate || parsed.createdAt || new Date().toISOString(),
+            },
+            // Only students have read state (and an unread badge).
+            role === 'Student'
+          );
         }
       } catch {
         // Use default title/body
@@ -136,7 +148,7 @@ class SignalRService {
           content: {
             title,
             body,
-            sound: 'default',
+            sound: true,
             ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
           },
           trigger: null,
@@ -147,30 +159,41 @@ class SignalRService {
     });
 
     // Auto-retry when connection fully closes (after all automatic retries exhausted)
-    this.notificationHub.onclose(() => {
-      setTimeout(() => this.retryNotificationConnection(), 5000);
+    hub.onclose(() => {
+      if (this.shouldRetryNotification(hub)) {
+        setTimeout(() => this.retryNotificationConnection(hub), 5000);
+      }
     });
 
     try {
-      await this.notificationHub.start();
+      await hub.start();
       logger.log('[SignalR] notification hub connected');
     } catch (err) {
       logger.recordError(err, 'SignalR:notificationStart');
-      setTimeout(() => this.retryNotificationConnection(), 5000);
+      if (this.shouldRetryNotification(hub)) {
+        setTimeout(() => this.retryNotificationConnection(hub), 5000);
+      }
     }
   }
 
-  private async retryNotificationConnection() {
-    if (!this.notificationHub) return;
+  // Retry only the hub that's still current, while logged in and not stopped on purpose.
+  private shouldRetryNotification(hub: signalR.HubConnection): boolean {
+    return !this.notificationStopped && this.notificationHub === hub && !!useAuthStore.getState().token;
+  }
+
+  private async retryNotificationConnection(hub: signalR.HubConnection) {
+    if (!this.shouldRetryNotification(hub)) return;
     if (
-      this.notificationHub.state === signalR.HubConnectionState.Connected ||
-      this.notificationHub.state === signalR.HubConnectionState.Connecting ||
-      this.notificationHub.state === signalR.HubConnectionState.Reconnecting
+      hub.state === signalR.HubConnectionState.Connected ||
+      hub.state === signalR.HubConnectionState.Connecting ||
+      hub.state === signalR.HubConnectionState.Reconnecting
     ) return;
     try {
-      await this.notificationHub.start();
+      await hub.start();
     } catch {
-      setTimeout(() => this.retryNotificationConnection(), 15000);
+      if (this.shouldRetryNotification(hub)) {
+        setTimeout(() => this.retryNotificationConnection(hub), 15000);
+      }
     }
   }
 
@@ -187,6 +210,14 @@ class SignalRService {
 
     const token = useAuthStore.getState().token;
     if (!token) return;
+
+    // A disconnected hub can still be retrying in the background — drop it (and
+    // its handlers) before a new one takes its place.
+    if (this.liveClassroomHub) {
+      const stale = this.liveClassroomHub;
+      this.liveClassroomHub = null;
+      stale.stop().catch(() => {});
+    }
 
     this.liveClassroomHub = new signalR.HubConnectionBuilder()
       .withUrl(HUB_URLS.LIVE_CLASSROOM, {
@@ -281,6 +312,10 @@ class SignalRService {
     this.liveClassroomHub?.on('HandRaised', callback);
   }
 
+  onHandLowered(callback: (data: any) => void) {
+    this.liveClassroomHub?.on('HandLowered', callback);
+  }
+
   isNotificationHubConnected(): boolean {
     return this.notificationHub?.state === signalR.HubConnectionState.Connected;
   }
@@ -291,10 +326,14 @@ class SignalRService {
   }
 
   async stopConnection(): Promise<void> {
-    await this.notificationHub?.stop();
-    await this.liveClassroomHub?.stop();
+    this.notificationStopped = true;
+    const notificationHub = this.notificationHub;
+    const liveClassroomHub = this.liveClassroomHub;
     this.notificationHub = null;
     this.liveClassroomHub = null;
+    // Stop both even if one throws, otherwise a failed notification-hub stop
+    // leaves the live hub (and its token) alive after logout.
+    await Promise.allSettled([notificationHub?.stop(), liveClassroomHub?.stop()]);
   }
 
   async stopLiveClassroomConnection(): Promise<void> {

@@ -5,9 +5,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { STORAGE_KEYS } from '../../config';
 import { notificationsApi } from '../api/notifications.api';
+import { getUserRole } from '../../utils/permissions';
+import { getNotificationOwnerId } from '../../store/notifications.store';
 
 const BACKGROUND_NOTIFICATION_TASK = 'background-notification-check';
-const LAST_COUNT_KEY = 'bg_notification_last_count';
+// Per user (and per tenant/role id) so one account's count never suppresses or
+// fakes "new" notifications for the next account on the device.
+const LAST_COUNT_KEY_PREFIX = 'bg_notification_last_count';
 
 // Background task: checks for new notifications when app is backgrounded/closed
 // Wrapped in try/catch — defineTask at module load can crash on devices without task manager support
@@ -20,11 +24,13 @@ try {
       const user = JSON.parse(userData);
       if (!user?.token) return BackgroundFetch.BackgroundFetchResult.NoData;
 
-      const role = user.roles?.[0] || 'Student';
-      const response = await notificationsApi.getByRole(role, 1, 5, user.studentId);
+      const role = getUserRole(Array.isArray(user.roles) ? user.roles : []);
+      const ownerId = getNotificationOwnerId(role, user);
+      const response = await notificationsApi.getByRole(role, 1, 5, ownerId);
       const currentCount = response.totalCount;
 
-      const lastCountStr = await AsyncStorage.getItem(LAST_COUNT_KEY);
+      const lastCountKey = `${LAST_COUNT_KEY_PREFIX}_${user.userId ?? 'unknown'}_${ownerId ?? role}`;
+      const lastCountStr = await AsyncStorage.getItem(lastCountKey);
       const lastCount = lastCountStr ? parseInt(lastCountStr, 10) : 0;
 
       if (lastCount > 0 && currentCount > lastCount && response.items.length > 0) {
@@ -33,14 +39,14 @@ try {
           content: {
             title: String(newest.title || 'PlatX'),
             body: String(newest.body || (newest as any).message || 'You have a new notification'),
-            sound: 'default',
+            sound: true,
             ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
           },
           trigger: null,
         });
       }
 
-      await AsyncStorage.setItem(LAST_COUNT_KEY, String(currentCount));
+      await AsyncStorage.setItem(lastCountKey, String(currentCount));
       return currentCount > lastCount
         ? BackgroundFetch.BackgroundFetchResult.NewData
         : BackgroundFetch.BackgroundFetchResult.NoData;

@@ -77,14 +77,27 @@ apiClient.interceptors.response.use(
       status,
     };
 
-    if (status === 401 && inMemoryToken !== null) {
-      // Token expired - clear auth data and force logout (only once)
+    // Only a 401 for the *current* token means the session expired. A late response
+    // for a request sent with an older token (previous user / before re-login) must
+    // not log out the session that's active now.
+    // getToken(), not inMemoryToken: before restoreSession runs (and for calls
+    // that read the token from storage) the in-memory copy is still null, and a
+    // genuine 401 would otherwise be ignored and leave a dead session in place.
+    const sentAuth = error.config?.headers?.Authorization;
+    const currentToken = await getToken();
+    const sentWithCurrentToken =
+      currentToken !== null && sentAuth === `Bearer ${currentToken}`;
+
+    if (status === 401 && sentWithCurrentToken) {
+      // Token expired - force logout (only once). Clear the token synchronously so
+      // concurrent 401s don't re-trigger; the auth store's callback does the full
+      // storage/state cleanup shared with normal logout.
+      setInMemoryToken(null);
       await AsyncStorage.multiRemove([
         STORAGE_KEYS.AUTH_TOKEN,
         STORAGE_KEYS.CURRENT_USER,
         STORAGE_KEYS.USER_ROLES,
       ]);
-      setInMemoryToken(null);
       // Reset Zustand auth store so user is redirected to login
       onUnauthorizedCallback?.();
     }
