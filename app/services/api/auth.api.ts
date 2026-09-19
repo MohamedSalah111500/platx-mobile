@@ -7,10 +7,10 @@ import type {
   MobileLoginResponse,
   MobileSelectTenantPayload,
   RegisterPayload,
-  VoiceRegisterResult,
   EmailConfirmPayload,
   ResetPasswordPayload,
   ChangePasswordPayload,
+  AppleSignInPayload,
 } from '../../types/auth.types';
 
 export const authApi = {
@@ -31,15 +31,6 @@ export const authApi = {
 
   register: async (payload: RegisterPayload): Promise<void> => {
     await apiClient.post(AUTH_URLS.REGISTRATION, payload);
-  },
-
-  voiceRegisterExtract: async (form: FormData): Promise<VoiceRegisterResult> => {
-    const { data } = await apiClient.post<VoiceRegisterResult>(
-      AUTH_URLS.VOICE_REGISTER_EXTRACT,
-      form,
-      { headers: { 'Content-Type': 'multipart/form-data' } },
-    );
-    return data;
   },
 
   forgotPassword: async (username: string, domain: string): Promise<void> => {
@@ -73,5 +64,15 @@ export const authApi = {
 
   changePassword: async (payload: ChangePasswordPayload): Promise<void> => {
     await apiClient.post(AUTH_URLS.CHANGE_PASSWORD, payload);
+  },
+
+  appleSignIn: async (payload: AppleSignInPayload): Promise<LoginResponse> => {
+    const { data } = await apiClient.post<LoginResponse>(AUTH_URLS.APPLE_SIGNIN, payload);
+    return data;
+  },
+
+  // The server deletes the account of the access token's owner — no id is sent.
+  deleteAccount: async (): Promise<void> => {
+    await apiClient.delete(AUTH_URLS.DELETE_ACCOUNT);
   },
 };

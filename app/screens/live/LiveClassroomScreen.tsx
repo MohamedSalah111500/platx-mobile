@@ -44,7 +44,8 @@ if (hasAgora) {
   }
 }
 import type { RootStackParamList } from '../../types/navigation.types';
-import type { LiveSession, LiveParticipant, LiveMessage } from '../../types/live.types';
+import type { LiveSession, LiveParticipant, LiveMessage, JoinLivePayload } from '../../types/live.types';
+import { REQUEST_ONLY } from '../../config/storePolicy';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'LiveClassroom'>;
 
@@ -137,7 +138,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   // ─── Join Session ────────────────────────────
   const joinSession = async (
     roomData?: LiveSession | null,
-    payment?: { paymentTransactionId: string; paymentTransactionImg: { uri: string; name: string; type: string } }
+    payment?: Pick<JoinLivePayload, 'paymentTransactionId' | 'paymentTransactionImg' | 'accessRequestOnly'>
   ) => {
     if (!user) return;
     const currentRoom = roomData || room;
@@ -233,6 +234,12 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
       paymentTransactionId: paymentTransactionId.trim(),
       paymentTransactionImg: paymentProof,
     });
+  };
+
+  // iOS: a paid session is joined by asking the teacher for access — no payment details.
+  const sendJoinRequest = () => {
+    setSubmittingPayment(true);
+    joinSession(room, { accessRequestOnly: true });
   };
 
   const loadParticipants = async () => {
@@ -1025,7 +1032,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
         </View>
       </Modal>
 
-      {/* ── Payment Required Modal ── */}
+      {/* ── Paid session: join request (iOS) / payment proof (other platforms) ── */}
       <Modal
         visible={paymentModalVisible}
         animationType="slide"
@@ -1038,61 +1045,80 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
         >
           <View style={[styles.participantsPanel, { backgroundColor: theme.colors.card }]}>
             <View style={styles.panelHeader}>
-              <Text style={[styles.panelTitle, { color: theme.colors.text }]}>{t('live.paymentProofRequired')}</Text>
+              <Text style={[styles.panelTitle, { color: theme.colors.text }]}>
+                {t(REQUEST_ONLY ? 'live.requestToJoinTitle' : 'live.paymentProofRequired')}
+              </Text>
               <TouchableOpacity onPress={() => setPaymentModalVisible(false)}>
                 <Ionicons name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
-            <Text style={[styles.emptyPanelText, { color: theme.colors.textSecondary }]}>{t('live.sessionRequiresPayment')}</Text>
-
-            <TouchableOpacity
-              style={[styles.proofPicker, { borderColor: theme.colors.border, backgroundColor: theme.colors.inputBackground }]}
-              onPress={pickPaymentProof}
-              activeOpacity={0.8}
-            >
-              {paymentProof ? (
-                <Image source={{ uri: paymentProof.uri }} style={styles.proofPreview} resizeMode="cover" />
-              ) : (
-                <View style={styles.proofEmpty}>
-                  <Ionicons name="cloud-upload-outline" size={28} color={theme.colors.primary} />
-                  <Text style={[styles.proofEmptyText, { color: theme.colors.textSecondary }]}>{t('live.attachReceipt')}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            {paymentProof && (
-              <TouchableOpacity onPress={pickPaymentProof}>
-                <Text style={[styles.changeProofText, { color: theme.colors.primary }]}>{t('live.changeReceipt')}</Text>
-              </TouchableOpacity>
-            )}
-
-            <Text style={[styles.emptyPanelText, { color: theme.colors.textSecondary, marginTop: spacing.md, marginBottom: spacing.xs }]}>
-              {t('live.paymentTransactionId')}
+            <Text style={[styles.emptyPanelText, { color: theme.colors.textSecondary }]}>
+              {t(REQUEST_ONLY ? 'live.requestToJoinNotice' : 'live.sessionRequiresPayment')}
             </Text>
-            <TextInput
-              style={[
-                styles.paymentInput,
-                {
-                  borderColor: theme.colors.inputBorder,
-                  backgroundColor: theme.colors.inputBackground,
-                  color: theme.colors.inputText,
-                },
-              ]}
-              placeholder={t('live.enterPaymentTransactionId')}
-              placeholderTextColor={theme.colors.inputPlaceholder}
-              value={paymentTransactionId}
-              onChangeText={setPaymentTransactionId}
-            />
 
-            <TouchableOpacity
-              style={[styles.submitPaymentBtn, { backgroundColor: theme.colors.primary }, submittingPayment && { opacity: 0.6 }]}
-              onPress={submitPayment}
-              disabled={submittingPayment}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.submitPaymentText}>
-                {submittingPayment ? t('live.joining') : t('live.submitPayment')}
-              </Text>
-            </TouchableOpacity>
+            {REQUEST_ONLY ? (
+              <TouchableOpacity
+                style={[styles.submitPaymentBtn, { backgroundColor: theme.colors.primary }, submittingPayment && { opacity: 0.6 }]}
+                onPress={sendJoinRequest}
+                disabled={submittingPayment}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.submitPaymentText}>
+                  {submittingPayment ? t('live.joining') : t('live.sendJoinRequest')}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={[styles.proofPicker, { borderColor: theme.colors.border, backgroundColor: theme.colors.inputBackground }]}
+                  onPress={pickPaymentProof}
+                  activeOpacity={0.8}
+                >
+                  {paymentProof ? (
+                    <Image source={{ uri: paymentProof.uri }} style={styles.proofPreview} resizeMode="cover" />
+                  ) : (
+                    <View style={styles.proofEmpty}>
+                      <Ionicons name="cloud-upload-outline" size={28} color={theme.colors.primary} />
+                      <Text style={[styles.proofEmptyText, { color: theme.colors.textSecondary }]}>{t('live.attachReceipt')}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+                {paymentProof && (
+                  <TouchableOpacity onPress={pickPaymentProof}>
+                    <Text style={[styles.changeProofText, { color: theme.colors.primary }]}>{t('live.changeReceipt')}</Text>
+                  </TouchableOpacity>
+                )}
+
+                <Text style={[styles.emptyPanelText, { color: theme.colors.textSecondary, marginTop: spacing.md, marginBottom: spacing.xs }]}>
+                  {t('live.paymentTransactionId')}
+                </Text>
+                <TextInput
+                  style={[
+                    styles.paymentInput,
+                    {
+                      borderColor: theme.colors.inputBorder,
+                      backgroundColor: theme.colors.inputBackground,
+                      color: theme.colors.inputText,
+                    },
+                  ]}
+                  placeholder={t('live.enterPaymentTransactionId')}
+                  placeholderTextColor={theme.colors.inputPlaceholder}
+                  value={paymentTransactionId}
+                  onChangeText={setPaymentTransactionId}
+                />
+
+                <TouchableOpacity
+                  style={[styles.submitPaymentBtn, { backgroundColor: theme.colors.primary }, submittingPayment && { opacity: 0.6 }]}
+                  onPress={submitPayment}
+                  disabled={submittingPayment}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.submitPaymentText}>
+                    {submittingPayment ? t('live.joining') : t('live.submitPayment')}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </KeyboardAvoidingView>
       </Modal>

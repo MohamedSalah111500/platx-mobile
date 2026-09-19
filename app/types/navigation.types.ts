@@ -113,6 +113,7 @@ export type ProfileStackParamList = {
   EditProfile: undefined;
   Settings: undefined;
   ChangePassword: undefined;
+  DeleteAccount: undefined;
   Groups: undefined;
   GroupDetail: { groupId: number };
   SubGroupDetail: { subGroupId: number; subGroupName?: string; groupId: number };

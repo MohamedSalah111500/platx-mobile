@@ -32,6 +32,7 @@ import { resolveCourseAvailability } from '../../utils/courseAvailability';
 import { CourseLockedNotice } from '../../components/course/CourseLockedNotice';
 import { CourseAvailabilityBadge } from '../../components/course/CourseAvailabilityBadge';
 import { CoursePrice } from '../../components/course/CoursePrice';
+import { REQUEST_ONLY } from '../../config/storePolicy';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { useRTL } from '../../i18n/RTLProvider';
 import { useSound } from '../../hooks/useSound';
@@ -487,7 +488,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
             {[
               { key: 'settings', icon: 'options-outline', label: t('courses.manage.settings'), sub: t('courses.manage.settingsSub'), screen: 'CourseSettings' as const },
               { key: 'students', icon: 'people-outline', label: t('courses.manage.students'), sub: t('courses.manage.studentsSub'), screen: 'CourseStudents' as const },
-              { key: 'requests', icon: 'mail-unread-outline', label: t('courses.manage.requests'), sub: t('courses.manage.requestsSub'), screen: 'EnrollmentRequests' as const },
+              { key: 'requests', icon: 'mail-unread-outline', label: t('courses.manage.requests'), sub: t(REQUEST_ONLY ? 'courses.manage.joinRequestsSub' : 'courses.manage.requestsSub'), screen: 'EnrollmentRequests' as const },
             ].map((row) => (
               <TouchableOpacity
                 key={row.key}
@@ -677,9 +678,9 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                 />
               )}
               {!isFree && requestStatus === 'pending' ? (
-                // Purchase request already sent — waiting for staff approval.
+                // Request already sent — waiting for staff approval.
                 <Button
-                  title={t('courses.pendingRequest')}
+                  title={t(REQUEST_ONLY ? 'courses.joinRequestPending' : 'courses.pendingRequest')}
                   onPress={() => {}}
                   disabled
                   size="large"
@@ -690,7 +691,11 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                 />
               ) : (
                 <Button
-                  title={isFree ? t('courses.enrollForFree') : t('courses.buyNow')}
+                  title={
+                    isFree
+                      ? t('courses.enrollForFree')
+                      : t(REQUEST_ONLY ? 'courses.requestToJoin' : 'courses.buyNow')
+                  }
                   onPress={isFree ? handleEnroll : handlePurchase}
                   loading={enrolling}
                   size="large"

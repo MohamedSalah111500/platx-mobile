@@ -8,7 +8,6 @@ import {
   Image,
   Alert,
   TextInput,
-  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -27,6 +26,7 @@ import { fontSize, typography } from '../../theme/typography';
 import { reservationsApi } from '../../services/api/reservations.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { CoursePrice } from '../../components/course/CoursePrice';
+import { REQUEST_ONLY } from '../../config/storePolicy';
 import {
   PAYMENT_METHOD_VODAFONE,
   PAYMENT_METHOD_INSTAPAY,
@@ -38,11 +38,6 @@ type Props = {
   navigation: NativeStackScreenProps<any, any>['navigation'];
   route: { params: { courseId: number; title?: string; price?: number; discountPrice?: number; currencyCode?: string; image?: string } };
 };
-
-// On iOS the app never collects or describes an external payment for course
-// access (App Store Review Guideline 3.1.1). Students only send a join request;
-// the academy handles enrollment on its own channels.
-export const REQUEST_ONLY = Platform.OS === 'ios';
 
 export default function CheckoutScreen({ navigation, route }: Props) {
   const { courseId, title, price, discountPrice, currencyCode, image } = route.params;

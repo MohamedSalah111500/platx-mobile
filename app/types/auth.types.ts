@@ -40,21 +40,6 @@ export interface User {
   staffId?: number;
 }
 
-export interface VoiceRegisterFields {
-  firstName?: string | null;
-  lastName?: string | null;
-  email?: string | null;
-  password?: string | null;
-}
-
-export interface VoiceRegisterResult {
-  transcript: string;
-  fields: VoiceRegisterFields;
-  missingFields: string[];
-  followUpQuestion: string;
-  isComplete: boolean;
-}
-
 export interface RegisterPayload {
   firstName: string;
   lastName: string;
@@ -86,6 +71,16 @@ export interface ChangePasswordPayload {
   currentPassword: string;
   password: string;
   confirmPassword: string;
+}
+
+// Backend AppleAuthRequest. The identity token is verified server-side; the
+// name is only present on the user's first Apple authorization.
+export interface AppleSignInPayload {
+  identityToken: string;
+  authorizationCode?: string | null;
+  domain: string;
+  givenName?: string | null;
+  familyName?: string | null;
 }
 
 // Mobile login (no domain required)

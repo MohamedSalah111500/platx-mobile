@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuthStore } from '../../store/auth.store';
@@ -19,16 +21,22 @@ import { typography } from '../../theme/typography';
 import type { AuthStackParamList } from '../../types/navigation.types';
 import { useRTL } from '../../i18n/RTLProvider';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
-import { VoiceRegisterAssistant } from '../../components/auth/VoiceRegisterAssistant';
-import type { VoiceRegisterFields } from '../../types/auth.types';
+import { isAppleSignInAvailable } from '../../services/auth/appleAuth';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 export default function RegisterScreen({ navigation, route }: Props) {
-  const { theme } = useTheme();
-  const { register, googleLogin, isLoading, error, clearError } = useAuthStore();
+  const { theme, isDark } = useTheme();
+  const { register, googleLogin, appleLogin, isLoading, error, clearError } = useAuthStore();
   const { t, isRTL } = useRTL();
+  const insets = useSafeAreaInsets();
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    isAppleSignInAvailable().then(setAppleAvailable);
+  }, []);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -50,15 +58,6 @@ export default function RegisterScreen({ navigation, route }: Props) {
     if (!domain.trim()) errors.domain = t('auth.domainRequired');
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  };
-
-  const applyVoiceFields = (fields: VoiceRegisterFields) => {
-    setFirstName(fields.firstName ?? '');
-    setLastName(fields.lastName ?? '');
-    setEmail(fields.email ?? '');
-    setPassword(fields.password ?? '');
-    setConfirmPassword(fields.password ?? '');
-    setFormErrors({});
   };
 
   const handleRegister = async () => {
@@ -100,6 +99,22 @@ export default function RegisterScreen({ navigation, route }: Props) {
     }
   };
 
+  // Signing up with Apple creates the account on first authorization, so it needs
+  // the academy domain just like the Google flow does.
+  const handleAppleSignUp = async () => {
+    if (!domain.trim()) {
+      setFormErrors({ domain: t('auth.domainRequiredForGoogle') });
+      return;
+    }
+    clearError();
+    setAppleLoading(true);
+    try {
+      await appleLogin(domain.trim());
+    } finally {
+      setAppleLoading(false);
+    }
+  };
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -109,6 +124,9 @@ export default function RegisterScreen({ navigation, route }: Props) {
       flexGrow: 1,
       justifyContent: 'center',
       padding: spacing['2xl'],
+      // The screen has no header, so the form clears the status bar / Dynamic Island itself.
+      paddingTop: insets.top + spacing['2xl'],
+      paddingBottom: insets.bottom + spacing['2xl'],
     },
     header: {
       marginBottom: spacing['2xl'],
@@ -176,12 +194,6 @@ export default function RegisterScreen({ navigation, route }: Props) {
           }}
           error={formErrors.domain}
           autoCapitalize="none"
-        />
-
-        <VoiceRegisterAssistant
-          domain={domain}
-          currentFields={{ firstName: firstName || null, lastName: lastName || null, email: email || null, password: password || null }}
-          onFieldsExtracted={applyVoiceFields}
         />
 
         <View style={styles.row}>
@@ -265,6 +277,25 @@ export default function RegisterScreen({ navigation, route }: Props) {
           <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.divider }} />
         </View>
 
+        {appleAvailable && (
+          <View
+            style={{ marginBottom: spacing.md, opacity: appleLoading || isLoading ? 0.6 : 1 }}
+            pointerEvents={appleLoading || googleLoading || isLoading ? 'none' : 'auto'}
+          >
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
+              buttonStyle={
+                isDark
+                  ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                  : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+              }
+              cornerRadius={borderRadius.lg}
+              style={{ width: '100%', height: 50 }}
+              onPress={handleAppleSignUp}
+            />
+          </View>
+        )}
+
         {/* Google Sign-Up */}
         <TouchableOpacity
           style={{
@@ -278,10 +309,11 @@ export default function RegisterScreen({ navigation, route }: Props) {
             borderRadius: borderRadius.lg,
             paddingVertical: spacing.md,
             paddingHorizontal: spacing.xl,
+            minHeight: 50,
             opacity: googleLoading ? 0.7 : 1,
           }}
           onPress={handleGoogleSignUp}
-          disabled={googleLoading || isLoading}
+          disabled={googleLoading || appleLoading || isLoading}
           activeOpacity={0.7}
         >
           <Ionicons name="logo-google" size={20} color="#DB4437" />

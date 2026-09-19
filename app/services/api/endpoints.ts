@@ -6,13 +6,14 @@ const BASE = API_CONFIG.BASE_URL;
 export const AUTH_URLS = {
   LOGIN: `${BASE}api/Auth/login`,
   REGISTRATION: `${BASE}api/Auth/register-student`,
-  VOICE_REGISTER_EXTRACT: `${BASE}api/Auth/voice-register-extract`,
   FORGOT_PASSWORD: `${BASE}api/Auth/forgot-password`,
   RESET_PASSWORD: `${BASE}api/Auth/reset-password`,
   CONFIRM_EMAIL: `${BASE}api/Auth/confirm-email`,
   SEND_CONFIRM_EMAIL: `${BASE}api/Auth/send-confirmation-email`,
   VERIFY_OTP_RESET_PASSWORD: `${BASE}api/Auth/verify-otp-reset-password`,
   CHANGE_PASSWORD: `${BASE}api/Auth/change-password`,
+  APPLE_SIGNIN: `${BASE}api/Auth/apple-signin`,
+  DELETE_ACCOUNT: `${BASE}api/Auth/me`,
   MOBILE_LOGIN: `${BASE}api/auth/mobile-login`,
   MOBILE_SELECT_TENANT: `${BASE}api/auth/mobile-select-tenant`,
 };

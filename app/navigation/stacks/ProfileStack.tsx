@@ -10,6 +10,7 @@ import SubGroupDetailScreen from '../../screens/groups/SubGroupDetailScreen';
 import LiveSessionsScreen from '../../screens/live/LiveSessionsListScreen';
 import CreateLiveScreen from '../../screens/live/CreateLiveScreen';
 import ChangePasswordScreen from '../../screens/profile/ChangePasswordScreen';
+import DeleteAccountScreen from '../../screens/profile/DeleteAccountScreen';
 import HonorBoardScreen from '../../screens/profile/HonorBoardScreen';
 import HomeworkStack from './HomeworkStack';
 import ReportsListScreen from '../../screens/reports/ReportsListScreen';
@@ -24,6 +25,7 @@ export default function ProfileStack() {
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+      <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
       <Stack.Screen name="Groups" component={GroupsScreen} />
       <Stack.Screen name="GroupDetail" component={GroupDetailScreen} />
       <Stack.Screen name="SubGroupDetail" component={SubGroupDetailScreen} />

@@ -11,7 +11,9 @@ import {
   TextInput,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuthStore } from '../../store/auth.store';
 import { Button } from '../../components/ui/Button';
@@ -22,14 +24,18 @@ import type { AuthStackParamList } from '../../types/navigation.types';
 import { useRTL } from '../../i18n/RTLProvider';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { GradientBackground } from '../../components/ui/GradientBackground';
+import { isAppleSignInAvailable } from '../../services/auth/appleAuth';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
+type ExternalProvider = 'google' | 'apple';
+
 export default function LoginScreen({ navigation }: Props) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const {
     login,
     googleLogin,
+    appleLogin,
     isLoading,
     error,
     clearError,
@@ -38,15 +44,23 @@ export default function LoginScreen({ navigation }: Props) {
     clearPendingEmailConfirmation,
   } = useAuthStore();
   const { t } = useRTL();
+  const insets = useSafeAreaInsets();
 
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  // Domain modal for Google Sign-In
+  // Academy domain modal shared by Google and Apple sign-in
   const [domainModalVisible, setDomainModalVisible] = useState(false);
   const [domainInput, setDomainInput] = useState('');
+  const [externalProvider, setExternalProvider] = useState<ExternalProvider>('google');
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    isAppleSignInAvailable().then(setAppleAvailable);
+  }, []);
 
   // Navigate to tenant selection when pendingTenants is set
   useEffect(() => {
@@ -86,8 +100,9 @@ export default function LoginScreen({ navigation }: Props) {
     }
   };
 
-  const handleGoogleSignIn = () => {
+  const openDomainModal = (provider: ExternalProvider) => {
     clearError();
+    setExternalProvider(provider);
     setDomainInput('');
     setDomainModalVisible(true);
   };
@@ -96,13 +111,16 @@ export default function LoginScreen({ navigation }: Props) {
     const domain = domainInput.trim();
     if (!domain) return;
     setDomainModalVisible(false);
-    setGoogleLoading(true);
+    const setProviderLoading = externalProvider === 'apple' ? setAppleLoading : setGoogleLoading;
+    setProviderLoading(true);
     try {
-      await googleLogin(domain);
+      await (externalProvider === 'apple' ? appleLogin(domain) : googleLogin(domain));
     } finally {
-      setGoogleLoading(false);
+      setProviderLoading(false);
     }
   };
+
+  const externalBusy = googleLoading || appleLoading || isLoading;
 
   const styles = createStyles(theme);
 
@@ -113,7 +131,11 @@ export default function LoginScreen({ navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          // No header on this screen, so keep the form clear of the Dynamic Island / home indicator.
+          { paddingTop: insets.top, paddingBottom: insets.bottom },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -171,10 +193,29 @@ export default function LoginScreen({ navigation }: Props) {
             <View style={styles.dividerLine} />
           </View>
 
+          {appleAvailable && (
+            <View
+              style={[styles.appleButtonWrap, externalBusy && { opacity: 0.6 }]}
+              pointerEvents={externalBusy ? 'none' : 'auto'}
+            >
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                buttonStyle={
+                  isDark
+                    ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                    : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+                }
+                cornerRadius={borderRadius['2xl']}
+                style={styles.appleButton}
+                onPress={() => openDomainModal('apple')}
+              />
+            </View>
+          )}
+
           <TouchableOpacity
-            style={[styles.googleButton, (googleLoading || isLoading) && { opacity: 0.6 }]}
-            onPress={handleGoogleSignIn}
-            disabled={googleLoading || isLoading}
+            style={[styles.googleButton, externalBusy && { opacity: 0.6 }]}
+            onPress={() => openDomainModal('google')}
+            disabled={externalBusy}
             activeOpacity={0.7}
           >
             <Ionicons name="logo-google" size={20} color="#DB4437" />
@@ -194,7 +235,7 @@ export default function LoginScreen({ navigation }: Props) {
         </View>
       </ScrollView>
 
-      {/* Domain Modal for Google Sign-In */}
+      {/* Academy domain modal for Google / Apple sign-in */}
       <Modal
         visible={domainModalVisible}
         transparent
@@ -312,7 +353,15 @@ function createStyles(theme: any) {
       color: theme.colors.textMuted,
       marginHorizontal: spacing.md,
     },
+    appleButtonWrap: {
+      marginBottom: spacing.md,
+    },
+    appleButton: {
+      width: '100%',
+      height: 50,
+    },
     googleButton: {
+      minHeight: 50,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',

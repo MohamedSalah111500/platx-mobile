@@ -25,6 +25,9 @@ export const liveApi = {
     } else {
       formData.append('paymentTransactionImg', '');
     }
+    if (payload.accessRequestOnly) {
+      formData.append('accessRequestOnly', 'true');
+    }
     // In React Native, set multipart/form-data explicitly so the networking
     // layer adds the boundary automatically. Using `undefined` (browser trick)
     // does NOT work in RN and leaves the default application/json header.

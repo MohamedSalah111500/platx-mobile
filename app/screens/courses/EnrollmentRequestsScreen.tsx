@@ -15,6 +15,7 @@ import { fontSize } from '../../theme/typography';
 import { reservationsApi } from '../../services/api/reservations.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { PAYMENT_METHOD_INSTAPAY, PAYMENT_METHOD_VODAFONE, type PendingReservation } from '../../types/reservation.types';
+import { REQUEST_ONLY } from '../../config/storePolicy';
 import type { HomeStackParamList } from '../../types/navigation.types';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'EnrollmentRequests'>;
@@ -176,7 +177,12 @@ export default function EnrollmentRequestsScreen({ navigation, route }: Props) {
           contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + spacing['3xl'] }]}
           ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={theme.colors.primary} colors={[theme.colors.primary]} progressBackgroundColor={theme.colors.card} />}
-          ListEmptyComponent={<EmptyState title={t('enrollmentRequests.empty')} message={t('enrollmentRequests.emptyHint')} />}
+          ListEmptyComponent={
+            <EmptyState
+              title={t('enrollmentRequests.empty')}
+              message={t(REQUEST_ONLY ? 'enrollmentRequests.joinEmptyHint' : 'enrollmentRequests.emptyHint')}
+            />
+          }
           showsVerticalScrollIndicator={false}
         />
       )}

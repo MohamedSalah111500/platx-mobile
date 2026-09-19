@@ -172,6 +172,37 @@ export default function SettingsScreen({ navigation }: Props) {
           </View>
         </View>
 
+        {/* Account */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textMuted }]}>
+            {t('settings.account')}
+          </Text>
+          <TouchableOpacity
+            style={[styles.card, { backgroundColor: theme.colors.card }]}
+            onPress={() => navigation.navigate('DeleteAccount')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.cardRow, { paddingBottom: 0 }]}>
+              <View style={[styles.settingIcon, { backgroundColor: theme.colors.danger + '1A' }]}>
+                <Ionicons name="trash-outline" size={20} color={theme.colors.danger} />
+              </View>
+              <View style={styles.settingInfo}>
+                <Text style={[styles.settingLabel, { color: theme.colors.danger }]}>
+                  {t('deleteAccount.title')}
+                </Text>
+                <Text style={[styles.settingDesc, { color: theme.colors.textMuted }]}>
+                  {t('settings.deleteAccountDesc')}
+                </Text>
+              </View>
+              <Ionicons
+                name={isRTL ? 'chevron-back' : 'chevron-forward'}
+                size={18}
+                color={theme.colors.textMuted}
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {/* Logout */}
         <View style={styles.section}>
           <TouchableOpacity

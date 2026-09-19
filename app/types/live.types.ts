@@ -70,6 +70,8 @@ export interface JoinLivePayload {
   studentId: number;
   paymentTransactionId?: string;
   paymentTransactionImg?: { uri: string; name: string; type: string };
+  // iOS: request the teacher's approval for a paid session without payment details.
+  accessRequestOnly?: boolean;
 }
 
 export interface AgoraTokenResponse {

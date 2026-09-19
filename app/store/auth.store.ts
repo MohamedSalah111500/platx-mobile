@@ -9,6 +9,7 @@ import { unregisterPushNotifications } from '../services/realtime/pushNotificati
 import { extractNumericId, extractTenantDomain } from '../utils/jwt';
 import { logger } from '../services/logger';
 import { signInWithGoogle } from '../services/auth/googleAuth';
+import { signInWithApple } from '../services/auth/appleAuth';
 import i18n from '../i18n/i18n.config';
 import { useNotificationsStore } from './notifications.store';
 import type {
@@ -44,8 +45,10 @@ interface AuthActions {
   clearPendingTenants: () => void;
   clearPendingEmailConfirmation: () => void;
   googleLogin: (domain: string) => Promise<void>;
+  appleLogin: (domain: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   confirmEmail: (payload: EmailConfirmPayload) => Promise<void>;
   forgotPassword: (username: string, domain: string) => Promise<void>;
   verifyOtpResetPassword: (
@@ -400,6 +403,24 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     }
   },
 
+  appleLogin: async (domain: string) => {
+    set({ error: null });
+    try {
+      const result = await signInWithApple(domain);
+      if (result.type === 'cancel') return;
+
+      set({ isLoading: true });
+      const { user, domain: resDomain } = processAuthResponse(result.response);
+      await persistAndSetAuth(set, user, result.response.token, resDomain || domain);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.userMessage ||
+        i18n.t('auth.appleSignInFailed');
+      set({ error: message, isLoading: false });
+    }
+  },
+
   register: async (payload: RegisterPayload) => {
     try {
       set({ isLoading: true, error: null });
@@ -419,6 +440,20 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     // Kicked off first so it reads the stored push token before the cleanup runs.
     unregisterPushNotifications(get().token).catch(() => {});
     await clearSession({ removePushToken: false });
+  },
+
+  // Permanently deletes the account server-side, then clears everything stored
+  // on the device. Throws (keeping the session) if the server did not confirm.
+  deleteAccount: async () => {
+    try {
+      await authApi.deleteAccount();
+    } catch (error: any) {
+      // 401: the token no longer maps to an account — a previous delete request
+      // succeeded even though its response never arrived.
+      if ((error?.status ?? error?.response?.status) !== 401) throw error;
+    }
+    // The server already dropped the push token registration.
+    await clearSession({ removePushToken: true });
   },
 
   confirmEmail: async (payload: EmailConfirmPayload) => {

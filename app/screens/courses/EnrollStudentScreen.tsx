@@ -22,6 +22,7 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { fontSize, typography } from '../../theme/typography';
 import { studentsApi, type TopStudent } from '../../services/api/students.api';
 import { reservationsApi } from '../../services/api/reservations.api';
+import { REQUEST_ONLY } from '../../config/storePolicy';
 import type { HomeStackParamList } from '../../types/navigation.types';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'EnrollStudent'>;
@@ -67,7 +68,7 @@ export default function EnrollStudentScreen({ navigation, route }: Props) {
     play('tap');
     Alert.alert(
       t('enrollStudent.confirmTitle'),
-      t('enrollStudent.confirmMessage', { name, course: courseName || '' }),
+      t(REQUEST_ONLY ? 'enrollStudent.joinConfirmMessage' : 'enrollStudent.confirmMessage', { name, course: courseName || '' }),
       [
         { text: t('enrollStudent.cancel'), style: 'cancel' },
         { text: t('enrollStudent.confirm'), onPress: () => handleEnroll(student) },
