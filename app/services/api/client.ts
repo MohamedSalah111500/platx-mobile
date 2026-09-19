@@ -1,6 +1,8 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG, STORAGE_KEYS, API_TIMEOUT } from '@config/index';
+import { getDeviceHeaders } from '../storage/device.identity';
+import i18n from '../../i18n/i18n.config';
 
 // Create axios instance
 export const apiClient: AxiosInstance = axios.create({
@@ -47,6 +49,14 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    const deviceHeaders = await getDeviceHeaders();
+    Object.entries(deviceHeaders).forEach(([key, value]) => {
+      config.headers.set(key, value);
+    });
+
+    // Server-side validation and device-protection messages are localized per request.
+    config.headers.set('Accept-Language', i18n.language || 'ar');
 
     return config;
   },
