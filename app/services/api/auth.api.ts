@@ -13,6 +13,8 @@ import type {
   AppleSignInPayload,
 } from '../../types/auth.types';
 
+const DELETE_ACCOUNT_TIMEOUT = 90000;
+
 export const authApi = {
   login: async (payload: LoginPayload): Promise<LoginResponse> => {
     const { data } = await apiClient.post<LoginResponse>(AUTH_URLS.LOGIN, payload);
@@ -72,7 +74,9 @@ export const authApi = {
   },
 
   // The server deletes the account of the access token's owner — no id is sent.
+  // The call cascades across the account's data, so it gets more room than the
+  // default timeout: a slow answer must not look like a failed deletion.
   deleteAccount: async (): Promise<void> => {
-    await apiClient.delete(AUTH_URLS.DELETE_ACCOUNT);
+    await apiClient.delete(AUTH_URLS.DELETE_ACCOUNT, { timeout: DELETE_ACCOUNT_TIMEOUT });
   },
 };

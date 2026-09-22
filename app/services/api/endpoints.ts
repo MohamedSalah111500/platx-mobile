@@ -18,6 +18,10 @@ export const AUTH_URLS = {
   MOBILE_SELECT_TENANT: `${BASE}api/auth/mobile-select-tenant`,
 };
 
+export const PROFILE_URLS = {
+  PHOTO: `${BASE}api/profile/photo`,
+};
+
 // Groups endpoints
 export const GROUPS_URLS = {
   BASE: `${BASE}api/Groups/`,

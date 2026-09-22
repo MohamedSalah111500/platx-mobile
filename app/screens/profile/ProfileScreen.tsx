@@ -20,6 +20,7 @@ import { typography, fontSize } from '../../theme/typography';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { GradientBackground } from '../../components/ui/GradientBackground';
+import { Avatar } from '../../components/ui/Avatar';
 import { coursesApi } from '../../services/api/courses.api';
 import { chatApi } from '../../services/api/chat.api';
 import { dashboardApi, type DashboardStats } from '../../services/api/dashboard.api';
@@ -93,8 +94,6 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const firstName = user?.firstName || '';
   const lastName = user?.lastName || '';
-  const initials = (firstName?.[0] || '') + (lastName?.[0] || '');
-  const photoUri = getFullImageUrl(user?.profileImage);
   // Light pastel icon fills glare in dark mode — use a translucent tint of the icon colour there.
   const tint = (lightBg: string, color: string) => (theme.dark ? color + '26' : lightBg);
 
@@ -149,14 +148,19 @@ export default function ProfileScreen({ navigation }: Props) {
       >
         {/* Purple header */}
         <View style={[styles.headerBg, { paddingTop: insets.top + spacing.lg, backgroundColor: theme.colors.primary }]}>
-          <View style={[styles.avatar, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
-            {photoUri ? (
-              <Image source={{ uri: photoUri }} style={styles.avatarImage} resizeMode="cover" />
-            ) : (
-              <Text style={[styles.avatarText, { color: theme.colors.primary }]}>
-                {initials.toUpperCase() || '?'}
-              </Text>
-            )}
+          <View style={styles.avatarWrap}>
+            <Avatar
+              self
+              editable
+              dimension={88}
+              radius={28}
+              name={`${firstName} ${lastName}`.trim()}
+              style={{
+                backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight,
+                borderWidth: 3,
+                borderColor: 'rgba(255,255,255,0.35)',
+              }}
+            />
           </View>
           <Text style={styles.userName}>
             {firstName} {lastName}
@@ -403,24 +407,8 @@ const styles = StyleSheet.create({
     paddingBottom: 44,
     alignItems: 'center',
   },
-  avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.35)',
+  avatarWrap: {
     marginBottom: spacing.md,
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 25,
-  },
-  avatarText: {
-    fontSize: 30,
-    fontFamily: 'Cairo_700Bold',
   },
   userName: {
     ...typography.screenTitle,

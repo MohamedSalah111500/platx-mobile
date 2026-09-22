@@ -845,5 +845,14 @@
     "update": "Update now",
     "hint": "Open the app again after updating.",
     "storeFailed": "Couldn't open the store."
+  },
+  "profilePhoto": {
+    "title": "Profile photo",
+    "hint": "Pick a photo — you can crop it before saving.",
+    "fromLibrary": "Choose from photos",
+    "fromCamera": "Take a photo",
+    "remove": "Remove photo",
+    "failed": "Could not update the photo. Please try again.",
+    "cameraDenied": "Allow camera access first."
   }
 }

@@ -16,6 +16,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
+import { Avatar } from '../../components/ui/Avatar';
 import { useRTL } from '../../i18n/RTLProvider';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
@@ -194,12 +195,7 @@ export default function HomeScreen({ navigation }: Props) {
     return t('home.goodEvening');
   };
 
-  const initials = user
-    ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase()
-    : '?';
-
   const firstName = user?.firstName || '';
-  const photoUri = getFullImageUrl(user?.profileImage);
 
   // ------------------------------------------------------------------ palette
   const CARD_BG = isDark ? theme.colors.card : '#FFFFFF';
@@ -802,13 +798,12 @@ export default function HomeScreen({ navigation }: Props) {
               activeOpacity={0.7}
               onPress={() => navigation.getParent()?.navigate('ProfileTab')}
             >
-              <View style={styles.avatarCircle}>
-                {photoUri ? (
-                  <Image source={{ uri: photoUri }} style={styles.avatarImage} resizeMode="cover" />
-                ) : (
-                  <Text style={styles.avatarText}>{initials}</Text>
-                )}
-              </View>
+              <Avatar
+                self
+                dimension={50}
+                name={`${firstName} ${user?.lastName || ''}`.trim()}
+                style={styles.avatarCircle}
+              />
               <View style={styles.headerTextBlock}>
                 <Text style={styles.headerWelcome}>{getGreeting()}</Text>
                 <Text style={styles.headerName} numberOfLines={1}>

@@ -63,6 +63,7 @@ interface AuthActions {
   clearError: () => void;
   setLoading: (loading: boolean) => void;
   dismissWelcome: () => void;
+  setProfilePhoto: (url: string | null) => Promise<void>;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -170,6 +171,8 @@ function resolveLogoUrl(logoUrl?: string | null): string | null {
   if (logoUrl.startsWith('http')) return logoUrl;
   return `${API_CONFIG.BASE_URL}${logoUrl.startsWith('/') ? logoUrl.slice(1) : logoUrl}`;
 }
+
+const DELETE_ACCOUNT_ATTEMPTS = 2;
 
 const LOGGED_OUT_STATE: Partial<AuthState> = {
   user: null,
@@ -445,12 +448,21 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   // Permanently deletes the account server-side, then clears everything stored
   // on the device. Throws (keeping the session) if the server did not confirm.
   deleteAccount: async () => {
-    try {
-      await authApi.deleteAccount();
-    } catch (error: any) {
-      // 401: the token no longer maps to an account — a previous delete request
-      // succeeded even though its response never arrived.
-      if ((error?.status ?? error?.response?.status) !== 401) throw error;
+    // Deleting twice is safe: the server answers a request for an account that is
+    // already gone the same way it answers the first one. So a request that never
+    // came back (cold start, dropped connection) is simply sent again instead of
+    // being reported as a failure the student cannot act on.
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await authApi.deleteAccount();
+        break;
+      } catch (error: any) {
+        const status = error?.status ?? error?.response?.status;
+        // 401: the token no longer maps to an account — a previous delete request
+        // succeeded even though its response never arrived.
+        if (status === 401) break;
+        if (status !== undefined || attempt === DELETE_ACCOUNT_ATTEMPTS) throw error;
+      }
     }
     // The server already dropped the push token registration.
     await clearSession({ removePushToken: true });
@@ -593,6 +605,17 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   clearError: () => set({ error: null }),
   setLoading: (loading: boolean) => set({ isLoading: loading }),
   dismissWelcome: () => set({ showWelcome: false }),
+
+  // Every screen draws the account's picture from the stored user, so writing it here is what makes
+  // one upload show up in the profile header, the lists and anywhere else at once.
+  setProfilePhoto: async (url: string | null) => {
+    const current = get().user;
+    if (!current) return;
+
+    const user: User = { ...current, profileImage: url ?? undefined };
+    set({ user });
+    await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+  },
 }));
 
 setOnUnauthorized(() => {
