@@ -241,6 +241,7 @@ export const EXAM_URLS = {
   GET_FOR_STUDENT: (id: number) =>
     `${BASE}api/OnlineExam/GetOnlineExamByIdForStuden/${id}`,
   DELETE: (id: number) => `${BASE}api/OnlineExam/${id}`,
+  CREATE: `${BASE}api/OnlineExam`,
   SUBMIT: `${BASE}api/OnlineExam/SubmitOnlineExamAsync`,
   GET_RESULTS: (examId: number, studentId: number) =>
     `${BASE}api/OnlineExam/GetExamResultsForStudent?examId=${examId}&studentId=${studentId}`,

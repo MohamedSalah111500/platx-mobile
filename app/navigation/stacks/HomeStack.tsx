@@ -14,6 +14,7 @@ import CourseSettingsScreen from '../../screens/courses/CourseSettingsScreen';
 import CourseStudentsScreen from '../../screens/courses/CourseStudentsScreen';
 import EnrollmentRequestsScreen from '../../screens/courses/EnrollmentRequestsScreen';
 import SendNotificationScreen from '../../screens/notifications/SendNotificationScreen';
+import CreateNewsScreen from '../../screens/news/CreateNewsScreen';
 import NotificationsListScreen from '../../screens/notifications/NotificationsListScreen';
 import HomeworkStack from './HomeworkStack';
 
@@ -35,6 +36,7 @@ export default function HomeStack() {
       <Stack.Screen name="CourseStudents" component={CourseStudentsScreen} />
       <Stack.Screen name="EnrollmentRequests" component={EnrollmentRequestsScreen} />
       <Stack.Screen name="SendNotification" component={SendNotificationScreen} />
+      <Stack.Screen name="CreateNews" component={CreateNewsScreen} />
       <Stack.Screen name="Homework" component={HomeworkStack} />
     </Stack.Navigator>
   );

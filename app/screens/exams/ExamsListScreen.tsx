@@ -34,7 +34,8 @@ const PAGE_SIZE = 20;
 export default function ExamsListScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { t, isRTL } = useRTL();
-  const { isStudent, user } = useAuth();
+  const { isStudent, user, can } = useAuth();
+  const canCreateExam = can('EXAMS_CREATE');
   const [studentTab, setStudentTab] = useState<'exams' | 'results'>('exams');
   const [exams, setExams] = useState<OnlineExamListItem[]>([]);
   const [history, setHistory] = useState<ExamHistoryItem[]>([]);
@@ -274,6 +275,16 @@ export default function ExamsListScreen({ navigation }: Props) {
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
           {t('exams.title')}
         </Text>
+        {canCreateExam && (
+          <TouchableOpacity
+            style={[styles.createBtn, { backgroundColor: theme.colors.primary }]}
+            onPress={() => navigation.navigate('CreateExam')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="add" size={18} color="#fff" />
+            <Text style={styles.createBtnText}>{t('createExam.new')}</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {isStudent && (
@@ -370,7 +381,23 @@ export default function ExamsListScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  createBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  createBtnText: {
+    color: '#fff',
+    fontSize: fontSize.xs,
+    fontFamily: 'Cairo_700Bold',
+  },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,

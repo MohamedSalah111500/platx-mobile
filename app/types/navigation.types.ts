@@ -61,6 +61,7 @@ export type HomeStackParamList = {
   CourseStudents: { courseId: number; courseName?: string };
   EnrollmentRequests: { courseId?: number; courseName?: string } | undefined;
   SendNotification: undefined;
+  CreateNews: undefined;
 };
 
 export type CoursesStackParamList = {
@@ -97,6 +98,7 @@ export type NotificationsStackParamList = {
 
 export type ExamsStackParamList = {
   ExamsList: undefined;
+  CreateExam: undefined;
   ExamTaking: { examId: number };
   ExamResult: { examId: number };
 };

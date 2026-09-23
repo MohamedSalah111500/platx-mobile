@@ -16,11 +16,11 @@ export async function checkAppVersion(force = false): Promise<void> {
 
   try {
     const result = await appVersionApi.check(platform, currentVersion);
-    useUIStore.getState().setUpdateRequired(
-      result.updateRequired
-        ? { storeUrl: result.storeUrl, latestVersion: result.latestVersion, currentVersion }
-        : null,
-    );
+    const info = { storeUrl: result.storeUrl, latestVersion: result.latestVersion, currentVersion };
+    const ui = useUIStore.getState();
+    ui.setUpdateRequired(result.updateRequired ? info : null);
+    // An optional update is only a suggestion, so it never replaces the blocking screen.
+    ui.setUpdateAvailable(!result.updateRequired && result.updateAvailable ? info : null);
   } catch (err) {
     logger.log(`[AppVersion] check skipped: ${(err as any)?.message ?? err}`);
   }

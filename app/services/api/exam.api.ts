@@ -6,6 +6,7 @@ import type {
   StudentExamSubmissionPayload,
   ExamResult,
   ExamHistoryItem,
+  CreateOnlineExamPayload,
 } from '../../types/exam.types';
 
 export const examApi = {
@@ -40,6 +41,12 @@ export const examApi = {
       ? EXAM_URLS.GET_FOR_STUDENT(examId)
       : EXAM_URLS.GET_BY_ID(examId);
     const { data } = await apiClient.get<any>(url);
+    return data;
+  },
+
+  // Staff/Admin only. Returns the new exam id.
+  createOnlineExam: async (payload: CreateOnlineExamPayload): Promise<number> => {
+    const { data } = await apiClient.post<number>(EXAM_URLS.CREATE, payload);
     return data;
   },
 

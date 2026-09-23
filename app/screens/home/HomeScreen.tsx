@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -82,6 +83,7 @@ export default function HomeScreen({ navigation }: Props) {
     if (isStudent) fetchUnreadCount();
   }, [isStudent, fetchUnreadCount]);
   const canReports = can('REPORTS');
+  const canManageNews = can('MANAGE_NEWS');
 
   // ------------------------------------------------------------------ data
   const loadData = async () => {
@@ -115,15 +117,7 @@ export default function HomeScreen({ navigation }: Props) {
         // reports may not be available
       }
     }
-    try {
-      const newsRes = await newsApi.getAll(1, 3, undefined, domain ?? undefined);
-      setNews(newsRes.items || []);
-      setNewsError(null);
-    } catch (err: any) {
-      console.error('[Home] news load failed', err);
-      setNewsError(err?.userMessage || t('errors.failedToLoad'));
-      setNews([]);
-    }
+    await loadNews();
     try {
       const coursesRes = (isTeacherOrAdmin || !domain)
         ? await coursesApi.getAll(1, 6)
@@ -152,6 +146,31 @@ export default function HomeScreen({ navigation }: Props) {
       // honor board may not be available
     }
   };
+
+  const loadNews = async () => {
+    try {
+      const newsRes = await newsApi.getAll(1, 3, undefined, domain ?? undefined);
+      setNews(newsRes.items || []);
+      setNewsError(null);
+    } catch (err: any) {
+      console.error('[Home] news load failed', err);
+      setNewsError(err?.userMessage || t('errors.failedToLoad'));
+      setNews([]);
+    }
+  };
+
+  // Coming back from publishing a news item (or from any other screen) should show
+  // it straight away, without reloading the whole dashboard.
+  const skipFirstFocus = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (skipFirstFocus.current) {
+        skipFirstFocus.current = false;
+        return;
+      }
+      loadNews();
+    }, [domain]),
+  );
 
   // Only students own courses. The student id is resolved from /Students/me
   // after login, so this re-runs once it arrives.
@@ -1097,6 +1116,19 @@ export default function HomeScreen({ navigation }: Props) {
                 </View>
                 <Text style={styles.quickActionText}>{t('enrollmentRequests.title')}</Text>
               </TouchableOpacity>
+
+              {canManageNews && (
+                <TouchableOpacity
+                  style={styles.quickActionPill}
+                  activeOpacity={0.7}
+                  onPress={() => { play('pop'); navigation.navigate('CreateNews'); }}
+                >
+                  <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[2]) }]}>
+                    <Ionicons name="newspaper-outline" size={16} color={ACCENT_COLORS[2].accent} />
+                  </View>
+                  <Text style={styles.quickActionText}>{t('createNews.new')}</Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={styles.quickActionPill}

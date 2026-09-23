@@ -626,7 +626,13 @@
     "addCommentFailed": "Failed to post comment. Please try again.",
     "deleteComment": "Delete Comment",
     "deleteCommentConfirm": "Delete this comment? This cannot be undone.",
-    "deleteCommentFailed": "Failed to delete comment."
+    "deleteCommentFailed": "Failed to delete comment.",
+    "categories": {
+      "announcement": "Announcement",
+      "event": "Event",
+      "achievement": "Achievement",
+      "general": "General"
+    }
   },
   "events": {
     "title": "Events",
@@ -866,5 +872,66 @@
     "remove": "Remove photo",
     "failed": "Could not update the photo. Please try again.",
     "cameraDenied": "Allow camera access first."
+  },
+  "createNews": {
+    "new": "Publish news",
+    "title": "Publish news",
+    "titleLabel": "Headline",
+    "titlePlaceholder": "A short, clear headline",
+    "subtitleLabel": "Subtitle",
+    "subtitlePlaceholder": "One line that adds context",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "e.g. Announcement",
+    "bodyLabel": "Story",
+    "bodyPlaceholder": "Write the news for your students...",
+    "addImage": "Add a cover image",
+    "removeImage": "Remove image",
+    "permissionDenied": "Photo library permission is required to pick an image.",
+    "publish": "Publish",
+    "published": "The news has been published.",
+    "failed": "Could not publish the news. Please try again."
+  },
+  "createExam": {
+    "new": "New exam",
+    "title": "Create an exam",
+    "nameLabel": "Exam name",
+    "namePlaceholder": "e.g. Unit 3 quiz",
+    "durationLabel": "Duration (minutes)",
+    "passMarkLabel": "Pass mark",
+    "passMarkPlaceholder": "Optional",
+    "showAnswers": "Show students the correct answers afterwards",
+    "questions": "Questions",
+    "question": "Question",
+    "questionPlaceholder": "Write the question...",
+    "typeSingle": "One answer",
+    "typeMulti": "Several answers",
+    "typeTrueFalse": "True / False",
+    "typeEssay": "Written answer",
+    "true": "True",
+    "false": "False",
+    "answer": "Answer",
+    "addAnswer": "Add an answer",
+    "addQuestion": "Add a question",
+    "pickCorrect": "Tap the circle next to the correct answer.",
+    "pickCorrectMulti": "Tap every correct answer.",
+    "score": "Points",
+    "audience": "Who takes this exam",
+    "sendToAll": "All students",
+    "noGroups": "No groups available yet.",
+    "chooseGroups": "Choose at least one group.",
+    "nameRequired": "Give the exam a name.",
+    "durationRequired": "Set a duration in minutes.",
+    "passMarkInvalid": "The pass mark must be a number.",
+    "questionRequired": "Every question needs text.",
+    "answerRequired": "Fill in every answer.",
+    "correctRequired": "Mark the correct answer.",
+    "create": "Create exam",
+    "created": "The exam has been created.",
+    "failed": "Could not create the exam. Please try again."
+  },
+  "updateAvailable": {
+    "title": "A new version is available",
+    "message": "Version {{version}} is on the store with the latest improvements.",
+    "update": "Update"
   }
 }

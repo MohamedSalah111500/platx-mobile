@@ -626,7 +626,13 @@
     "addCommentFailed": "فشل نشر التعليق. حاول مرة أخرى.",
     "deleteComment": "حذف التعليق",
     "deleteCommentConfirm": "هل تريد حذف هذا التعليق؟ لا يمكن التراجع عن هذا الإجراء.",
-    "deleteCommentFailed": "فشل حذف التعليق."
+    "deleteCommentFailed": "فشل حذف التعليق.",
+    "categories": {
+      "announcement": "إعلان",
+      "event": "فعالية",
+      "achievement": "إنجاز",
+      "general": "عام"
+    }
   },
   "events": {
     "title": "الأحداث",
@@ -866,5 +872,66 @@
     "remove": "إزالة الصورة",
     "failed": "تعذّر تحديث الصورة. حاول مرة أخرى.",
     "cameraDenied": "لازم تسمح باستخدام الكاميرا الأول."
+  },
+  "createNews": {
+    "new": "نشر خبر",
+    "title": "نشر خبر",
+    "titleLabel": "العنوان",
+    "titlePlaceholder": "عنوان قصير وواضح",
+    "subtitleLabel": "العنوان الفرعي",
+    "subtitlePlaceholder": "سطر يوضح الخبر",
+    "categoryLabel": "التصنيف",
+    "categoryPlaceholder": "مثال: إعلان",
+    "bodyLabel": "تفاصيل الخبر",
+    "bodyPlaceholder": "اكتب الخبر لطلابك...",
+    "addImage": "إضافة صورة للخبر",
+    "removeImage": "حذف الصورة",
+    "permissionDenied": "لازم تسمح بالوصول للصور عشان تختار صورة.",
+    "publish": "نشر",
+    "published": "تم نشر الخبر.",
+    "failed": "تعذر نشر الخبر. حاول مرة أخرى."
+  },
+  "createExam": {
+    "new": "امتحان جديد",
+    "title": "إنشاء امتحان",
+    "nameLabel": "اسم الامتحان",
+    "namePlaceholder": "مثال: اختبار الوحدة الثالثة",
+    "durationLabel": "المدة (بالدقائق)",
+    "passMarkLabel": "درجة النجاح",
+    "passMarkPlaceholder": "اختياري",
+    "showAnswers": "عرض الإجابات الصحيحة للطلاب بعد الانتهاء",
+    "questions": "الأسئلة",
+    "question": "سؤال",
+    "questionPlaceholder": "اكتب السؤال...",
+    "typeSingle": "إجابة واحدة",
+    "typeMulti": "أكثر من إجابة",
+    "typeTrueFalse": "صح / خطأ",
+    "typeEssay": "إجابة مكتوبة",
+    "true": "صح",
+    "false": "خطأ",
+    "answer": "إجابة",
+    "addAnswer": "إضافة إجابة",
+    "addQuestion": "إضافة سؤال",
+    "pickCorrect": "اضغط على الدائرة جنب الإجابة الصحيحة.",
+    "pickCorrectMulti": "اضغط على كل إجابة صحيحة.",
+    "score": "الدرجة",
+    "audience": "مين هيحل الامتحان",
+    "sendToAll": "كل الطلاب",
+    "noGroups": "مفيش مجموعات متاحة.",
+    "chooseGroups": "اختار مجموعة واحدة على الأقل.",
+    "nameRequired": "اكتب اسم الامتحان.",
+    "durationRequired": "حدد مدة الامتحان بالدقائق.",
+    "passMarkInvalid": "درجة النجاح لازم تكون رقم.",
+    "questionRequired": "كل سؤال لازم يكون مكتوب.",
+    "answerRequired": "اكتب كل الإجابات.",
+    "correctRequired": "حدد الإجابة الصحيحة.",
+    "create": "إنشاء الامتحان",
+    "created": "تم إنشاء الامتحان.",
+    "failed": "تعذر إنشاء الامتحان. حاول مرة أخرى."
+  },
+  "updateAvailable": {
+    "title": "في نسخة جديدة متاحة",
+    "message": "النسخة {{version}} موجودة على المتجر بآخر التحسينات.",
+    "update": "تحديث"
   }
 }

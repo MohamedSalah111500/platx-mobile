@@ -34,6 +34,8 @@ export function Input({
   rightIcon,
   onRightIconPress,
   secureTextEntry,
+  style: inputStyle,
+  multiline,
   ...inputProps
 }: InputProps) {
   const { theme } = useTheme();
@@ -66,6 +68,7 @@ export function Input({
       <View
         style={[
           styles.inputContainer,
+          multiline && { alignItems: 'flex-start' },
           {
             backgroundColor: theme.dark ? theme.colors.inputBackground : theme.colors.card,
             borderColor,
@@ -80,20 +83,28 @@ export function Input({
         )}
 
         <TextInput
-          style={{
-            flex: 1,
-            height: 50,
-            paddingVertical: 0,
-            fontSize: fontSize.base,
-            fontFamily: 'Cairo_400Regular',
-            color: theme.colors.inputText,
-            textAlign: I18nManager.isRTL ? 'right' : 'left',
-            writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
-          }}
+          style={[
+            {
+              flex: 1,
+              fontSize: fontSize.base,
+              fontFamily: 'Cairo_400Regular',
+              color: theme.colors.inputText,
+              textAlign: I18nManager.isRTL ? 'right' : 'left',
+              writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+            },
+            // A multi-line field grows with its text instead of staying one row tall,
+            // and starts writing at the top of the box.
+            multiline
+              ? { minHeight: 110, paddingVertical: 10, textAlignVertical: 'top' as const }
+              : { height: 50, paddingVertical: 0 },
+            // Caller styles refine the field rather than replacing it.
+            inputStyle,
+          ]}
           placeholderTextColor={theme.colors.inputPlaceholder}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           secureTextEntry={secureTextEntry && !isPasswordVisible}
+          multiline={multiline}
           {...inputProps}
         />
 

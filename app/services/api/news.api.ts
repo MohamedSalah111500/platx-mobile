@@ -1,6 +1,6 @@
 import apiClient from './client';
 import { NEWS_URLS, NEWS_COMMENTS_URLS, withPagination } from './endpoints';
-import type { NewsItem, NewsComment } from '../../types/news.types';
+import type { NewsItem, NewsComment, CreateNewsInput } from '../../types/news.types';
 import type { PaginatedResponse } from '../../types/api.types';
 
 export const newsApi = {
@@ -51,6 +51,19 @@ export const newsApi = {
   getSingle: async (id: number | string, domain?: string): Promise<NewsItem> => {
     const { data } = await apiClient.get<NewsItem>(NEWS_URLS.GET_SINGLE(id, domain || ''));
     return data;
+  },
+
+  // Backend NewsCreateDto is multipart: title, subtitle, description, category
+  // and an optional image.
+  createNews: async (input: CreateNewsInput): Promise<NewsItem> => {
+    const formData = new FormData();
+    formData.append('Title', input.title);
+    formData.append('SubTitle', input.subTitle);
+    formData.append('Description', input.description);
+    formData.append('Category', input.category);
+    if (input.staffId != null) formData.append('StaffId', String(input.staffId));
+    if (input.image) formData.append('Image', input.image as unknown as Blob);
+    return newsApi.create(formData);
   },
 
   create: async (formData: FormData): Promise<NewsItem> => {

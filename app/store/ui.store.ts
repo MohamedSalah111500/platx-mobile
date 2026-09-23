@@ -8,6 +8,8 @@ export interface UpdateRequiredInfo {
 
 interface UIState {
   updateRequired: UpdateRequiredInfo | null;
+  /** A newer store version exists but the current one still works. */
+  updateAvailable: UpdateRequiredInfo | null;
   isGlobalLoading: boolean;
   toastMessage: string | null;
   toastType: 'success' | 'error' | 'info' | 'warning' | null;
@@ -15,6 +17,8 @@ interface UIState {
 
 interface UIActions {
   setUpdateRequired: (info: UpdateRequiredInfo | null) => void;
+  setUpdateAvailable: (info: UpdateRequiredInfo | null) => void;
+  dismissUpdateAvailable: () => void;
   setGlobalLoading: (loading: boolean) => void;
   showToast: (
     message: string,
@@ -27,11 +31,17 @@ type UIStore = UIState & UIActions;
 
 export const useUIStore = create<UIStore>((set) => ({
   updateRequired: null,
+  updateAvailable: null,
   isGlobalLoading: false,
   toastMessage: null,
   toastType: null,
 
   setUpdateRequired: (info: UpdateRequiredInfo | null) => set({ updateRequired: info }),
+
+  setUpdateAvailable: (info: UpdateRequiredInfo | null) => set({ updateAvailable: info }),
+
+  // Dismissed for this launch only: the reminder comes back next time the app starts.
+  dismissUpdateAvailable: () => set({ updateAvailable: null }),
 
   setGlobalLoading: (loading: boolean) => set({ isGlobalLoading: loading }),
 

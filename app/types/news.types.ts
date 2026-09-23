@@ -14,6 +14,15 @@ export interface NewsItem {
   updatedAt?: string;
 }
 
+export interface CreateNewsInput {
+  title: string;
+  subTitle: string;
+  description: string;
+  category: string;
+  image?: { uri: string; name: string; type: string } | null;
+  staffId?: number | null;
+}
+
 export interface NewsComment {
   id: number;
   newsId: number;

@@ -16,6 +16,7 @@ import MainTabNavigator from './MainTabNavigator';
 import LiveClassroomScreen from '../screens/live/LiveClassroomScreen';
 import WelcomeSplash from '../components/WelcomeSplash';
 import UpdateRequiredScreen from '../screens/UpdateRequiredScreen';
+import UpdateAvailableBanner from '../components/UpdateAvailableBanner';
 import { useUIStore } from '../store/ui.store';
 import { checkAppVersion } from '../services/appVersionGate';
 
@@ -143,6 +144,7 @@ export default function RootNavigator() {
 
       {isAuthenticated && showWelcome && <WelcomeSplash />}
       {!bootstrapped && <BrandedLoading />}
+      {isAuthenticated && !updateRequired && <UpdateAvailableBanner />}
       {updateRequired && (
         <View style={StyleSheet.absoluteFill}>
           <UpdateRequiredScreen />

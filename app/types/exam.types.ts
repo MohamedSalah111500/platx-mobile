@@ -57,6 +57,53 @@ export interface OnlineExamListItem {
   createdAt?: string;
 }
 
+// ── Creating an exam (staff) ──────────────────────────────────────────────
+export const QUESTION_TYPE = {
+  SingleChoice: 1,
+  MultiChoice: 2,
+  TrueFalse: 3,
+  Essay: 4,
+} as const;
+
+export const EXAM_ONLINE_TYPE = {
+  /** Opens at a set date and time. */
+  Scheduled: 1,
+  /** Available as soon as it is created. */
+  Dynamic: 2,
+} as const;
+
+export interface ExamAnswerInput {
+  answerBody: string;
+  isCorrect: boolean;
+  orderNumber: number;
+}
+
+export interface ExamQuestionInput {
+  questionBody: string;
+  typeId: number;
+  maxScore: number;
+  answers: ExamAnswerInput[];
+}
+
+export interface CreateOnlineExamPayload {
+  name: string;
+  /** Only multiple-choice style exams can be graded without a teacher. */
+  isAutoCorrect: boolean;
+  isShowCorrectAnswers: boolean;
+  passMark?: number | null;
+  onlineType: number;
+  startDate?: string | null;
+  endDate?: string | null;
+  durationInMin?: number | null;
+  sendToAll: boolean;
+  /** Staff id of the teacher creating it, for attribution. */
+  createdBy?: number | null;
+  groupIds: number[];
+  subGroupIds: number[];
+  studentIds: number[];
+  questions: ExamQuestionInput[];
+}
+
 export interface StudentExamSubmissionPayload {
   examId: number;
   studentId: number;
