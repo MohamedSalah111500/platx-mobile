@@ -80,9 +80,9 @@ export default function ExamResultScreen({ navigation, route }: Props) {
     if (diffMin >= 60) {
       const h = Math.floor(diffMin / 60);
       const m = diffMin % 60;
-      return `${h}h ${m}m`;
+      return `${h} ${t('exams.hours')} ${m} ${t('exams.min')}`;
     }
-    return `${diffMin}m`;
+    return `${diffMin} ${t('exams.min')}`;
   };
 
   if (loading) {
