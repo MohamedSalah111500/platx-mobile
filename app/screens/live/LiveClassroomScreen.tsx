@@ -15,10 +15,12 @@ import {
   Dimensions,
   PermissionsAndroid,
   TurboModuleRegistry,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
+import { requestRecordingPermissionsAsync, setAudioModeAsync } from 'expo-audio';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../hooks/useAuth';
 import { useRTL } from '../../i18n/RTLProvider';
@@ -263,6 +265,29 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
 
   // ─── Request Permissions ──────────────────────
   const requestPermissions = async (): Promise<boolean> => {
+    // The microphone is what carries the lesson. iOS grants it silently on first
+    // use, so a teacher who once tapped "Don't Allow" would broadcast video with
+    // no sound and nothing would say why - ask for it explicitly instead.
+    try {
+      const mic = await requestRecordingPermissionsAsync();
+      if (!mic.granted) {
+        logger.log('[Live] microphone permission denied');
+        Alert.alert(
+          t('live.permissionsRequired'),
+          t('live.microphoneDenied'),
+          mic.canAskAgain
+            ? undefined
+            : [
+                { text: t('common.cancel'), style: 'cancel' },
+                { text: t('live.openSettings'), onPress: () => Linking.openSettings() },
+              ],
+        );
+        return false;
+      }
+    } catch (err) {
+      logger.log(`[Live] microphone permission check failed: ${String(err)}`);
+    }
+
     if (Platform.OS === 'android') {
       const permissions = [
         PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
@@ -281,6 +306,18 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
     }
     return true; // iOS handled via Info.plist
   };
+
+  // A live lesson behaves like a call: it has to be audible with the ring switch
+  // on silent and it needs the recording session. The app's sound effects set the
+  // opposite mode at startup, so claim it back while the room is open.
+  useEffect(() => {
+    setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true }).catch((err) =>
+      logger.log(`[Live] could not set the audio mode: ${String(err)}`),
+    );
+    return () => {
+      setAudioModeAsync({ playsInSilentMode: false, allowsRecording: false }).catch(() => {});
+    };
+  }, []);
 
   // ─── Agora Setup ─────────────────────────────
   useEffect(() => {
@@ -367,6 +404,26 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           onError: (errCode: number, msg: string) => {
             logger.log(`[Live] Agora error code=${errCode} msg=${msg}`);
             logger.recordError(new Error(`Agora error ${errCode}: ${msg}`), 'Live:Agora');
+          },
+          // 1 = capturing, 2 = encoding, 3 = failed. A non-zero error means the
+          // microphone never started (permission, or another app holding it).
+          onLocalAudioStateChanged: (_c: any, state: number, error: number) => {
+            logger.log(`[Live] local audio state=${state} error=${error}`);
+          },
+          // Reason 5 = the sender muted, 6 = the receiver muted, 7 = the sender left.
+          onRemoteAudioStateChanged: (
+            _c: any,
+            remoteUid: number,
+            state: number,
+            reason: number,
+          ) => {
+            logger.log(`[Live] remote audio uid=${remoteUid} state=${state} reason=${reason}`);
+          },
+          onUserMuteAudio: (_c: any, remoteUid: number, muted: boolean) => {
+            logger.log(`[Live] uid=${remoteUid} muted=${muted}`);
+          },
+          onAudioRoutingChanged: (routing: number) => {
+            logger.log(`[Live] audio route=${routing}`);
           },
         };
         AgoraService.registerEvents(eventHandler);

@@ -519,7 +519,9 @@
     "invalidTokenResponse": "Failed to get live session token.",
     "videoUnavailable": "Video is not available in this build",
     "videoUnavailableHint": "Use a development build for full video support",
-    "untitled": "Untitled session"
+    "untitled": "Untitled session",
+    "microphoneDenied": "PlatX needs the microphone so your students can hear you. Enable it for PlatX in your device settings.",
+    "openSettings": "Open settings"
   },
   "reports": {
     "title": "Reports",
