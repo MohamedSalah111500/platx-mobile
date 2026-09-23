@@ -109,6 +109,10 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   const [submittingPayment, setSubmittingPayment] = useState(false);
 
   const chatListRef = useRef<FlatList>(null);
+  // Join already answers with a token bound to a server-assigned Agora uid. Reusing
+  // it avoids a second round trip and keeps two people from picking the same uid,
+  // which Agora resolves by kicking the first one out of the channel.
+  const agoraCredsRef = useRef<{ token?: string; uid?: number } | null>(null);
 
   // Numeric id used for hub calls (same id JoinClassroom is invoked with).
   const hubUserId = user?.studentId ?? 0;
@@ -169,6 +173,12 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           liveClassroomId: roomId,
           staffId: userId,
         });
+      }
+      if (response?.token) {
+        agoraCredsRef.current = {
+          token: response.token,
+          uid: typeof response.uid === 'number' ? response.uid : undefined,
+        };
       }
       const status = response?.status;
       if (status === 1) {
@@ -301,16 +311,31 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           return;
         }
 
-        logger.log(`[Live] fetching Agora token for channel=${room.channelName}`);
-        const tokenResp = await liveApi.getToken({
-          channelName: room.channelName,
-          uid: user.studentId ?? 0,
-          role: isTeacher ? 1 : 0,
-        });
+        const joinCreds = agoraCredsRef.current;
+        let token = joinCreds?.token;
+        let uid = joinCreds?.uid;
+        let appId: string | undefined;
 
-        const { token, appId, uid } = tokenResp || ({} as any);
+        if (!token) {
+          logger.log(`[Live] fetching Agora token for channel=${room.channelName}`);
+          const tokenResp = await liveApi.getToken({
+            channelName: room.channelName,
+            uid: uid ?? user.studentId ?? 0,
+            role: isTeacher ? 1 : 0,
+          });
+          token = tokenResp?.token;
+          uid = typeof tokenResp?.uid === 'number' ? tokenResp.uid : uid;
+          appId = (tokenResp as any)?.appId as string | undefined;
+        }
+
+        // Servers that leave the app id out of the token response publish it on its
+        // own endpoint, so fetch it there instead of failing the join.
+        if (token && !appId) {
+          logger.log('[Live] no appId with the token, asking the config endpoint');
+          appId = (await liveApi.getAgoraAppId().catch(() => null)) ?? undefined;
+        }
         if (!appId || !token) {
-          logger.log(`[Live] token response missing appId/token: ${JSON.stringify(tokenResp).substring(0, 200)}`);
+          logger.log(`[Live] cannot join: appId=${!!appId} token=${!!token}`);
           Alert.alert(
             t('common.error'),
             t('live.invalidTokenResponse') || 'Failed to get live session token.',

@@ -187,6 +187,8 @@ export const LIVE_URLS = {
   JOIN_STAFF: `${BASE}api/liveclassroom/join-staff`,
   ACTIVE: `${BASE}api/liveclassroom/active`,
   GET_TOKEN: `${BASE}api/liveclassroom/token`,
+  // Agora app id, for servers whose token response does not include it.
+  CONFIG: `${BASE}api/liveclassroom/config`,
   GET_ROOM: (roomId: number) => `${BASE}api/liveclassroom/${roomId}`,
   GET_PARTICIPANTS: (roomId: number) => `${BASE}api/liveclassroom/${roomId}/participants`,
   APPROVE: `${BASE}api/liveclassroom/approve`,

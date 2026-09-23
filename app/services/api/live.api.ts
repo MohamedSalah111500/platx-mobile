@@ -70,6 +70,11 @@ export const liveApi = {
     return data;
   },
 
+  getAgoraAppId: async (): Promise<string | null> => {
+    const { data } = await apiClient.get<{ appId?: string }>(LIVE_URLS.CONFIG);
+    return data?.appId ?? null;
+  },
+
   getRoom: async (roomId: number): Promise<LiveSession> => {
     const { data } = await apiClient.get<LiveSession>(LIVE_URLS.GET_ROOM(roomId));
     return data;
