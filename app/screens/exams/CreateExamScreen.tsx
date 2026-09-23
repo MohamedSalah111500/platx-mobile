@@ -105,7 +105,6 @@ export default function CreateExamScreen({ navigation }: Props) {
     updateQuestion(index, { type, answers: defaultAnswers(type, t) });
 
   const addQuestion = () => {
-    play('tap');
     setQuestions((prev) => [
       ...prev,
       { body: '', type: QUESTION_TYPE.SingleChoice, score: '1', answers: defaultAnswers(QUESTION_TYPE.SingleChoice, t) },

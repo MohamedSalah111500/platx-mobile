@@ -172,7 +172,6 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
   const openLink = async () => {
     const target = lesson?.linkUrl;
     if (!target) return;
-    play('tap');
     try {
       await WebBrowser.openBrowserAsync(target);
     } catch {}
@@ -220,7 +219,6 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
 
   const openDocument = async () => {
     if (fileBusy) return;
-    play('tap');
     setFileBusy('open');
     try {
       const file = await ensureLocalFile();
@@ -254,7 +252,6 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
 
   const downloadDocument = async () => {
     if (fileBusy) return;
-    play('tap');
     setFileBusy('download');
     try {
       const file = await ensureLocalFile();

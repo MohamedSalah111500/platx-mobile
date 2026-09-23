@@ -21,7 +21,6 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import { chatApi } from '../../services/api/chat.api';
-import { useSound } from '../../hooks/useSound';
 import type { ChatStackParamList } from '../../types/navigation.types';
 import type { ChatMessage } from '../../types/chat.types';
 import { isOwnMessage as checkIsOwnMessage } from './isOwnMessage';
@@ -44,7 +43,6 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
   const { theme } = useTheme();
   const { user, isStudent } = useAuth();
   const { t, isRTL } = useRTL();
-  const { play } = useSound();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -85,7 +83,6 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
 
   const handleSend = async () => {
     if (!newMessage.trim() || sending) return;
-    play('swoosh');
     const messageText = newMessage.trim();
     setSending(true);
     setNewMessage('');

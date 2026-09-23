@@ -45,7 +45,6 @@ export default function SendNotificationScreen({ navigation }: Props) {
   }, [sendToAll, groups.length]);
 
   const toggleGroup = (id: number) => {
-    play('tap');
     setSelected((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);

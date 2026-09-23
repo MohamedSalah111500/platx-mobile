@@ -203,7 +203,6 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
   };
 
   const handlePurchase = () => {
-    play('tap');
     navigation.navigate('Checkout', {
       courseId,
       title: course?.title || course?.name,
@@ -252,7 +251,6 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
     }
     const firstLesson = isEnrolled || isOwner ? getFirstLesson() : getFreePreviewLesson();
     if (firstLesson) {
-      play('swoosh');
       navigation.navigate('LessonPlayer', {
         lessonId: firstLesson.id,
         courseId,
@@ -310,11 +308,9 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
   const openLesson = (lesson: Lesson) => {
     if (isLockedForStudent) return;
     if (lockedIds.includes(lesson.id)) {
-      play('pop');
       Alert.alert(t('common.info'), t('quiz.completeToContinue'));
       return;
     }
-    play('tap');
     navigation.navigate('LessonPlayer', {
       lessonId: lesson.id,
       courseId,
@@ -325,7 +321,6 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
 
   const handleViewCertificate = async () => {
     if (!certificateCode) return;
-    play('tap');
     try {
       await WebBrowser.openBrowserAsync(CERTIFICATE_URLS.WEB_VERIFY(certificateCode));
     } catch {}
@@ -495,7 +490,6 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                 style={styles.manageRow}
                 activeOpacity={0.7}
                 onPress={() => {
-                  play('tap');
                   navigation.navigate(row.screen, { courseId, courseName: course.title || course.name });
                 }}
               >
@@ -547,7 +541,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                 <View key={section.id} style={[styles.sectionCard, { backgroundColor: theme.colors.card, borderColor: lineColor }]}>
                   <TouchableOpacity
                     style={[styles.sectionHeader, { borderBottomColor: lineColor, borderBottomWidth: isExpanded && lessonCount > 0 ? 1 : 0 }]}
-                    onPress={() => { play('pop'); toggleSection(section.id); }}
+                    onPress={() => { toggleSection(section.id); }}
                     activeOpacity={0.7}
                   >
                     <View style={[styles.sectionNumBadge, { backgroundColor: theme.colors.primary }]}>

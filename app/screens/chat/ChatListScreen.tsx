@@ -23,7 +23,6 @@ import { groupsApi } from '../../services/api/groups.api';
 import { subGroupsApi } from '../../services/api/subgroups.api';
 import { chatApi } from '../../services/api/chat.api';
 import type { ChatStackParamList } from '../../types/navigation.types';
-import { useSound } from '../../hooks/useSound';
 import type { Group, SubGroupLookup } from '../../types/group.types';
 import type { StaffChatContact } from '../../types/chat.types';
 
@@ -45,7 +44,6 @@ export default function ChatListScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { user, isStudent } = useAuth();
   const { t, isRTL } = useRTL();
-  const { play } = useSound();
   const insets = useSafeAreaInsets();
   const [groups, setGroups] = useState<Group[]>([]);
   const [subGroups, setSubGroups] = useState<SubGroupLookup[]>([]);
@@ -120,7 +118,6 @@ export default function ChatListScreen({ navigation }: Props) {
       <TouchableOpacity
         style={[styles.card, { backgroundColor: theme.colors.card }]}
         onPress={() => {
-          play('tap');
           navigation.navigate('ChatRoom', {
             groupId: item.groupId,
             groupName: name,
@@ -160,7 +157,6 @@ export default function ChatListScreen({ navigation }: Props) {
       <TouchableOpacity
         style={[styles.card, { backgroundColor: theme.colors.card }]}
         onPress={() => {
-          play('tap');
           navigation.navigate('ChatRoom', {
             groupId: item.id,
             groupName: item.name,
@@ -198,7 +194,6 @@ export default function ChatListScreen({ navigation }: Props) {
         { backgroundColor: theme.colors.surface, borderColor: theme.colors.divider },
       ]}
       onPress={() => {
-        play('tap');
         navigation.navigate('ChatRoom', {
           groupId: item.groupId,
           groupName: item.name,

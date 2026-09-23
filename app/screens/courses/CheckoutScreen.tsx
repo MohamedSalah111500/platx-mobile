@@ -140,7 +140,7 @@ export default function CheckoutScreen({ navigation, route }: Props) {
           styles.methodTab,
           { borderColor: active ? theme.colors.primary : theme.colors.border, backgroundColor: active ? theme.colors.primary + '15' : theme.colors.card },
         ]}
-        onPress={() => { play('tap'); setSelectedMethod(methodValue); }}
+        onPress={() => { setSelectedMethod(methodValue); }}
         activeOpacity={0.75}
       >
         <Text style={[styles.methodTabText, { color: active ? theme.colors.primary : theme.colors.textSecondary }]}>

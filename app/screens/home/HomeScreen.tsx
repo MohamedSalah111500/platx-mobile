@@ -31,7 +31,6 @@ import type { EventItem } from '../../types/event.types';
 import type { Course, Enrollment } from '../../types/course.types';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { toLocalDateString } from '../../utils/date';
-import { useSound } from '../../hooks/useSound';
 import { GradientBackground } from '../../components/ui/GradientBackground';
 import { studentsApi } from '../../services/api/students.api';
 import { honorBoardApi, type HonorBoardEntry } from '../../services/api/honor-board.api';
@@ -57,7 +56,6 @@ export default function HomeScreen({ navigation }: Props) {
   const { theme, isDark } = useTheme();
   const { user, role, domain, isStudent, isStaff, isAdmin, can } = useAuth();
   const { t, isRTL, locale } = useRTL();
-  const { play } = useSound();
   const insets = useSafeAreaInsets();
 
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -923,7 +921,6 @@ export default function HomeScreen({ navigation }: Props) {
             style={styles.reportsWidget}
             activeOpacity={0.8}
             onPress={() => {
-              play('tap');
               navigation.getParent()?.navigate('ProfileTab', { screen: 'Reports', initial: false });
             }}
           >
@@ -952,7 +949,6 @@ export default function HomeScreen({ navigation }: Props) {
               style={styles.statCardDark}
               activeOpacity={0.85}
               onPress={() => {
-                play('tap');
                 navigation.getParent()?.navigate('ProfileTab', { screen: 'HonorBoard', initial: false });
               }}
             >
@@ -1046,7 +1042,7 @@ export default function HomeScreen({ navigation }: Props) {
           <TouchableOpacity
             style={styles.quickActionPill}
             activeOpacity={0.7}
-            onPress={() => { play('pop'); navigation.navigate('CoursesList'); }}
+            onPress={() => { navigation.navigate('CoursesList'); }}
           >
             <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[0]) }]}>
               <Ionicons name="book-outline" size={16} color={ACCENT_COLORS[0].accent} />
@@ -1057,7 +1053,7 @@ export default function HomeScreen({ navigation }: Props) {
           <TouchableOpacity
             style={styles.quickActionPill}
             activeOpacity={0.7}
-            onPress={() => { play('pop'); navigation.navigate('Homework'); }}
+            onPress={() => { navigation.navigate('Homework'); }}
           >
             <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[2]) }]}>
               <Ionicons name="document-text-outline" size={16} color={ACCENT_COLORS[2].accent} />
@@ -1068,7 +1064,7 @@ export default function HomeScreen({ navigation }: Props) {
           <TouchableOpacity
             style={styles.quickActionPill}
             activeOpacity={0.7}
-            onPress={() => { play('pop'); navigation.getParent()?.navigate('ChatTab'); }}
+            onPress={() => { navigation.getParent()?.navigate('ChatTab'); }}
           >
             <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[1]) }]}>
               <Ionicons name="chatbubbles-outline" size={16} color={ACCENT_COLORS[1].accent} />
@@ -1080,7 +1076,6 @@ export default function HomeScreen({ navigation }: Props) {
             style={styles.quickActionPill}
             activeOpacity={0.7}
             onPress={() => {
-              play('pop');
               navigation.getParent()?.navigate('ProfileTab', { screen: 'Groups', initial: false });
             }}
           >
@@ -1094,7 +1089,6 @@ export default function HomeScreen({ navigation }: Props) {
             style={styles.quickActionPill}
             activeOpacity={0.7}
             onPress={() => {
-              play('pop');
               navigation.getParent()?.navigate('ProfileTab', { screen: 'LiveSessions', initial: false });
             }}
           >
@@ -1109,7 +1103,7 @@ export default function HomeScreen({ navigation }: Props) {
               <TouchableOpacity
                 style={styles.quickActionPill}
                 activeOpacity={0.7}
-                onPress={() => { play('pop'); navigation.navigate('EnrollmentRequests'); }}
+                onPress={() => { navigation.navigate('EnrollmentRequests'); }}
               >
                 <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[1]) }]}>
                   <Ionicons name="mail-unread-outline" size={16} color={ACCENT_COLORS[1].accent} />
@@ -1121,7 +1115,7 @@ export default function HomeScreen({ navigation }: Props) {
                 <TouchableOpacity
                   style={styles.quickActionPill}
                   activeOpacity={0.7}
-                  onPress={() => { play('pop'); navigation.navigate('CreateNews'); }}
+                  onPress={() => { navigation.navigate('CreateNews'); }}
                 >
                   <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[2]) }]}>
                     <Ionicons name="newspaper-outline" size={16} color={ACCENT_COLORS[2].accent} />
@@ -1133,7 +1127,7 @@ export default function HomeScreen({ navigation }: Props) {
               <TouchableOpacity
                 style={styles.quickActionPill}
                 activeOpacity={0.7}
-                onPress={() => { play('pop'); navigation.navigate('SendNotification'); }}
+                onPress={() => { navigation.navigate('SendNotification'); }}
               >
                 <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[0]) }]}>
                   <Ionicons name="megaphone-outline" size={16} color={ACCENT_COLORS[0].accent} />
@@ -1160,7 +1154,6 @@ export default function HomeScreen({ navigation }: Props) {
                   key={course.id}
                   activeOpacity={0.85}
                   onPress={() => {
-                    play('tap');
                     navigation.navigate('CourseDetail', { courseId: course.id });
                   }}
                   style={{
@@ -1273,7 +1266,6 @@ export default function HomeScreen({ navigation }: Props) {
                     style={styles.courseCard}
                     activeOpacity={0.85}
                     onPress={() => {
-                      play('tap');
                       navigation.navigate('CourseDetail', { courseId: course.id });
                     }}
                   >
@@ -1349,7 +1341,6 @@ export default function HomeScreen({ navigation }: Props) {
                   style={styles.eventCard}
                   activeOpacity={0.85}
                   onPress={() => {
-                    play('tap');
                     navigation.navigate('EventDetail', { eventId: event.id });
                   }}
                 >
@@ -1393,7 +1384,7 @@ export default function HomeScreen({ navigation }: Props) {
                 key={item.id}
                 style={styles.newsCard}
                 activeOpacity={0.85}
-                onPress={() => { play('tap'); navigation.navigate('NewsDetail', { newsId: item.id, newsItem: item }); }}
+                onPress={() => { navigation.navigate('NewsDetail', { newsId: item.id, newsItem: item }); }}
               >
                 <View style={styles.newsImageContainer}>
                   {getFullImageUrl(item.imageUrl || item.imageURl) ? (

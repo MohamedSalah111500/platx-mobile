@@ -9,7 +9,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../theme/ThemeProvider';
 import { useRTL } from '../i18n/RTLProvider';
-import { useSound } from '../hooks/useSound';
 import { spacing, borderRadius } from '../theme/spacing';
 import type { MainTabParamList } from '../types/navigation.types';
 
@@ -67,7 +66,6 @@ const TAB_BAR_HEIGHT = isTablet ? 76 : 68;
 function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { play } = useSound();
 
   const focusedRoute = state.routes[state.index];
   if (shouldHideTabBar(focusedRoute)) return null;
@@ -100,7 +98,6 @@ function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           const onPress = () => {
             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
             if (!focused && !event.defaultPrevented) {
-              play('tap');
               navigation.navigate(route.name, route.params);
             }
           };

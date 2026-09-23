@@ -65,7 +65,6 @@ export default function EnrollStudentScreen({ navigation, route }: Props) {
 
   const confirmEnroll = (student: TopStudent) => {
     const name = `${student.firstName || ''} ${student.lastName || ''}`.trim();
-    play('tap');
     Alert.alert(
       t('enrollStudent.confirmTitle'),
       t(REQUEST_ONLY ? 'enrollStudent.joinConfirmMessage' : 'enrollStudent.confirmMessage', { name, course: courseName || '' }),

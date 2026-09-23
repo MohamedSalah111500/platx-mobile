@@ -62,7 +62,6 @@ export default function EnrollmentRequestsScreen({ navigation, route }: Props) {
   };
 
   const decide = (r: PendingReservation, approve: boolean) => {
-    play('tap');
     Alert.alert(
       t(approve ? 'enrollmentRequests.confirmApproveTitle' : 'enrollmentRequests.confirmRejectTitle'),
       t(approve ? 'enrollmentRequests.confirmApprove' : 'enrollmentRequests.confirmReject', {

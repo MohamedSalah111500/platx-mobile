@@ -18,7 +18,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
-import { useSound } from '../../hooks/useSound';
 import { Spinner } from '../ui/Spinner';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { fontSize, typography } from '../../theme/typography';
@@ -38,7 +37,6 @@ type Props = {
 export default function NewsPhotoViewerModal({ visible, onClose, newsId, imageUrl }: Props) {
   const { theme } = useTheme();
   const { t, isRTL } = useRTL();
-  const { play } = useSound();
   const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
@@ -70,7 +68,6 @@ export default function NewsPhotoViewerModal({ visible, onClose, newsId, imageUr
       const comment = await newsApi.addComment(newsId, content);
       setComments((prev) => [...prev, comment]);
       setDraft('');
-      play('tap');
     } catch {
       Alert.alert(t('common.error'), t('news.addCommentFailed'));
     } finally {
