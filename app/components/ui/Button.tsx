@@ -107,6 +107,12 @@ export function Button({
       ...sizeStyles[size],
       ...variantStyles[variant],
       fontFamily: 'Cairo_700Bold',
+      // A long label shrinks and centres instead of pushing the icon out of the
+      // button, and Cairo sits centred on Android without its extra font padding.
+      flexShrink: 1,
+      textAlign: 'center',
+      textAlignVertical: 'center',
+      includeFontPadding: false,
     };
   };
 

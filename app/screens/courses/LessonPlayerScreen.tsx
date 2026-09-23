@@ -145,7 +145,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
         } catch {}
       }
     } catch (err: any) {
-      const msg = err?.userMessage || err?.message || 'Failed to load lesson.';
+      const msg = err?.userMessage || t('errors.failedToLoad');
       setError(msg);
     } finally {
       setLoading(false);

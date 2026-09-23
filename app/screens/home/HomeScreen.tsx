@@ -37,6 +37,7 @@ import { honorBoardApi, type HonorBoardEntry } from '../../services/api/honor-bo
 import { reportsApi } from '../../services/api/reports.api';
 import { effectivePrice, formatPrice } from '../../utils/price';
 import SectionHeader from '../../components/ui/SectionHeader';
+import { Spinner } from '../../components/ui/Spinner';
 import { useNotificationsStore } from '../../store/notifications.store';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -67,6 +68,9 @@ export default function HomeScreen({ navigation }: Props) {
   const [coursesError, setCoursesError] = useState<string | null>(null);
   const [honorTop3, setHonorTop3] = useState<HonorBoardEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  // First paint: sections are hidden until their data arrives, so show a spinner
+  // instead of an empty screen.
+  const [initialLoading, setInitialLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
   const [reportsSummary, setReportsSummary] = useState<{ avgAttendance: number; avgExamScore: number; groupsCount: number; examsCount: number } | null>(null);
 
@@ -117,7 +121,7 @@ export default function HomeScreen({ navigation }: Props) {
       setNewsError(null);
     } catch (err: any) {
       console.error('[Home] news load failed', err);
-      setNewsError(err?.userMessage || err?.message || 'Failed to load news');
+      setNewsError(err?.userMessage || t('errors.failedToLoad'));
       setNews([]);
     }
     try {
@@ -128,7 +132,7 @@ export default function HomeScreen({ navigation }: Props) {
       setCoursesError(null);
     } catch (err: any) {
       console.error('[Home] courses load failed', err);
-      setCoursesError(err?.userMessage || err?.message || 'Failed to load courses');
+      setCoursesError(err?.userMessage || t('courses.failedToLoadCoursesList'));
       setCourses([]);
     }
     try {
@@ -164,7 +168,7 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
   useEffect(() => {
-    loadData();
+    loadData().finally(() => setInitialLoading(false));
   }, []);
 
   useEffect(() => {
@@ -276,7 +280,8 @@ export default function HomeScreen({ navigation }: Props) {
     bellDot: {
       position: 'absolute',
       top: 12,
-      right: 13,
+      // `end` so the dot sits on the bell the same way in Arabic and English.
+      end: 13,
       width: 8,
       height: 8,
       borderRadius: 4,
@@ -862,6 +867,8 @@ export default function HomeScreen({ navigation }: Props) {
             )}
           </View>
         </View>
+
+        {initialLoading && <Spinner />}
 
         {/* ────────────── STAT CARDS ────────────── */}
         {isTeacherOrAdmin ? (

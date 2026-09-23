@@ -150,7 +150,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
       setShowAddModal(false);
       loadData(currentMonth, currentYear);
     } catch (err: any) {
-      Alert.alert(t('common.error'), err?.userMessage || err?.message || 'Failed to add student');
+      Alert.alert(t('common.error'), err?.userMessage || t('honorBoard.addFailed'));
     } finally {
       setAdding(false);
     }
@@ -394,7 +394,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
 
               {/* Rank picker */}
               <Text style={[modalStyles.label, { color: theme.colors.textSecondary }]}>
-                Rank
+                {t('honorBoard.rank')}
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: spacing.md }}>
                 {Array.from({ length: 10 }, (_, i) => i + 1).map((rank) => {

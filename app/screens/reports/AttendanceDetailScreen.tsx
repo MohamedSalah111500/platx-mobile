@@ -33,7 +33,7 @@ export default function AttendanceDetailScreen({ navigation, route }: Props) {
       const data = await reportsApi.getGroupAttendanceReports(groupId);
       setItems(data);
     } catch (err: any) {
-      setError(err?.userMessage || err?.message || t('reports.failedToLoad'));
+      setError(err?.userMessage || t('reports.failedToLoad'));
     } finally {
       setLoading(false);
       setRefreshing(false);

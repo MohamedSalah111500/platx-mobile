@@ -196,7 +196,8 @@
     "emailConfirmationFailed": "Email confirmation failed.",
     "sendResetCodeFailed": "Failed to send reset code.",
     "invalidVerificationCode": "Invalid verification code.",
-    "passwordResetFailed": "Password reset failed."
+    "passwordResetFailed": "Password reset failed.",
+    "member": "Member"
   },
   "welcome": {
     "greeting": "Welcome 👋",
@@ -515,7 +516,10 @@
     "agoraNotAvailable": "Live not available",
     "permissionsRequired": "Permissions required",
     "permissionsExplanation": "Camera and microphone access are required to join.",
-    "invalidTokenResponse": "Failed to get live session token."
+    "invalidTokenResponse": "Failed to get live session token.",
+    "videoUnavailable": "Video is not available in this build",
+    "videoUnavailableHint": "Use a development build for full video support",
+    "untitled": "Untitled session"
   },
   "reports": {
     "title": "Reports",
@@ -543,7 +547,7 @@
     "markAsRead": "Mark as Read",
     "markAllRead": "Mark All as Read",
     "noNotifications": "No notifications yet",
-    "newNotification": "New notification",
+    "newNotification": "You have a new notification",
     "new": "new",
     "allCaughtUp": "You're all caught up!",
     "justNow": "Just now",
@@ -606,7 +610,8 @@
     "addToSubGroup": "Add Student to Sub-Group",
     "yourSubGroup": "Your Sub-Group",
     "fileUrlMissing": "File URL is missing",
-    "cannotOpenFile": "Cannot open this file type"
+    "cannotOpenFile": "Cannot open this file type",
+    "addStudentFailed": "Could not add the student."
   },
   "news": {
     "title": "News",
@@ -703,7 +708,12 @@
     "sessionExpired": "Your session has expired. Please login again.",
     "unauthorized": "You are not authorized to perform this action.",
     "notFound": "Resource not found.",
-    "failedToLoad": "Failed to load data."
+    "failedToLoad": "Failed to load data.",
+    "crashTitle": "Something went wrong",
+    "crashMessage": "An unexpected error occurred. Please try again.",
+    "crashLabel": "Error",
+    "crashRetry": "Try Again",
+    "crashShare": "Share diagnostic report"
   },
   "honorBoard": {
     "title": "Honor Board",
@@ -711,7 +721,9 @@
     "noStudents": "No Rankings Yet",
     "noStudentsMessage": "Student rankings will appear here once available.",
     "points": "{{count}} points",
-    "lessons": "{{count}} lessons completed"
+    "lessons": "{{count}} lessons completed",
+    "rank": "Rank",
+    "addFailed": "Could not add the student."
   },
   "errorBoundary": {
     "title": "Something went wrong",

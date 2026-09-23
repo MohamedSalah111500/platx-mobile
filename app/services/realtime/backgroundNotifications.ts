@@ -7,6 +7,7 @@ import { STORAGE_KEYS } from '../../config';
 import { notificationsApi } from '../api/notifications.api';
 import { getUserRole } from '../../utils/permissions';
 import { getNotificationOwnerId } from '../../store/notifications.store';
+import i18n from '../../i18n/i18n.config';
 
 const BACKGROUND_NOTIFICATION_TASK = 'background-notification-check';
 // Per user (and per tenant/role id) so one account's count never suppresses or
@@ -38,7 +39,7 @@ try {
         await Notifications.scheduleNotificationAsync({
           content: {
             title: String(newest.title || 'PlatX'),
-            body: String(newest.body || (newest as any).message || 'You have a new notification'),
+            body: String(newest.body || (newest as any).message || i18n.t('notifications.newNotification')),
             sound: true,
             ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
           },

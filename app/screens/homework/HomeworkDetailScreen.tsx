@@ -80,7 +80,7 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
         setFiles(sub.files || []);
       }
     } catch (err: any) {
-      setError(err?.userMessage || err?.message || t('homework.failedToLoad'));
+      setError(err?.userMessage || t('homework.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -143,7 +143,7 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
         ]);
       }
     } catch (err: any) {
-      Alert.alert(t('common.error'), err?.userMessage || err?.message || t('homework.uploadFailed'));
+      Alert.alert(t('common.error'), err?.userMessage || t('homework.uploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -175,7 +175,7 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
         [{ text: t('common.ok'), onPress: () => navigation.goBack() }]
       );
     } catch (err: any) {
-      Alert.alert(t('common.error'), err?.userMessage || err?.message || t('homework.submitFailed'));
+      Alert.alert(t('common.error'), err?.userMessage || t('homework.submitFailed'));
     } finally {
       setSaving(false);
     }

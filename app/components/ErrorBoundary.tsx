@@ -9,6 +9,7 @@ import {
   Share,
 } from 'react-native';
 import { logger } from '../services/logger';
+import i18n from '../i18n/i18n.config';
 
 interface Props {
   children: ReactNode;
@@ -78,22 +79,22 @@ export class ErrorBoundary extends Component<Props, State> {
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={styles.title}>Something went wrong</Text>
-          <Text style={styles.message}>An unexpected error occurred. Please try again.</Text>
+          <Text style={styles.title}>{i18n.t('errors.crashTitle')}</Text>
+          <Text style={styles.message}>{i18n.t('errors.crashMessage')}</Text>
 
           <View style={styles.errorBox}>
-            <Text style={styles.errorLabel}>Error</Text>
+            <Text style={styles.errorLabel}>{i18n.t('errors.crashLabel')}</Text>
             <Text style={styles.errorText} selectable>
               {errMessage}
             </Text>
           </View>
 
           <TouchableOpacity style={styles.button} onPress={this.handleRetry}>
-            <Text style={styles.buttonText}>Try Again</Text>
+            <Text style={styles.buttonText}>{i18n.t('errors.crashRetry')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.linkButton} onPress={this.handleShare}>
-            <Text style={styles.linkText}>Share diagnostic report</Text>
+            <Text style={styles.linkText}>{i18n.t('errors.crashShare')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>

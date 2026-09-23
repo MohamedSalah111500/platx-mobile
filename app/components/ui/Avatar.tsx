@@ -186,7 +186,8 @@ export function Avatar({
     badge: {
       position: 'absolute',
       bottom: 0,
-      right: 0,
+      // `end` so the badge follows the reading direction in Arabic.
+      end: 0,
       width: Math.max(24, dimension / 3),
       height: Math.max(24, dimension / 3),
       borderRadius: borderRadius.full,

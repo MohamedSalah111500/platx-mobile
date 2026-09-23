@@ -76,7 +76,7 @@ export default function ExamsListScreen({ navigation }: Props) {
       setHasMore(result.items.length >= PAGE_SIZE);
       setPage(p);
     } catch (err: any) {
-      setError(err?.userMessage || err?.message || t('exams.failedToLoad'));
+      setError(err?.userMessage || t('exams.failedToLoad'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -145,7 +145,7 @@ export default function ExamsListScreen({ navigation }: Props) {
               await examApi.deleteExam(exam.id);
               setExams(prev => prev.filter(e => e.id !== exam.id));
             } catch (err: any) {
-              Alert.alert(t('common.error'), err?.userMessage || err?.message || t('exams.deleteFailed'));
+              Alert.alert(t('common.error'), err?.userMessage || t('exams.deleteFailed'));
             }
           },
         },

@@ -61,7 +61,7 @@ export default function HomeworkListScreen({ navigation }: Props) {
         }
         setPage(p);
       } catch (err: any) {
-        setError(err?.userMessage || err?.message || t('homework.failedToLoad'));
+        setError(err?.userMessage || t('homework.failedToLoad'));
       } finally {
         setLoading(false);
         setRefreshing(false);

@@ -129,7 +129,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
       setRoom(data);
       await joinSession(data);
     } catch (err: any) {
-      setError(err?.userMessage || err?.message || 'Failed to load session.');
+      setError(err?.userMessage || t('live.failedToLoadSession'));
     } finally {
       setLoading(false);
     }
@@ -357,7 +357,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
         logger.recordError(err, 'Live:setupAgora');
         Alert.alert(
           t('common.error'),
-          err?.userMessage || err?.message || 'Failed to join live session.',
+          err?.userMessage || t('live.joinSessionFailed'),
         );
       }
     };
@@ -639,10 +639,10 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
         <View style={styles.videoPlaceholder}>
           <Ionicons name="videocam-outline" size={48} color={DARK.textSecondary} />
           <Text style={styles.placeholderText}>
-            Video is not available in this build
+            {t('live.videoUnavailable')}
           </Text>
           <Text style={[styles.placeholderText, { fontSize: 12, marginTop: 4 }]}>
-            Use a development build for full video support
+            {t('live.videoUnavailableHint')}
           </Text>
         </View>
       );

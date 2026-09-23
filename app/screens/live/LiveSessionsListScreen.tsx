@@ -44,7 +44,7 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
       const data = await liveApi.getActive();
       setSessions(Array.isArray(data) ? data : []);
     } catch (err: any) {
-      const msg = err?.userMessage || err?.message || 'Failed to load sessions.';
+      const msg = err?.userMessage || t('live.failedToLoadSessions');
       setError(msg);
       setSessions([]);
     } finally {
@@ -133,7 +133,7 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
         )}
       </View>
 
-      <Text style={styles.sessionTitle}>{item.liveName || item.title || 'Untitled'}</Text>
+      <Text style={styles.sessionTitle}>{item.liveName || item.title || t('live.untitled')}</Text>
       {item.teacherName && (
         <Text style={styles.sessionTeacher}>{t('common.by')} {item.teacherName}</Text>
       )}

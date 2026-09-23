@@ -73,7 +73,7 @@ export default function TenantSelectionScreen({ navigation }: Props) {
           <View style={styles.tenantInfo}>
             <Text style={styles.tenantName} numberOfLines={1}>{item.tenantName}</Text>
             <Text style={styles.tenantRoles}>
-              {item.roles?.join(', ') || 'Member'}
+              {item.roles?.join(', ') || t('auth.member')}
             </Text>
           </View>
           <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color={theme.colors.textMuted} />

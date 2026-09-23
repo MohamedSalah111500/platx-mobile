@@ -196,7 +196,8 @@
     "emailConfirmationFailed": "فشل تأكيد البريد الإلكتروني.",
     "sendResetCodeFailed": "فشل إرسال رمز إعادة التعيين.",
     "invalidVerificationCode": "رمز التحقق غير صحيح.",
-    "passwordResetFailed": "فشل إعادة تعيين كلمة المرور."
+    "passwordResetFailed": "فشل إعادة تعيين كلمة المرور.",
+    "member": "عضو"
   },
   "welcome": {
     "greeting": "مرحباً 👋",
@@ -515,7 +516,10 @@
     "agoraNotAvailable": "البث المباشر غير متاح",
     "permissionsRequired": "الأذونات مطلوبة",
     "permissionsExplanation": "يلزم السماح بالوصول إلى الكاميرا والميكروفون للانضمام.",
-    "invalidTokenResponse": "فشل الحصول على رمز جلسة البث المباشر."
+    "invalidTokenResponse": "فشل الحصول على رمز جلسة البث المباشر.",
+    "videoUnavailable": "الفيديو غير متاح في هذه النسخة",
+    "videoUnavailableHint": "استخدم نسخة التطوير لتشغيل الفيديو بالكامل",
+    "untitled": "حصة بدون عنوان"
   },
   "reports": {
     "title": "التقارير",
@@ -543,7 +547,7 @@
     "markAsRead": "تحديد كمقروء",
     "markAllRead": "تحديد الكل كمقروء",
     "noNotifications": "لا توجد إشعارات",
-    "newNotification": "إشعار جديد",
+    "newNotification": "لديك إشعار جديد",
     "new": "جديد",
     "allCaughtUp": "أنت على اطلاع بكل شيء!",
     "justNow": "الآن",
@@ -606,7 +610,8 @@
     "addToSubGroup": "إضافة طالب للمجموعة الفرعية",
     "yourSubGroup": "مجموعتك الفرعية",
     "fileUrlMissing": "رابط الملف غير موجود",
-    "cannotOpenFile": "لا يمكن فتح هذا النوع من الملفات"
+    "cannotOpenFile": "لا يمكن فتح هذا النوع من الملفات",
+    "addStudentFailed": "تعذر إضافة الطالب."
   },
   "news": {
     "title": "الأخبار",
@@ -703,7 +708,12 @@
     "sessionExpired": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.",
     "unauthorized": "غير مصرح لك بتنفيذ هذا الإجراء.",
     "notFound": "المورد غير موجود.",
-    "failedToLoad": "فشل تحميل البيانات."
+    "failedToLoad": "فشل تحميل البيانات.",
+    "crashTitle": "حدث خطأ غير متوقع",
+    "crashMessage": "حصل خطأ غير متوقع. برجاء المحاولة مرة أخرى.",
+    "crashLabel": "الخطأ",
+    "crashRetry": "إعادة المحاولة",
+    "crashShare": "مشاركة تقرير الخطأ"
   },
   "honorBoard": {
     "title": "لوحة الشرف",
@@ -711,7 +721,9 @@
     "noStudents": "لا توجد تصنيفات بعد",
     "noStudentsMessage": "ستظهر تصنيفات الطلاب هنا عندما تكون متاحة.",
     "points": "{{count}} نقطة",
-    "lessons": "{{count}} دروس مكتملة"
+    "lessons": "{{count}} دروس مكتملة",
+    "rank": "الترتيب",
+    "addFailed": "تعذر إضافة الطالب."
   },
   "errorBoundary": {
     "title": "حدث خطأ ما",

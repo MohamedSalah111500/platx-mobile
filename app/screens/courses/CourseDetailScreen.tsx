@@ -178,7 +178,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
       setRequestStatus(status);
     } catch (err: any) {
       if (stale()) return;
-      setError(err?.userMessage || err?.message || 'Failed to load course details.');
+      setError(err?.userMessage || t('courses.failedToLoadCourseDetails'));
     } finally {
       if (!stale()) setLoading(false);
     }

@@ -80,7 +80,7 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
       }
       setQuestionScores(scores);
     } catch (err: any) {
-      setError(err?.userMessage || err?.message || t('homework.failedToLoad'));
+      setError(err?.userMessage || t('homework.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -136,7 +136,7 @@ export default function HomeworkReviewScreen({ navigation, route }: Props) {
         { text: t('common.ok'), onPress: () => navigation.goBack() },
       ]);
     } catch (err: any) {
-      Alert.alert(t('common.error'), err?.userMessage || err?.message || t('homework.gradeFailed'));
+      Alert.alert(t('common.error'), err?.userMessage || t('homework.gradeFailed'));
     } finally {
       setSaving(false);
     }

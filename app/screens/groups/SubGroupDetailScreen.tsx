@@ -168,7 +168,7 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
       setStudents((prev) => [...prev, student]);
       setGroupStudents((prev) => prev.filter((s) => s.id !== student.id));
     } catch (err: any) {
-      Alert.alert(t('common.error'), err?.userMessage || err?.message || 'Failed');
+      Alert.alert(t('common.error'), err?.userMessage || t('groups.addStudentFailed'));
     } finally {
       setAdding(null);
     }

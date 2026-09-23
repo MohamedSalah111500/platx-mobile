@@ -96,7 +96,7 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
 
       startDateRef.current = new Date().toISOString();
     } catch (err: any) {
-      setError(err?.userMessage || err?.message || t('exams.failedToLoad'));
+      setError(err?.userMessage || t('exams.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -222,7 +222,7 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
         ]);
       }
     } catch (err: any) {
-      Alert.alert(t('common.error'), err?.userMessage || err?.message || t('exams.submitFailed'));
+      Alert.alert(t('common.error'), err?.userMessage || t('exams.submitFailed'));
     } finally {
       submittingRef.current = false;
       setSubmitting(false);

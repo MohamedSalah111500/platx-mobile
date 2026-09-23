@@ -67,7 +67,7 @@ export default function GroupsListScreen({ navigation }: Props) {
         setGroups(items);
       }
     } catch (err: any) {
-      const msg = err?.userMessage || err?.message || t('groups.failedToLoadGroups');
+      const msg = err?.userMessage || t('groups.failedToLoadGroups');
       setError(msg);
       setGroups([]);
     } finally {

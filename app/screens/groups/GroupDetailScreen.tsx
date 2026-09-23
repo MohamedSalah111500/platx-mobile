@@ -216,7 +216,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
       const studentsData = await groupsApi.getGroupStudents(groupId);
       setStudents(Array.isArray(studentsData) ? studentsData : []);
     } catch (err: any) {
-      Alert.alert(t('common.error'), err?.userMessage || err?.message || 'Failed');
+      Alert.alert(t('common.error'), err?.userMessage || t('groups.addStudentFailed'));
     } finally {
       setInviting(false);
     }
@@ -331,7 +331,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
           Alert.alert(t('common.error'), t('groups.cannotOpenFile') || 'Cannot open this file type');
         }
       } catch (err: any) {
-        Alert.alert(t('common.error'), err?.message || 'Failed to open file');
+        Alert.alert(t('common.error'), err?.userMessage || t('groups.cannotOpenFile'));
       }
     }
   };

@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.platx.platform",
-      "buildNumber": "4",
+      "buildNumber": "5",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSMicrophoneUsageDescription": "The microphone is used for live class audio and to record voice feedback.",
@@ -21,7 +21,7 @@
     },
     "android": {
       "package": "com.platx.platform",
-      "versionCode": 26,
+      "versionCode": 27,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

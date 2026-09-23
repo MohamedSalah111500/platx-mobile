@@ -282,7 +282,6 @@ export const PAYMENT_METHODS_URLS = {
 
 // File upload
 export const FILE_URLS = {
-  UPLOAD: `${BASE}api/Files/upload`,
   // Backend FilesController is POST api/Files, returns { id, url }.
   CREATE: `${BASE}api/Files`,
   GET: (fileName: string) => `${BASE}api/Files/${fileName}`,

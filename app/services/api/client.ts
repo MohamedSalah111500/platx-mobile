@@ -71,7 +71,12 @@ apiClient.interceptors.response.use(
   async (error: AxiosError<{ message?: string; errors?: Record<string, string[]> }>) => {
     const status = error.response?.status;
     const url = error.config?.url || 'unknown';
-    const message = error.response?.data?.message || error.message || 'An error occurred';
+    // A request that never reached the server has no server message; show the
+    // localized network error instead of axios' English text.
+    const message =
+      error.response?.data?.message ||
+      (error.response ? error.message : i18n.t('errors.networkError')) ||
+      i18n.t('errors.serverError');
 
     // Use warn for expected status codes (400/404 are common in fallback patterns)
     if (status === 404 || status === 400) {

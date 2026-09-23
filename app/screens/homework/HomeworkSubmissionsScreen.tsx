@@ -36,7 +36,7 @@ export default function HomeworkSubmissionsScreen({ navigation, route }: Props) 
       const data = await homeworkApi.getSubmissionsForReview(homeworkId);
       setItems(Array.isArray(data) ? data : []);
     } catch (err: any) {
-      setError(err?.userMessage || err?.message || t('homework.failedToLoad'));
+      setError(err?.userMessage || t('homework.failedToLoad'));
     } finally {
       setLoading(false);
       setRefreshing(false);

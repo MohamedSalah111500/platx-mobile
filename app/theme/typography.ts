@@ -94,15 +94,26 @@ export const typography = {
     fontSize: fontSize.xs,
     lineHeight: Math.round(fontSize.xs * lineHeightMultiplier.normal),
   },
+  // Button labels: centred in the button and allowed to shrink, so a long Arabic
+  // label never spills past the button or pushes its icon out. `includeFontPadding`
+  // is Android-only and keeps Cairo vertically centred there.
   button: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.base,
     lineHeight: Math.round(fontSize.base * lineHeightMultiplier.tight),
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    flexShrink: 1,
   },
   buttonSmall: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.sm,
     lineHeight: Math.round(fontSize.sm * lineHeightMultiplier.tight),
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    flexShrink: 1,
   },
 } as const;
 

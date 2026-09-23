@@ -202,6 +202,6 @@ function createStyles(theme: any) {
     progressRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 2 },
     progressTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: theme.colors.border, overflow: 'hidden' },
     progressFill: { height: '100%', borderRadius: 3 },
-    progressText: { fontSize: fontSize.xs, fontFamily: 'Cairo_600SemiBold', color: theme.colors.textSecondary, minWidth: 34, textAlign: 'right' },
+    progressText: { fontSize: fontSize.xs, fontFamily: 'Cairo_600SemiBold', color: theme.colors.textSecondary, minWidth: 34, textAlign: 'center' },
   });
 }

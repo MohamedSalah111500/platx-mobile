@@ -61,7 +61,7 @@ export default function ChangePasswordScreen({ navigation }: Props) {
         { text: t('common.ok'), onPress: () => navigation.goBack() },
       ]);
     } catch (err: any) {
-      Alert.alert(t('common.error'), err?.userMessage || err?.message || 'Failed to change password.');
+      Alert.alert(t('common.error'), err?.userMessage || t('auth.changePasswordFailed'));
     } finally {
       setLoading(false);
     }

@@ -39,7 +39,7 @@ export default function ReportsListScreen({ navigation }: Props) {
         setExams(data);
       }
     } catch (err: any) {
-      setError(err?.userMessage || err?.message || t('reports.failedToLoad'));
+      setError(err?.userMessage || t('reports.failedToLoad'));
     } finally {
       setLoading(false);
       setRefreshing(false);

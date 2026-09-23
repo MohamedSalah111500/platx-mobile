@@ -84,7 +84,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
       const data = await coursesApi.getStudentEnrollments(user.studentId);
       setEnrollments(Array.isArray(data) ? data : []);
     } catch (err: any) {
-      const msg = err?.userMessage || err?.message || 'Failed to load enrolled courses.';
+      const msg = err?.userMessage || t('courses.failedToLoadEnrolled');
       setError(msg);
       setEnrollments([]);
     } finally {
@@ -118,7 +118,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
         setHasMore(items.length >= 10);
       }
     } catch (err: any) {
-      const msg = err?.userMessage || err?.message || 'Failed to load courses.';
+      const msg = err?.userMessage || t('courses.failedToLoadCoursesList');
       setError(msg);
       setHasMore(false);
       if (pageNum === 1) setCourses([]);

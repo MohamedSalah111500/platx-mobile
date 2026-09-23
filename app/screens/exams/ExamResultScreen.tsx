@@ -47,7 +47,7 @@ export default function ExamResultScreen({ navigation, route }: Props) {
       const data = await examApi.getResults(examId, user.studentId);
       setResult(data);
     } catch (err: any) {
-      setError(err?.userMessage || err?.message || t('exams.failedToLoadResults'));
+      setError(err?.userMessage || t('exams.failedToLoadResults'));
     } finally {
       setLoading(false);
     }
