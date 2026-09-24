@@ -110,7 +110,7 @@ function processAuthResponse(
       // Staff.Id (AuthResponse.Staff) — needed by staff-scoped endpoints such as
       // GetStaffNotificationListAsync. There is no api/Staffs/me to resolve it later.
       staffId: Number.isFinite(staffId) && staffId > 0 ? staffId : undefined,
-      profileImage: _resp.student?.profileImage ?? _resp.staff?.profileImage ?? undefined,
+      profileImage: _resp.profileImage ?? _resp.student?.profileImage ?? _resp.staff?.profileImage ?? undefined,
     },
     domain,
   };
