@@ -19,6 +19,7 @@ import UpdateRequiredScreen from '../screens/UpdateRequiredScreen';
 import UpdateAvailableBanner from '../components/UpdateAvailableBanner';
 import { useUIStore } from '../store/ui.store';
 import { checkAppVersion } from '../services/appVersionGate';
+import { registerForPushNotifications } from '../services/realtime/pushNotifications';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -87,7 +88,14 @@ export default function RootNavigator() {
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') checkAppVersion();
+      if (state !== 'active') return;
+      checkAppVersion();
+      // Re-announce the push token on every return to the app. The server forgets a
+      // token the moment one delivery bounces, and registering again here is what
+      // gets notifications back without the student reinstalling anything.
+      if (useAuthStore.getState().token) {
+        registerForPushNotifications().catch(() => {});
+      }
     });
     return () => sub.remove();
   }, []);

@@ -32,15 +32,17 @@ export async function registerForPushNotifications(): Promise<boolean> {
     const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
     if (!token) return false;
 
-    const stored = await AsyncStorage.getItem(STORAGE_KEYS.PUSH_TOKEN);
-    if (stored === token) return true;
-
+    // Register every time rather than only when the token changes. The server drops a
+    // token as soon as one delivery comes back "DeviceNotRegistered" (an app update or
+    // a long-closed app is enough), and a device that skipped re-registering because
+    // its stored copy still matched would then stay silent for good. Registering is an
+    // upsert, so repeating it is free.
     await apiClient.post(DEVICE_TOKEN_URLS.REGISTER, {
       token,
       platform: Platform.OS,
     });
     await AsyncStorage.setItem(STORAGE_KEYS.PUSH_TOKEN, token);
-    logger.log('[Push] token registered');
+    logger.log(`[Push] token registered (${token.slice(0, 18)}…)`);
     return true;
   } catch (err) {
     logger.recordError(err, 'Push:register');
