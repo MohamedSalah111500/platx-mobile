@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 // Font families — Cairo loaded in App.tsx from assets/fonts (metrics re-centred)
 export const fontFamily = {
   regular: 'Cairo_400Regular',
@@ -35,6 +36,13 @@ export const lineHeightMultiplier = {
   normal: 1.5,
   relaxed: 1.75,
 } as const;
+
+// A button label is one line inside a fixed-height pill. Android needs an explicit
+// line height or Cairo's Arabic glyphs clip; iOS centres the glyphs on its own and
+// pushes the label upwards when it is given one.
+export function buttonLineHeight(size: number): number | undefined {
+  return Platform.OS === 'ios' ? undefined : Math.round(size * lineHeightMultiplier.tight);
+}
 
 // Typography presets
 // Note: React Native requires lineHeight as absolute pixel values, not multipliers
@@ -96,11 +104,12 @@ export const typography = {
   },
   // Button labels: centred in the button and allowed to shrink, so a long Arabic
   // label never spills past the button or pushes its icon out. `includeFontPadding`
-  // is Android-only and keeps Cairo vertically centred there.
+  // is Android-only and keeps Cairo vertically centred there; `buttonLineHeight`
+  // leaves the line box to iOS, which otherwise sits the label high.
   button: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.base,
-    lineHeight: Math.round(fontSize.base * lineHeightMultiplier.tight),
+    lineHeight: buttonLineHeight(fontSize.base),
     textAlign: 'center',
     textAlignVertical: 'center',
     includeFontPadding: false,
@@ -109,7 +118,7 @@ export const typography = {
   buttonSmall: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.sm,
-    lineHeight: Math.round(fontSize.sm * lineHeightMultiplier.tight),
+    lineHeight: buttonLineHeight(fontSize.sm),
     textAlign: 'center',
     textAlignVertical: 'center',
     includeFontPadding: false,

@@ -12,6 +12,8 @@ import { useTheme } from '@theme/ThemeProvider';
 import { spacing, borderRadius } from '@theme/spacing';
 import { typography } from '@theme/typography';
 
+const isIOS = Platform.OS === 'ios';
+
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
 type ButtonSize = 'small' | 'medium' | 'large';
 
@@ -89,10 +91,11 @@ export function Button({
 
   const getTextStyle = (): TextStyle => {
     const sizeStyles: Record<ButtonSize, TextStyle> = {
-      // lineHeight >= 1.4 x fontSize, otherwise Cairo clips.
-      small: { ...typography.buttonSmall, fontSize: 13, lineHeight: 19 },
-      medium: { ...typography.button, fontSize: 15, lineHeight: 21 },
-      large: { ...typography.button, fontSize: 16, lineHeight: 23 },
+      // Android needs lineHeight >= 1.4 x fontSize or Cairo clips; iOS centres the
+      // label itself and sits it high when it is given one.
+      small: { ...typography.buttonSmall, fontSize: 13, lineHeight: isIOS ? undefined : 19 },
+      medium: { ...typography.button, fontSize: 15, lineHeight: isIOS ? undefined : 21 },
+      large: { ...typography.button, fontSize: 16, lineHeight: isIOS ? undefined : 23 },
     };
 
     const variantStyles: Record<ButtonVariant, TextStyle> = {

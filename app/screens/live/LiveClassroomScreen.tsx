@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
+  useWindowDimensions,
   PermissionsAndroid,
   TurboModuleRegistry,
   Linking,
@@ -37,10 +38,18 @@ import type { IRtcEngineEventHandler } from '../../services/agora/agora.service'
 
 // Conditionally load RtcSurfaceView (only available in dev builds, not Expo Go)
 let RtcSurfaceView: any = null;
+// Show the whole frame instead of filling the view with it. Agora crops by default,
+// which cuts off most of a teacher who is holding the phone the other way round or
+// showing something written down. (RenderModeType.RenderModeFit)
+let RENDER_FIT = 2;
 const hasAgora = !!TurboModuleRegistry.get('AgoraRtcNg');
 if (hasAgora) {
   try {
-    RtcSurfaceView = require('react-native-agora').RtcSurfaceView;
+    const agora = require('react-native-agora');
+    RtcSurfaceView = agora.RtcSurfaceView;
+    if (agora.RenderModeType?.RenderModeFit != null) {
+      RENDER_FIT = agora.RenderModeType.RenderModeFit;
+    }
   } catch {
     // Agora not available
   }
@@ -74,6 +83,8 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   const { user, isStudent } = useAuth();
   const { t, isRTL } = useRTL();
   const { theme } = useTheme();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const isLandscape = windowWidth > windowHeight;
 
   // Block screenshots/screen recording during live sessions, to protect the
   // classroom feed from being captured.
@@ -749,7 +760,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           </View>
         );
       }
-      return <RtcSurfaceView style={styles.fullVideo} canvas={{ uid: 0 }} />;
+      return <RtcSurfaceView style={styles.fullVideo} canvas={{ uid: 0, renderMode: RENDER_FIT }} />;
     }
 
     // Student: show teacher's remote feed
@@ -758,7 +769,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
       return (
         <RtcSurfaceView
           style={styles.fullVideo}
-          canvas={{ uid: teacherUid }}
+          canvas={{ uid: teacherUid, renderMode: RENDER_FIT }}
         />
       );
     }
@@ -989,8 +1000,10 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
       </View>
 
       {/* ── Control Bar ── */}
+      {/* Landscape has almost no height to spare, so the bar floats over the video
+          instead of taking a strip of it, and the buttons shrink to match. */}
       {joined && (
-        <View style={styles.controlBar}>
+        <View style={[styles.controlBar, isLandscape && styles.controlBarFloating]}>
           {/* Mic */}
           <TouchableOpacity
             style={[
@@ -1313,6 +1326,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingBottom: spacing.lg,
     backgroundColor: DARK.surface,
+  },
+  controlBarFloating: {
+    position: 'absolute',
+    start: 0,
+    end: 0,
+    bottom: 0,
+    paddingVertical: spacing.sm,
+    paddingBottom: spacing.sm,
+    backgroundColor: 'rgba(0,0,0,0.45)',
   },
   controlButton: {
     width: CONTROL_SIZE,
