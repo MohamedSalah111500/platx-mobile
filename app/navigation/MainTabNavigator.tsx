@@ -46,6 +46,9 @@ const HIDE_TAB_BAR_SCREENS = [
   'NotificationsList',
   'Reports',
   'AttendanceDetail',
+  'MySessions',
+  'Sessions',
+  'SessionAttendance',
   'ExamReportDetail',
 ];
 

@@ -353,7 +353,10 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
     );
   }
 
-  if (lockedAvailability) {
+  const remainingViews: number | null | undefined = (lesson as any)?.remainingViews;
+  const viewsExhausted = isStudent && remainingViews === 0 && (lesson as any)?.isEnrolled !== true && !(lesson as any)?.freePreview;
+
+  if (lockedAvailability || viewsExhausted) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
@@ -364,7 +367,15 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
           <View style={{ width: 40 }} />
         </View>
         <View style={{ padding: 20 }}>
-          <CourseLockedNotice availability={lockedAvailability} />
+          {lockedAvailability ? (
+            <CourseLockedNotice availability={lockedAvailability} />
+          ) : (
+            <View style={[styles.viewsNotice, { backgroundColor: theme.colors.card }]}>
+              <Ionicons name="lock-closed" size={28} color={theme.colors.primary} />
+              <Text style={[styles.viewsNoticeTitle, { color: theme.colors.text }]}>{t('lessons.viewsExhaustedTitle')}</Text>
+              <Text style={[styles.metaText, { color: theme.colors.textMuted, textAlign: 'center' }]}>{t('lessons.viewsExhaustedBody')}</Text>
+            </View>
+          )}
         </View>
       </SafeAreaView>
     );
@@ -582,6 +593,15 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
                 )}
               </View>
 
+              {isStudent && remainingViews != null && (lesson as any)?.isEnrolled === true && (
+                <View style={styles.metaItem}>
+                  <Ionicons name="eye-outline" size={16} color={theme.colors.textMuted} />
+                  <Text style={[styles.viewsText, { color: theme.colors.textMuted }]}>
+                    {remainingViews > 0 ? t('lessons.viewsRemaining', { count: remainingViews }) : t('lessons.viewsLast')}
+                  </Text>
+                </View>
+              )}
+
               {lesson.description ? (
                 <View style={[styles.descriptionWrap, { borderTopColor: theme.dark ? theme.colors.border : theme.colors.divider }]}>
                   <Text style={[styles.lessonDescription, { color: theme.colors.textSecondary }]}>{lesson.description}</Text>
@@ -641,6 +661,21 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
+  viewsNotice: {
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    gap: 10,
+  },
+  viewsText: {
+    fontSize: 14,
+    fontFamily: 'Cairo_500Medium',
+  },
+  viewsNoticeTitle: {
+    fontSize: 17,
+    fontFamily: 'Cairo_700Bold',
+    textAlign: 'center',
+  },
   container: { flex: 1 },
   header: {
     flexDirection: 'row',

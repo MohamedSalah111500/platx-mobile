@@ -1,5 +1,8 @@
 export { default as apiClient } from './client';
 export { authApi } from './auth.api';
+export { registrationApi } from './registration.api';
+export { walletApi } from './wallet.api';
+export { sessionsApi } from './sessions.api';
 export { notificationsApi } from './notifications.api';
 export { newsApi } from './news.api';
 export { groupsApi } from './groups.api';

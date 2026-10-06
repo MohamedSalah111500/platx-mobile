@@ -11,3 +11,4 @@ export { ScreenHeader } from './ScreenHeader';
 export { SearchBar } from './SearchBar';
 export { ErrorBanner } from './ErrorBanner';
 export { ErrorRetry } from './ErrorRetry';
+export { QrCode } from './QrCode';

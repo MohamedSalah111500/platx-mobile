@@ -37,6 +37,8 @@ import { getFullImageUrl } from '../../utils/imageUrl';
 import { useRTL } from '../../i18n/RTLProvider';
 import { useSound } from '../../hooks/useSound';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
+import { PartPurchaseSheet, type PartPurchase } from '../../components/course/PartPurchaseSheet';
+import { formatAmount } from '../../utils/price';
 
 type Props = {
   navigation: NativeStackScreenProps<any, any>['navigation'];
@@ -76,6 +78,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
   const [certificateCode, setCertificateCode] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<number> | 'all'>('all');
   const [requestStatus, setRequestStatus] = useState<RequestStatus>('none');
+  const [purchase, setPurchase] = useState<PartPurchase | null>(null);
 
   // Load on first focus, then refresh silently every time the screen regains
   // focus (back from Checkout, or after staff approved the purchase request) so
@@ -114,7 +117,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
         }));
       }
 
-      if (!data?.sections || data.sections.length === 0 || data.sections.every((s: any) => !s.lessons?.length)) {
+      if (isStudent || !data?.sections || data.sections.length === 0 || data.sections.every((s: any) => !s.lessons?.length)) {
         try {
           const sections = await coursesApi.getCourseSections(courseId);
           if (Array.isArray(sections) && sections.length > 0) {
@@ -162,7 +165,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
         }
 
         // Not enrolled yet → is there a purchase request in flight?
-        if (!found && !(useServerFlag && serverEnrolled)) {
+        if ((!found && !(useServerFlag && serverEnrolled)) || data?.hasFullAccess === false) {
           try {
             const mine = (await reservationsApi.getMine(user.studentId))
               .filter((r) => Number(r.courseId) === numCourseId)
@@ -204,6 +207,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
 
   const handlePurchase = () => {
     navigation.navigate('Checkout', {
+      upgrade: isPartial,
       courseId,
       title: course?.title || course?.name,
       price: course?.price,
@@ -226,9 +230,9 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
   };
 
   const getFirstLesson = (): Lesson | null => {
-    if (!course?.sections) return null;
-    for (const section of course.sections) {
-      if (section.lessons?.length > 0) return section.lessons[0];
+    for (const section of course?.sections || []) {
+      const first = section.lessons?.find((l) => !isDivider(l) && isOwned(l));
+      if (first) return first;
     }
     return null;
   };
@@ -255,7 +259,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
         lessonId: firstLesson.id,
         courseId,
         isCompleted: lessonDone(firstLesson),
-        isEnrolled,
+        isEnrolled: isEnrolled && isOwned(firstLesson),
       });
     } else {
       Alert.alert(t('common.info'), t('courses.noLessonsYet'));
@@ -280,33 +284,59 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
     });
   };
 
-  const totalLessons = course?.sections?.reduce((n, s) => n + (s.lessons?.length || 0), 0) ?? 0;
+  const isDivider = (l: Lesson): boolean => l.type === 6;
+  const totalLessons = course?.sections?.reduce((n, s) => n + (s.lessons?.filter((l) => !isDivider(l)).length || 0), 0) ?? 0;
   const isFree = course?.isFree || course?.price === 0;
   const availability = resolveCourseAvailability(course);
   const isLockedForStudent = !isOwner && availability !== COURSE_AVAILABILITY.Available;
 
   const lessonDone = (l: any): boolean => l?.isCompleated ?? l?.isCompleted ?? false;
 
+  const isPartial = isStudent && isEnrolled && course?.hasFullAccess === false;
+  const owns = (item: Section | Lesson): boolean => item.isEnrolled === true && !item.isSessionUnlocked;
+  const isOwned = (l: Lesson): boolean => !isPartial || (l.isEnrolled !== false && !l.isSessionUnlocked);
+  const isNotOwned = (l: Lesson): boolean => isPartial && l.isEnrolled === false && !l.isSessionUnlocked && !l.freePreview;
+  const canBuyParts = isStudent && !REQUEST_ONLY && !isFree && !isLockedForStudent && course?.hasFullAccess !== true;
+  const sectionForSale = (s: Section): boolean => canBuyParts && !!course?.sellSectionsSeparately && !owns(s) && Number(s.price) > 0;
+  const lessonForSale = (s: Section, l: Lesson): boolean =>
+    canBuyParts && !!course?.sellLessonsSeparately && !owns(s) && !owns(l) && Number(l.price) > 0;
+
+  const buySection = (s: Section) => setPurchase({ kind: 'section', id: s.id, title: s.title, price: Number(s.price) });
+  const buyLesson = (l: Lesson) => setPurchase({ kind: 'lesson', id: l.id, title: l.title, price: Number(l.price) });
+
+  const onPartPaid = (bought: PartPurchase) => {
+    setPurchase(null);
+    play('success');
+    Alert.alert(t('common.success'), t(bought.kind === 'section' ? 'courses.parts.sectionBought' : 'courses.parts.lessonBought'));
+    loadCourse(true);
+  };
+
   // Mirrors web course-learning lockedLessonIds. Only students are gated —
   // teachers/admins have no progress, so every quiz would look unsolved.
   const lockedLessonIds = (): number[] => {
-    if (!isStudent || isOwner || !course?.quizPolicy) return [];
+    if (!isStudent || isOwner || !isEnrolled || !course?.quizPolicy) return [];
     if (Number((course as any).quizPolicyScope) === 1) {
       // Current-section-only: each section is gated by its own first unsolved quiz.
       return (course.sections || []).flatMap((s) => {
         const sectionLessons = s.lessons || [];
-        const idx = sectionLessons.findIndex((l) => l.type === 3 && !lessonDone(l));
+        const idx = sectionLessons.findIndex((l) => l.type === 3 && !lessonDone(l) && isOwned(l));
         return idx < 0 ? [] : sectionLessons.slice(idx + 1).map((l) => l.id);
       });
     }
     const lessons = (course?.sections || []).flatMap((s) => s.lessons || []);
-    const quizIdx = lessons.findIndex((l) => l.type === 3 && !lessonDone(l));
+    const quizIdx = lessons.findIndex((l) => l.type === 3 && !lessonDone(l) && isOwned(l));
     if (quizIdx < 0) return [];
     return lessons.slice(quizIdx + 1).map((l) => l.id);
   };
 
-  const openLesson = (lesson: Lesson) => {
+  const openLesson = (section: Section, lesson: Lesson) => {
     if (isLockedForStudent) return;
+    if (isNotOwned(lesson) || (!isEnrolled && !isOwner && !lesson.freePreview && !lesson.isSessionUnlocked && (lessonForSale(section, lesson) || sectionForSale(section)))) {
+      if (lessonForSale(section, lesson)) buyLesson(lesson);
+      else if (sectionForSale(section)) buySection(section);
+      else Alert.alert(t('common.info'), t('courses.parts.notIncluded'));
+      return;
+    }
     if (lockedIds.includes(lesson.id)) {
       Alert.alert(t('common.info'), t('quiz.completeToContinue'));
       return;
@@ -315,7 +345,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
       lessonId: lesson.id,
       courseId,
       isCompleted: lessonDone(lesson),
-      isEnrolled,
+      isEnrolled: isEnrolled && isOwned(lesson),
     });
   };
 
@@ -468,6 +498,13 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
             </View>
           )}
 
+          {isPartial && (
+            <View style={[styles.partChip, styles.partialPill, { backgroundColor: theme.colors.info + '1A' }]}>
+              <Ionicons name="pie-chart-outline" size={14} color={theme.colors.info} />
+              <Text style={[styles.partChipText, { color: theme.colors.info }]}>{t('courses.parts.partial')}</Text>
+            </View>
+          )}
+
           {course.description ? (
             <Text style={[styles.description, { color: theme.colors.textSecondary }]}>{course.description}</Text>
           ) : null}
@@ -536,11 +573,12 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
 
             {course.sections.map((section: Section, sIdx: number) => {
               const isExpanded = expandedSections === 'all' || expandedSections.has(section.id);
-              const lessonCount = section.lessons?.length || 0;
+              const lessonCount = section.lessons?.filter((l) => !isDivider(l)).length || 0;
+              const rowCount = section.lessons?.length || 0;
               return (
                 <View key={section.id} style={[styles.sectionCard, { backgroundColor: theme.colors.card, borderColor: lineColor }]}>
                   <TouchableOpacity
-                    style={[styles.sectionHeader, { borderBottomColor: lineColor, borderBottomWidth: isExpanded && lessonCount > 0 ? 1 : 0 }]}
+                    style={[styles.sectionHeader, { borderBottomColor: lineColor, borderBottomWidth: isExpanded && rowCount > 0 ? 1 : 0 }]}
                     onPress={() => { toggleSection(section.id); }}
                     activeOpacity={0.7}
                   >
@@ -553,6 +591,24 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                         {lessonCount} {t('courses.lessons')}
                       </Text>
                     </View>
+                    {canBuyParts && owns(section) ? (
+                      <View style={[styles.partChip, { backgroundColor: theme.colors.success + '1A' }]}>
+                        <Ionicons name="checkmark-circle" size={14} color={theme.colors.success} />
+                        <Text style={[styles.partChipText, { color: theme.colors.success }]}>{t('courses.parts.owned')}</Text>
+                      </View>
+                    ) : sectionForSale(section) ? (
+                      <TouchableOpacity
+                        style={[styles.partChip, { backgroundColor: theme.colors.primary + '1A' }]}
+                        onPress={() => buySection(section)}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                      >
+                        <Ionicons name="cart-outline" size={14} color={theme.colors.primary} />
+                        <Text style={[styles.partChipText, { color: theme.colors.primary }]}>
+                          {t('courses.parts.buySection')} · {`${formatAmount(Number(section.price))} ${t('wallet.points')}`}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : null}
                     <Ionicons
                       name={isExpanded ? 'chevron-up' : 'chevron-down'}
                       size={18}
@@ -561,12 +617,24 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                   </TouchableOpacity>
 
                   {isExpanded && section.lessons?.map((lesson, lIdx) => {
+                    const rowBorder = lIdx < rowCount - 1 && { borderBottomWidth: 1, borderBottomColor: lineColor };
+                    if (isDivider(lesson)) {
+                      return (
+                        <View key={lesson.id} style={[styles.dividerRow, rowBorder]}>
+                          <View style={[styles.dividerLine, { backgroundColor: lineColor }]} />
+                          <Text style={[styles.dividerTitle, { color: theme.colors.textMuted }]} numberOfLines={2}>{lesson.title}</Text>
+                          <View style={[styles.dividerLine, { backgroundColor: lineColor }]} />
+                        </View>
+                      );
+                    }
+                    const lessonNumber = section.lessons.slice(0, lIdx).filter((l) => !isDivider(l)).length + 1;
                     const isDoc = lesson.type === 2;
                     const isQuiz = lesson.type === 3;
                     const isFile = lesson.type === 4;
                     const isLink = lesson.type === 5;
                     const done = lessonDone(lesson);
-                    const locked = lockedIds.includes(lesson.id);
+                    const locked = lockedIds.includes(lesson.id) || isNotOwned(lesson);
+                    const forSale = lessonForSale(section, lesson);
                     const durationSec = Number((lesson as any).durationInSeconds ?? 0);
                     const durationMin = durationSec > 0 ? Math.max(1, Math.round(durationSec / 60)) : null;
 
@@ -581,13 +649,13 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                         style={[
                           styles.lessonRow,
                           locked && { opacity: 0.55 },
-                          lIdx < lessonCount - 1 && { borderBottomWidth: 1, borderBottomColor: lineColor },
+                          rowBorder,
                         ]}
-                        onPress={() => openLesson(lesson)}
+                        onPress={() => openLesson(section, lesson)}
                         activeOpacity={0.65}
                       >
                         {/* Lesson number */}
-                        <Text style={[styles.lessonNum, { color: theme.colors.textMuted }]}>{lIdx + 1}</Text>
+                        <Text style={[styles.lessonNum, { color: theme.colors.textMuted }]}>{lessonNumber}</Text>
 
                         {/* Icon */}
                         <View style={[styles.lessonIconWrap, { backgroundColor: iconBg }]}>
@@ -611,6 +679,19 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                             {isLink && <View style={[styles.lessonTypePill, { backgroundColor: '#0EA5E9' + pillAlpha }]}><Text style={[styles.lessonTypePillText, { color: '#0EA5E9' }]}>{t('courses.link')}</Text></View>}
                             {isQuiz && <View style={[styles.lessonTypePill, { backgroundColor: '#F59E0B' + pillAlpha }]}><Text style={[styles.lessonTypePillText, { color: '#F59E0B' }]}>{t('courses.exam')}</Text></View>}
                           </View>
+                          {forSale && (
+                            <TouchableOpacity
+                              style={[styles.partChip, styles.lessonPartChip, { backgroundColor: theme.colors.primary + '1A' }]}
+                              onPress={() => buyLesson(lesson)}
+                              activeOpacity={0.7}
+                              accessibilityRole="button"
+                            >
+                              <Ionicons name="cart-outline" size={14} color={theme.colors.primary} />
+                              <Text style={[styles.partChipText, { color: theme.colors.primary }]}>
+                                {t('courses.parts.buyLesson')} · {`${formatAmount(Number(lesson.price))} ${t('wallet.points')}`}
+                              </Text>
+                            </TouchableOpacity>
+                          )}
                         </View>
 
                         {/* Lock or play arrow */}
@@ -634,7 +715,43 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
       {/* ── Sticky Action Bar ── */}
       {!isLockedForStudent && (
       <View style={[styles.stickyBar, { backgroundColor: theme.colors.card, paddingBottom: insets.bottom + spacing.md, borderTopColor: lineColor }]}>
-        {isEnrolled || isOwner ? (
+        {isPartial ? (
+          <>
+            {requestStatus === 'rejected' && (
+              <Text style={[styles.requestNotice, { color: theme.colors.danger }]}>{t('courses.requestRejected')}</Text>
+            )}
+            <View style={styles.stickyActions}>
+              <Button
+                title={t('courses.parts.continue')}
+                onPress={handleWatch}
+                size="large"
+                icon={<Ionicons name="play-circle" size={22} color="#fff" />}
+                style={{ borderRadius: 16, flex: 1 }}
+              />
+              {requestStatus === 'pending' ? (
+                <Button
+                  title={t(REQUEST_ONLY ? 'courses.joinRequestPending' : 'courses.pendingRequest')}
+                  onPress={() => {}}
+                  disabled
+                  size="large"
+                  variant="outline"
+                  style={{ borderRadius: 16, flex: 1 }}
+                />
+              ) : (
+                <Button
+                  title={t(REQUEST_ONLY ? 'courses.requestToJoin' : 'courses.parts.buyFullCourse')}
+                  onPress={handlePurchase}
+                  size="large"
+                  variant="outline"
+                  style={{ borderRadius: 16, flex: 1 }}
+                />
+              )}
+            </View>
+            {!REQUEST_ONLY && (
+              <Text style={[styles.upgradeNote, { color: theme.colors.textMuted }]}>{t('courses.parts.upgradeNote')}</Text>
+            )}
+          </>
+        ) : isEnrolled || isOwner ? (
           <View style={styles.stickyActions}>
             <Button
               title={t('courses.watch')}
@@ -702,6 +819,14 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
         )}
       </View>
       )}
+
+      <PartPurchaseSheet
+        purchase={purchase}
+        currencyCode={course.currencyCode}
+        onClose={() => setPurchase(null)}
+        onPaid={onPartPaid}
+        onError={(message) => Alert.alert(t('common.error'), message)}
+      />
     </View>
   );
 }
@@ -1038,5 +1163,48 @@ const styles = StyleSheet.create({
   stickyActions: {
     flexDirection: 'row',
     gap: spacing.sm,
+  },
+  upgradeNote: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Cairo_500Medium',
+    textAlign: 'center',
+    marginTop: spacing.sm,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerTitle: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Cairo_600SemiBold',
+    flexShrink: 1,
+    textAlign: 'center',
+  },
+  partChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  partChipText: {
+    fontSize: fontSize.xs,
+    fontFamily: 'Cairo_600SemiBold',
+  },
+  lessonPartChip: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.xs,
+  },
+  partialPill: {
+    alignSelf: 'flex-start',
+    marginBottom: spacing.md,
   },
 });

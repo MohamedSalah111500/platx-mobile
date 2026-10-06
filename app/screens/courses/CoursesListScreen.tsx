@@ -23,7 +23,7 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import { coursesApi } from '../../services/api/courses.api';
 import type { CoursesStackParamList } from '../../types/navigation.types';
-import type { Course, Enrollment } from '../../types/course.types';
+import { ACCESS_SCOPE, type Course, type Enrollment } from '../../types/course.types';
 import { resolveCourseAvailability } from '../../utils/courseAvailability';
 import { CourseAvailabilityBadge } from '../../components/course/CourseAvailabilityBadge';
 import { getFullImageUrl } from '../../utils/imageUrl';
@@ -310,6 +310,11 @@ export default function CoursesListScreen({ navigation, route }: Props) {
                 {course.instructorName}
               </Text>
             ) : null}
+            {item.accessScope === ACCESS_SCOPE.Partial && (
+              <View style={[styles.partialPill, { backgroundColor: theme.colors.info + '1A' }]}>
+                <Text style={[styles.partialPillText, { color: theme.colors.info }]}>{t('courses.parts.partial')}</Text>
+              </View>
+            )}
             <View style={styles.progressWrap}>
               <View style={[styles.progressBar, { backgroundColor: theme.colors.border }]}>
                 <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: accent }]} />
@@ -584,5 +589,16 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 11,
     marginTop: 4,
+  },
+  partialPill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  partialPillText: {
+    fontSize: 12,
+    fontFamily: 'Cairo_600SemiBold',
   },
 });

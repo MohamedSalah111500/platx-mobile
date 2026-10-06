@@ -1,7 +1,7 @@
 import apiClient from './client';
-import { COURSES_URLS, ONLINE_COURSE_URLS, COURSE_SECTION_URLS, COURSE_LESSON_URLS, BUNNY_URLS, EXAM_ONLINE_URLS, withPagination } from './endpoints';
+import { COURSES_URLS, ONLINE_COURSE_URLS, COURSE_SECTION_URLS, COURSE_LESSON_URLS, BUNNY_URLS, EXAM_ONLINE_URLS, ENROLLMENT_CODE_URLS, withPagination } from './endpoints';
 import { ENROLLMENT_STATUS } from '../../types/course.types';
-import type { Course, Enrollment, EnrollmentHistoryItem, Lesson, Section, Quiz } from '../../types/course.types';
+import type { Course, Enrollment, EnrollmentCodeResult, EnrollmentHistoryItem, Lesson, Section, Quiz } from '../../types/course.types';
 import type { PaginatedResponse } from '../../types/api.types';
 
 export interface BunnyPlaybackToken {
@@ -148,6 +148,9 @@ export const coursesApi = {
     }
     return data;
   },
+
+  redeemEnrollmentCode: async (token: string): Promise<EnrollmentCodeResult> =>
+    (await apiClient.post<EnrollmentCodeResult>(ENROLLMENT_CODE_URLS.REDEEM, { token })).data,
 
   getOnlineCourseSingle: async (id: number): Promise<Course> => {
     const { data } = await apiClient.get<Course>(ONLINE_COURSE_URLS.GET_SINGLE(id));

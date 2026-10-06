@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { REQUEST_ONLY } from '../../config/storePolicy';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -25,6 +26,10 @@ import { coursesApi } from '../../services/api/courses.api';
 import { chatApi } from '../../services/api/chat.api';
 import { dashboardApi, type DashboardStats } from '../../services/api/dashboard.api';
 import type { Enrollment } from '../../types/course.types';
+import { StudentCodeButton } from '../../components/profile/StudentCodeButton';
+import { useFocusEffect } from '@react-navigation/native';
+import { walletApi } from '../../services/api/wallet.api';
+import { formatAmount } from '../../utils/price';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
 
@@ -39,12 +44,30 @@ export default function ProfileScreen({ navigation }: Props) {
   const canMyGroup = can('MY_GROUP');
   const canLive = can('LIVE_CLASSROOM');
   const canReports = can('REPORTS');
+  const canSessions = can('SESSIONS');
+  const canMySessions = can('MY_SESSIONS');
   const isStaffOrAdmin = !isStudent;
 
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [messageThreadsCount, setMessageThreadsCount] = useState(0);
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [points, setPoints] = useState<number | null>(null);
+  const showPoints = isStudent && !REQUEST_ONLY;
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!showPoints) return;
+      let active = true;
+      walletApi
+        .me()
+        .then((wallet) => active && setPoints(wallet.balance))
+        .catch(() => undefined);
+      return () => {
+        active = false;
+      };
+    }, [showPoints])
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -123,6 +146,24 @@ export default function ProfileScreen({ navigation }: Props) {
       onPress: () => navigation.navigate('LiveSessions'),
     });
   }
+  if (canSessions || canMySessions) {
+    generalMenuItems.push({
+      iconName: 'easel',
+      iconBg: theme.colors.primaryLight,
+      iconColor: theme.colors.primary,
+      label: canSessions ? t('sessions.title') : t('sessions.mine'),
+      onPress: () => navigation.navigate(canSessions ? 'Sessions' : 'MySessions'),
+    });
+  }
+  if (isStudent && !REQUEST_ONLY) {
+    generalMenuItems.push({
+      iconName: 'wallet',
+      iconBg: tint('#E8F8F0', '#34C38F'),
+      iconColor: '#34C38F',
+      label: t('wallet.title'),
+      onPress: () => navigation.navigate('Wallet'),
+    });
+  }
   generalMenuItems.push({
     iconName: 'trophy',
     iconBg: tint('#FFF4E5', '#F5A623'),
@@ -168,8 +209,23 @@ export default function ProfileScreen({ navigation }: Props) {
           {user?.email ? (
             <Text style={styles.email}>{user.email}</Text>
           ) : null}
-          <View style={styles.rolePill}>
-            <Text style={styles.roleText}>{role}</Text>
+          <View style={[styles.pillsRow, { flexWrap: 'wrap', justifyContent: 'center' }]}>
+            <View style={styles.rolePill}>
+              <Text style={styles.roleText}>{role}</Text>
+            </View>
+            {isStudent && user?.studentCode ? <StudentCodeButton code={user.studentCode} /> : null}
+            {showPoints && points !== null ? (
+              <TouchableOpacity
+                style={styles.pointsPill}
+                onPress={() => navigation.navigate('Wallet')}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={t('wallet.title')}
+              >
+                <Ionicons name="star" size={14} color="#FFFFFF" />
+                <Text style={styles.pointsText}>{`${formatAmount(points)} ${t('wallet.points')}`}</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         </View>
 
@@ -419,12 +475,31 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     marginTop: 4,
   },
-  rolePill: {
+  pillsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     marginTop: spacing.sm,
+  },
+  rolePill: {
     paddingHorizontal: spacing.lg,
     paddingVertical: 6,
     backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: borderRadius.full,
+  },
+  pointsPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: borderRadius.full,
+  },
+  pointsText: {
+    fontSize: 14,
+    fontFamily: 'Cairo_700Bold',
+    color: '#FFFFFF',
   },
   roleText: {
     fontSize: fontSize.xs,

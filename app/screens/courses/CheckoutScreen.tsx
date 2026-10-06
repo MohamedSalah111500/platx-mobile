@@ -26,7 +26,9 @@ import { fontSize, typography } from '../../theme/typography';
 import { reservationsApi } from '../../services/api/reservations.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { CoursePrice } from '../../components/course/CoursePrice';
+import { WalletPayCard } from '../../components/wallet/WalletPayCard';
 import { REQUEST_ONLY } from '../../config/storePolicy';
+import type { CheckoutParams } from '../../types/navigation.types';
 import {
   PAYMENT_METHOD_VODAFONE,
   PAYMENT_METHOD_INSTAPAY,
@@ -36,11 +38,11 @@ import {
 
 type Props = {
   navigation: NativeStackScreenProps<any, any>['navigation'];
-  route: { params: { courseId: number; title?: string; price?: number; discountPrice?: number; currencyCode?: string; image?: string } };
+  route: { params: CheckoutParams };
 };
 
 export default function CheckoutScreen({ navigation, route }: Props) {
-  const { courseId, title, price, discountPrice, currencyCode, image } = route.params;
+  const { courseId, title, price, discountPrice, currencyCode, image, upgrade } = route.params;
   const { theme } = useTheme();
   const { user } = useAuth();
   const { t, isRTL } = useRTL();
@@ -217,6 +219,24 @@ export default function CheckoutScreen({ navigation, route }: Props) {
             </View>
           ) : (
           <>
+          {upgrade && (
+            <View style={[styles.noticeCard, { backgroundColor: theme.colors.card }]}>
+              <Ionicons name="information-circle-outline" size={20} color={theme.colors.primary} />
+              <Text style={[styles.noticeText, { color: theme.colors.textSecondary }]}>{t('courses.parts.upgradeNote')}</Text>
+            </View>
+          )}
+          <WalletPayCard
+            kind="course"
+            targetId={courseId}
+            price={Number(discountPrice && discountPrice > 0 ? discountPrice : price ?? 0)}
+            currencyCode={currencyCode}
+            onPaid={() =>
+              Alert.alert(t('common.success'), t('wallet.coursePaid'), [
+                { text: t('common.ok'), onPress: () => navigation.goBack() },
+              ])
+            }
+            onError={(message) => Alert.alert(t('common.error'), message)}
+          />
           <Text style={[styles.sectionLabel, { color: theme.colors.text }]}>{t('checkout.paymentMethod')}</Text>
 
           {vodafone.length === 0 && instapay.length === 0 ? (

@@ -3,25 +3,25 @@
     "name": "PlatX",
     "slug": "platx",
     "scheme": "platx",
-    "version": "1.0.10",
+    "version": "1.0.11",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.platx.platform",
-      "buildNumber": "10",
+      "buildNumber": "11",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSMicrophoneUsageDescription": "The microphone is used for live class audio and to record voice feedback.",
-        "NSCameraUsageDescription": "The camera is used for live video classes.",
+        "NSCameraUsageDescription": "The camera is used for live video classes and for scanning QR codes, such as points cards and student attendance cards.",
         "NSPhotoLibraryUsageDescription": "Photo library access is used to attach payment proof and share images in chat.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.platx.platform",
-      "versionCode": 32,
+      "versionCode": 33,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -83,7 +83,7 @@
         "expo-image-picker",
         {
           "photosPermission": "Photo library access is used to attach payment proof and share images in chat.",
-          "cameraPermission": "The camera is used for live video classes."
+          "cameraPermission": "The camera is used for live video classes and for scanning QR codes, such as points cards and student attendance cards."
         }
       ],
       "./plugins/removePermissions",

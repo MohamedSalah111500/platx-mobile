@@ -39,6 +39,7 @@ export type CheckoutParams = {
   discountPrice?: number;
   currencyCode?: string;
   image?: string;
+  upgrade?: boolean;
 };
 
 export type HomeStackParamList = {
@@ -124,6 +125,10 @@ export type ProfileStackParamList = {
   HonorBoard: undefined;
   Homework: undefined;
   Reports: undefined;
+  Wallet: undefined;
+  MySessions: undefined;
+  Sessions: undefined;
+  SessionAttendance: { sessionId: number; title: string };
   AttendanceDetail: { groupId: number; groupName: string };
   ExamReportDetail: { examId: number; examName: string };
 };

@@ -127,6 +127,10 @@ async function startEmailConfirmation(
   credentials: { userName: string; password: string },
   domain: string | null
 ) {
+  if (!credentials.userName.includes('@')) {
+    set({ isLoading: false, error: i18n.t('auth.confirmEmailWithEmailLogin') });
+    return;
+  }
   const resolvedDomain = domain ?? '';
   // Login doesn't send an OTP by itself — request one so the user has a code to enter.
   await authApi.sendConfirmationEmail(credentials.userName, resolvedDomain).catch(() => {});
@@ -153,10 +157,12 @@ async function resolveStudentId(user: User): Promise<User> {
   if (!hasStudentRole(user.roles)) return user;
   try {
     const me = await studentsApi.getMe();
-    if (me?.id && me.id !== user.studentId) {
+    const studentCode = me?.code ?? undefined;
+    if (me?.id && (me.id !== user.studentId || studentCode !== user.studentCode)) {
       return {
         ...user,
         studentId: me.id,
+        studentCode,
         profileImage: user.profileImage ?? me.profileImage ?? undefined,
       };
     }
@@ -581,7 +587,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             // The user may have logged out (or switched account) while this was in
             // flight — never write the old profile back over a cleared session.
             if (get().token !== token) return;
-            if (fixed.studentId !== restoredUser.studentId) {
+            if (fixed !== restoredUser) {
               set({ user: fixed });
               AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(fixed)).catch(() => {});
             }

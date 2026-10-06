@@ -23,6 +23,7 @@ export interface StudentProfile {
   lastName?: string;
   email?: string;
   profileImage?: string;
+  code?: string | null;
 }
 
 export const studentsApi = {

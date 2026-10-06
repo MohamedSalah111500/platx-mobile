@@ -42,7 +42,7 @@ export default function ChangePasswordScreen({ navigation }: Props) {
       Alert.alert(t('common.validation'), t('validation.required'));
       return;
     }
-    if (!/^[A-Za-z0-9]{8,}$/.test(newPassword)) {
+    if (!/^[A-Za-z0-9]{6,}$/.test(newPassword)) {
       Alert.alert(t('common.validation'), t('auth.passwordMinLength'));
       return;
     }

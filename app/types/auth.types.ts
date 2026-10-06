@@ -37,6 +37,7 @@ export interface User {
   profileImage?: string;
   // Numeric student/staff ID from backend
   studentId?: number;
+  studentCode?: string;
   staffId?: number;
 }
 
@@ -45,6 +46,7 @@ export interface RegisterPayload {
   lastName: string;
   email: string;
   phoneNumber?: string;
+  educationStage?: string;
   password: string;
   confirmPassword: string;
   dateOfBirth?: string;

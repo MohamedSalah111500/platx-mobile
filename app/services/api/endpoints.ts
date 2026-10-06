@@ -18,6 +18,25 @@ export const AUTH_URLS = {
   MOBILE_SELECT_TENANT: `${BASE}api/auth/mobile-select-tenant`,
 };
 
+export const REGISTRATION_SETTINGS_URLS = {
+  PUBLIC: (domain: string) =>
+    `${BASE}api/tenant/registration-settings?domain=${encodeURIComponent(domain)}`,
+};
+
+export const WALLET_URLS = {
+  ME: `${BASE}api/wallet/me`,
+  MY_TRANSACTIONS: `${BASE}api/wallet/me/transactions`,
+  REDEEM: `${BASE}api/wallet/redeem`,
+  PAY_COURSE: (courseId: number) => `${BASE}api/wallet/pay/course/${courseId}`,
+  PAY_LIVE: (liveClassroomId: number) => `${BASE}api/wallet/pay/live/${liveClassroomId}`,
+  PAY_SECTION: (sectionId: number) => `${BASE}api/wallet/pay/section/${sectionId}`,
+  PAY_LESSON: (lessonId: number) => `${BASE}api/wallet/pay/lesson/${lessonId}`,
+};
+
+export const ENROLLMENT_CODE_URLS = {
+  REDEEM: `${BASE}api/CourseEnrollmentToken/redeem`,
+};
+
 export const PROFILE_URLS = {
   PHOTO: `${BASE}api/profile/photo`,
 };
@@ -342,4 +361,14 @@ export function withPagination(
 export const APP_VERSION_URLS = {
   CHECK: (platform: 'android' | 'ios', version: string) =>
     `${BASE}api/AppVersion?platform=${platform}&version=${encodeURIComponent(version)}`,
+};
+
+export const CLASS_SESSION_URLS = {
+  LIST: `${BASE}api/class-sessions`,
+  MINE: `${BASE}api/class-sessions/mine`,
+  ONE: (id: number) => `${BASE}api/class-sessions/${id}`,
+  STATUS: (id: number) => `${BASE}api/class-sessions/${id}/status`,
+  ROSTER: (id: number) => `${BASE}api/class-sessions/${id}/roster`,
+  ATTENDANCE: (id: number) => `${BASE}api/class-sessions/${id}/attendance`,
+  SCAN: (id: number) => `${BASE}api/class-sessions/${id}/attendance/scan`,
 };

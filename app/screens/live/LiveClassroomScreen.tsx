@@ -56,6 +56,7 @@ if (hasAgora) {
 }
 import type { RootStackParamList } from '../../types/navigation.types';
 import type { LiveSession, LiveParticipant, LiveMessage, JoinLivePayload } from '../../types/live.types';
+import { WalletPayCard } from '../../components/wallet/WalletPayCard';
 import { REQUEST_ONLY } from '../../config/storePolicy';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'LiveClassroom'>;
@@ -1164,6 +1165,18 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
               </TouchableOpacity>
             ) : (
               <>
+                {!!room?.price && room.price > 0 && (
+                  <WalletPayCard
+                    kind="live"
+                    targetId={roomId}
+                    price={Number(room.price)}
+                    onPaid={() => {
+                      setPaymentModalVisible(false);
+                      joinSession(room);
+                    }}
+                    onError={(message) => Alert.alert(t('common.error'), message)}
+                  />
+                )}
                 <TouchableOpacity
                   style={[styles.proofPicker, { borderColor: theme.colors.border, backgroundColor: theme.colors.inputBackground }]}
                   onPress={pickPaymentProof}

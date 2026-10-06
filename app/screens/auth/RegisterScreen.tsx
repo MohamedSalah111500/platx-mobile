@@ -22,8 +22,19 @@ import type { AuthStackParamList } from '../../types/navigation.types';
 import { useRTL } from '../../i18n/RTLProvider';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { isAppleSignInAvailable } from '../../services/auth/appleAuth';
+import {
+  registrationApi,
+  registrationFieldMode,
+  DEFAULT_REGISTRATION_SETTINGS,
+  type RegistrationSettings,
+} from '../../services/api/registration.api';
+import { normalizePhoneNumber } from '../../utils/phoneNumber';
+import { EDUCATION_STAGES, type EducationStage } from '../../utils/educationStages';
+import { SelectField } from '../../components/ui/SelectField';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
+
+const SETTINGS_LOOKUP_DELAY_MS = 500;
 
 export default function RegisterScreen({ navigation, route }: Props) {
   const { theme, isDark } = useTheme();
@@ -44,7 +55,37 @@ export default function RegisterScreen({ navigation, route }: Props) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [domain, setDomain] = useState(route.params?.domain || '');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [educationStage, setEducationStage] = useState<EducationStage | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [registration, setRegistration] = useState<RegistrationSettings>(DEFAULT_REGISTRATION_SETTINGS);
+
+  useEffect(() => {
+    const key = domain.trim();
+    if (!key) {
+      setRegistration(DEFAULT_REGISTRATION_SETTINGS);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      registrationApi
+        .forDomain(key, controller.signal)
+        .then(setRegistration)
+        .catch(() => {
+          if (!controller.signal.aborted) setRegistration(DEFAULT_REGISTRATION_SETTINGS);
+        });
+    }, SETTINGS_LOOKUP_DELAY_MS);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [domain]);
+
+  const phoneMode = registrationFieldMode(registration, 'phoneNumber');
+  const showPhone = phoneMode !== 'Hidden';
+  const stageMode = registrationFieldMode(registration, 'educationStage');
+  const showStage = stageMode !== 'Hidden';
+  const showSocialSignUp = registration.allowSocialSignUp;
 
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
@@ -53,9 +94,19 @@ export default function RegisterScreen({ navigation, route }: Props) {
     if (!email.trim()) errors.email = t('auth.emailRequired');
     else if (!/\S+@\S+\.\S+/.test(email)) errors.email = t('auth.invalidEmailFormat');
     if (!password.trim()) errors.password = t('auth.passwordRequired');
-    else if (!/^[A-Za-z0-9]{8,}$/.test(password)) errors.password = t('auth.passwordMinLength');
+    else if (!/^[A-Za-z0-9]{6,}$/.test(password)) errors.password = t('auth.passwordMinLength');
     if (password !== confirmPassword) errors.confirmPassword = t('auth.passwordsDoNotMatch');
     if (!domain.trim()) errors.domain = t('auth.domainRequired');
+    if (showPhone) {
+      if (!phoneNumber.trim()) {
+        if (phoneMode === 'Required') errors.phoneNumber = t('auth.phoneNumberRequired');
+      } else if (!normalizePhoneNumber(phoneNumber)) {
+        errors.phoneNumber = t('auth.phoneNumberInvalid');
+      }
+    }
+    if (showStage && stageMode === 'Required' && !educationStage) {
+      errors.educationStage = t('auth.educationStageRequired');
+    }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -72,6 +123,8 @@ export default function RegisterScreen({ navigation, route }: Props) {
         password,
         confirmPassword,
         domain: domain.trim(),
+        ...(showPhone ? { phoneNumber: normalizePhoneNumber(phoneNumber) ?? undefined } : {}),
+        ...(showStage && educationStage ? { educationStage } : {}),
       });
       // Navigate to OTP verification after successful registration
       navigation.navigate('OTPVerification', {
@@ -80,8 +133,28 @@ export default function RegisterScreen({ navigation, route }: Props) {
         type: 'email_confirm',
         password,
       });
-    } catch {
-      // Error is set in store
+    } catch (err: any) {
+      const serverErrors = err?.response?.data?.errors ?? {};
+      const fieldErrors = (['phoneNumber', 'educationStage'] as const).filter((key) => serverErrors[key]);
+      if (fieldErrors.length > 0) {
+        setRegistration((current) => ({
+          ...current,
+          fields: current.fields.map((f) =>
+            fieldErrors.includes(f.key as (typeof fieldErrors)[number]) && f.mode === 'Hidden'
+              ? { ...f, mode: 'Required' }
+              : f
+          ),
+        }));
+        setFormErrors((e) => {
+          const next = { ...e };
+          for (const key of fieldErrors) {
+            const value = serverErrors[key];
+            next[key] = Array.isArray(value) ? value[0] : String(value);
+          }
+          return next;
+        });
+        clearError();
+      }
     }
   };
 
@@ -260,6 +333,37 @@ export default function RegisterScreen({ navigation, route }: Props) {
           secureTextEntry
         />
 
+        {showPhone && (
+          <Input
+            label={phoneMode === 'Required' ? t('auth.phoneNumber') : t('auth.phoneOptional')}
+            placeholder="01012345678"
+            value={phoneNumber}
+            onChangeText={(text) => {
+              setPhoneNumber(text);
+              if (formErrors.phoneNumber) setFormErrors((e) => ({ ...e, phoneNumber: '' }));
+            }}
+            error={formErrors.phoneNumber}
+            keyboardType="phone-pad"
+            textContentType="telephoneNumber"
+            autoComplete="tel"
+            maxLength={24}
+          />
+        )}
+
+        {showStage && (
+          <SelectField
+            label={stageMode === 'Required' ? t('auth.educationStage') : t('auth.educationStageOptional')}
+            placeholder={t('auth.educationStagePlaceholder')}
+            value={educationStage}
+            options={EDUCATION_STAGES.map((stage) => ({ value: stage, label: t(`educationStages.${stage}`) }))}
+            onChange={(stage) => {
+              setEducationStage(stage);
+              if (formErrors.educationStage) setFormErrors((e) => ({ ...e, educationStage: '' }));
+            }}
+            error={formErrors.educationStage}
+          />
+        )}
+
         <Button
           title={t('auth.createAccount')}
           onPress={handleRegister}
@@ -268,64 +372,67 @@ export default function RegisterScreen({ navigation, route }: Props) {
           size="large"
         />
 
-        {/* Divider */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: spacing.xl }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.divider }} />
-          <Text style={{ ...typography.caption, color: theme.colors.textMuted, marginHorizontal: spacing.md }}>
-            {t('auth.orContinueWith')}
-          </Text>
-          <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.divider }} />
-        </View>
+        {showSocialSignUp && (
+          <>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: spacing.xl }}>
+              <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.divider }} />
+              <Text style={{ ...typography.caption, color: theme.colors.textMuted, marginHorizontal: spacing.md }}>
+                {t('auth.orContinueWith')}
+              </Text>
+              <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.divider }} />
+            </View>
 
-        {appleAvailable && (
-          <View
-            style={{ marginBottom: spacing.md, opacity: appleLoading || isLoading ? 0.6 : 1 }}
-            pointerEvents={appleLoading || googleLoading || isLoading ? 'none' : 'auto'}
-          >
-            <AppleAuthentication.AppleAuthenticationButton
-              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
-              buttonStyle={
-                isDark
-                  ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-                  : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
-              }
-              cornerRadius={borderRadius.lg}
-              style={{ width: '100%', height: 50 }}
-              onPress={handleAppleSignUp}
-            />
-          </View>
+            {appleAvailable && (
+              <View
+                style={{ marginBottom: spacing.md, opacity: appleLoading || isLoading ? 0.6 : 1 }}
+                pointerEvents={appleLoading || googleLoading || isLoading ? 'none' : 'auto'}
+              >
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
+                  buttonStyle={
+                    isDark
+                      ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                      : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+                  }
+                  cornerRadius={borderRadius.lg}
+                  style={{ width: '100%', height: 50 }}
+                  onPress={handleAppleSignUp}
+                />
+              </View>
+            )}
+
+            {/* Google Sign-Up */}
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: spacing.md,
+                backgroundColor: theme.colors.card,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                borderRadius: borderRadius.lg,
+                paddingVertical: spacing.md,
+                paddingHorizontal: spacing.xl,
+                minHeight: 50,
+                opacity: googleLoading ? 0.7 : 1,
+              }}
+              onPress={handleGoogleSignUp}
+              disabled={googleLoading || appleLoading || isLoading}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="logo-google" size={20} color="#DB4437" />
+              <Text
+                style={{
+                  ...typography.button,
+                  color: theme.colors.text,
+                }}
+              >
+                {googleLoading ? t('common.loading') : t('auth.signUpWithGoogle')}
+              </Text>
+            </TouchableOpacity>
+          </>
         )}
-
-        {/* Google Sign-Up */}
-        <TouchableOpacity
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: spacing.md,
-            backgroundColor: theme.colors.card,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            borderRadius: borderRadius.lg,
-            paddingVertical: spacing.md,
-            paddingHorizontal: spacing.xl,
-            minHeight: 50,
-            opacity: googleLoading ? 0.7 : 1,
-          }}
-          onPress={handleGoogleSignUp}
-          disabled={googleLoading || appleLoading || isLoading}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="logo-google" size={20} color="#DB4437" />
-          <Text
-            style={{
-              ...typography.button,
-              color: theme.colors.text,
-            }}
-          >
-            {googleLoading ? t('common.loading') : t('auth.signUpWithGoogle')}
-          </Text>
-        </TouchableOpacity>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>{t('auth.hasAccount')} </Text>

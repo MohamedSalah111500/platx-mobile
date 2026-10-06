@@ -22,6 +22,8 @@ export const PERMISSIONS = {
   ADMIN_PANEL: ['SuperAdmin', 'Admin'] as TRole[],
   REPORTS: ['SuperAdmin', 'Admin', 'Staff'] as TRole[],
   EXAMS_CREATE: ['SuperAdmin', 'Admin', 'Staff'] as TRole[],
+  SESSIONS: ['SuperAdmin', 'Admin', 'Staff'] as TRole[],
+  MY_SESSIONS: ['Student'] as TRole[],
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;

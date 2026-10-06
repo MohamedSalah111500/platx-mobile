@@ -34,7 +34,11 @@ export interface Course {
   isPublished?: boolean;
   isEnrolled?: boolean;
   hasCertificate?: boolean;
+  hasFullAccess?: boolean;
+  sellSectionsSeparately?: boolean;
+  sellLessonsSeparately?: boolean;
   quizPolicy?: number; // 0 = not mandatory, 1 = solve only, 2 = solve and pass
+  quizPolicyScope?: number;
   sections?: Section[];
   createdAt?: string;
   updateTime?: string;
@@ -49,6 +53,9 @@ export interface Section {
   title: string;
   order: number;
   lessons: Lesson[];
+  price?: number | null;
+  isEnrolled?: boolean;
+  isSessionUnlocked?: boolean;
 }
 
 export interface Lesson {
@@ -61,6 +68,10 @@ export interface Lesson {
   duration?: number;
   order: number;
   isFree?: boolean;
+  freePreview?: boolean;
+  price?: number | null;
+  isEnrolled?: boolean;
+  isSessionUnlocked?: boolean;
   isCompleted?: boolean;
   isCompleated?: boolean;
   sectionId: number;
@@ -83,7 +94,17 @@ export interface Enrollment {
   progressPercentage?: number;
   status?: number;
   certificateCode?: string | null;
+  accessScope?: number;
   course?: Course;
+}
+
+export const ACCESS_SCOPE = { Full: 0, Partial: 1 } as const;
+
+export interface EnrollmentCodeResult {
+  courseId: number;
+  courseName: string;
+  sectionTitle?: string | null;
+  lessonTitle?: string | null;
 }
 
 export interface QuizAnswer {

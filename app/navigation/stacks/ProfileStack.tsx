@@ -1,3 +1,7 @@
+import WalletScreen from '../../screens/wallet/WalletScreen';
+import MySessionsScreen from '../../screens/sessions/MySessionsScreen';
+import SessionsListScreen from '../../screens/sessions/SessionsListScreen';
+import SessionAttendanceScreen from '../../screens/sessions/SessionAttendanceScreen';
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { ProfileStackParamList } from '../../types/navigation.types';
@@ -34,6 +38,10 @@ export default function ProfileStack() {
       <Stack.Screen name="HonorBoard" component={HonorBoardScreen} />
       <Stack.Screen name="Homework" component={HomeworkStack} />
       <Stack.Screen name="Reports" component={ReportsListScreen} />
+      <Stack.Screen name="Wallet" component={WalletScreen} />
+      <Stack.Screen name="MySessions" component={MySessionsScreen} />
+      <Stack.Screen name="Sessions" component={SessionsListScreen} />
+      <Stack.Screen name="SessionAttendance" component={SessionAttendanceScreen} />
       <Stack.Screen name="AttendanceDetail" component={AttendanceDetailScreen} />
       <Stack.Screen name="ExamReportDetail" component={ExamReportDetailScreen} />
     </Stack.Navigator>
