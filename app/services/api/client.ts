@@ -20,6 +20,15 @@ export const setInMemoryToken = (token: string | null) => {
   inMemoryToken = token;
 };
 
+let parentMode = false;
+const PARENT_SCOPE = /(^|\/)api\/(guardian|devicetoken)\//i;
+
+export const setParentMode = (enabled: boolean) => {
+  parentMode = enabled;
+};
+
+const isParentScoped = (url?: string): boolean => !!url && PARENT_SCOPE.test(url);
+
 // Callback for 401 unauthorized - set by auth store to avoid circular imports
 let onUnauthorizedCallback: (() => void) | null = null;
 export const setOnUnauthorized = (cb: () => void) => {
@@ -28,7 +37,8 @@ export const setOnUnauthorized = (cb: () => void) => {
 
 export const getToken = async (): Promise<string | null> => {
   if (inMemoryToken) return inMemoryToken;
-  
+  if (parentMode) return null;
+
   try {
     const userData = await AsyncStorage.getItem(STORAGE_KEYS.CURRENT_USER);
     if (userData) {
@@ -44,7 +54,7 @@ export const getToken = async (): Promise<string | null> => {
 // Request interceptor - adds auth token and logs requests
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const token = await getToken();
+    const token = parentMode && !isParentScoped(config.url) ? null : await getToken();
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

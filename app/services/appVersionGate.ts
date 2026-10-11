@@ -9,13 +9,13 @@ let lastCheckedAt = 0;
 
 export async function checkAppVersion(force = false): Promise<void> {
   if (!force && Date.now() - lastCheckedAt < RECHECK_INTERVAL_MS) return;
-  lastCheckedAt = Date.now();
 
   const currentVersion = getAppVersion();
   const platform = Platform.OS === 'ios' ? 'ios' : 'android';
 
   try {
     const result = await appVersionApi.check(platform, currentVersion);
+    lastCheckedAt = Date.now();
     const info = { storeUrl: result.storeUrl, latestVersion: result.latestVersion, currentVersion };
     const ui = useUIStore.getState();
     ui.setUpdateRequired(result.updateRequired ? info : null);

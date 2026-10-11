@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS, API_CONFIG } from '../config';
 import { authApi } from '../services/api/auth.api';
@@ -12,6 +13,7 @@ import { signInWithGoogle } from '../services/auth/googleAuth';
 import { signInWithApple } from '../services/auth/appleAuth';
 import i18n from '../i18n/i18n.config';
 import { useNotificationsStore } from './notifications.store';
+import { useParentStore } from './parent.store';
 import type {
   User,
   LoginResponse,
@@ -233,6 +235,8 @@ async function persistAndSetAuth(
   const tenantName = branding?.tenantName ?? null;
   const tenantLogo = resolveLogoUrl(branding?.tenantLogo);
   const tenantColor = branding?.primaryColor ?? null;
+
+  await useParentStore.getState().clear();
 
   // Token must be usable by the API client before we ask for the student profile.
   setInMemoryToken(token);
@@ -601,6 +605,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           } catch {}
         }, 0);
       } else {
+        await useParentStore.getState().restore().catch(() => false);
         set({ isLoading: false });
       }
     } catch {
@@ -625,5 +630,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 }));
 
 setOnUnauthorized(() => {
+  if (useParentStore.getState().token) {
+    useParentStore
+      .getState()
+      .clear()
+      .catch(() => {})
+      .finally(() => Alert.alert(i18n.t('parent.sessionEndedTitle'), i18n.t('parent.sessionEnded')));
+    return;
+  }
   clearSession({ removePushToken: true }).catch(() => {});
 });

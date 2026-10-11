@@ -50,6 +50,17 @@ export async function registerForPushNotifications(): Promise<boolean> {
   }
 }
 
+export async function enablePushNotifications(): Promise<boolean> {
+  try {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') return false;
+  } catch (err) {
+    logger.recordError(err, 'Push:permission');
+    return false;
+  }
+  return registerForPushNotifications();
+}
+
 export async function unregisterPushNotifications(authToken?: string | null): Promise<void> {
   try {
     const token = await AsyncStorage.getItem(STORAGE_KEYS.PUSH_TOKEN);

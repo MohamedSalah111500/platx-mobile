@@ -328,6 +328,20 @@ export const DEVICE_TOKEN_URLS = {
   UNREGISTER: `${BASE}api/DeviceToken/unregister`,
 };
 
+export const GUARDIAN_URLS = {
+  REDEEM: `${BASE}api/guardian/redeem`,
+  CHILDREN: `${BASE}api/guardian/children`,
+  ATTENDANCE: (studentId: number) => `${BASE}api/guardian/children/${studentId}/attendance`,
+  EXAMS: (studentId: number) => `${BASE}api/guardian/children/${studentId}/exams`,
+  HOMEWORK: (studentId: number) => `${BASE}api/guardian/children/${studentId}/homework`,
+  WALLET: (studentId: number) => `${BASE}api/guardian/children/${studentId}/wallet`,
+  NOTIFICATIONS: `${BASE}api/guardian/notifications`,
+  UNREAD_COUNT: `${BASE}api/guardian/notifications/unread-count`,
+  MARK_READ: (id: number) => `${BASE}api/guardian/notifications/${id}/read`,
+  MARK_ALL_READ: `${BASE}api/guardian/notifications/read-all`,
+  LOGOUT: `${BASE}api/guardian/logout`,
+};
+
 // SignalR Hub URLs
 export const HUB_URLS = {
   NOTIFICATIONS: `${BASE}hubs/notification`,

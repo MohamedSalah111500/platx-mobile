@@ -8,6 +8,7 @@ import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import OTPVerificationScreen from '../screens/auth/OTPVerificationScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import TenantSelectionScreen from '../screens/auth/TenantSelectionScreen';
+import ParentLinkScreen from '../screens/parent/ParentLinkScreen';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -25,6 +26,7 @@ export default function AuthNavigator() {
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+      <Stack.Screen name="ParentLink" component={ParentLinkScreen} />
     </Stack.Navigator>
   );
 }

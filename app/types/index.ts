@@ -40,4 +40,4 @@ export type {
   LiveParticipant,
   LiveMessage,
 } from './live.types';
-export type { RootStackParamList, AuthStackParamList, MainTabParamList } from './navigation.types';
+export type { RootStackParamList, AuthStackParamList, MainTabParamList, ParentStackParamList } from './navigation.types';

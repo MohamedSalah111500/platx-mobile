@@ -1,6 +1,7 @@
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
+  Parent: undefined;
   LiveClassroom: { roomId: number; isTeacher: boolean };
   LessonPlayer: {
     lessonId: number;
@@ -22,6 +23,16 @@ export type AuthStackParamList = {
     password?: string;
   };
   ResetPassword: { token: string };
+  ParentLink: { code?: string } | undefined;
+};
+
+export type ParentStackParamList = {
+  ParentHome: undefined;
+  ParentAttendance: undefined;
+  ParentExams: undefined;
+  ParentHomework: undefined;
+  ParentNotifications: undefined;
+  ParentLink: { code?: string } | undefined;
 };
 
 export type MainTabParamList = {

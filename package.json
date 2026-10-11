@@ -1,6 +1,6 @@
 {
   "name": "PlatX",
-  "version": "1.0.8",
+  "version": "1.0.12",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",

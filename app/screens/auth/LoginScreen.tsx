@@ -232,6 +232,18 @@ export default function LoginScreen({ navigation }: Props) {
               </Text>
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            style={styles.parentLink}
+            onPress={() => {
+              clearError();
+              navigation.navigate('ParentLink');
+            }}
+            disabled={externalBusy}
+            hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
+          >
+            <Text style={styles.parentLinkText}>{t('parent.loginLink')}</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -328,7 +340,16 @@ function createStyles(theme: any) {
       alignItems: 'center',
       justifyContent: 'center',
       marginTop: spacing['2xl'],
+    },
+    parentLink: {
+      alignSelf: 'center',
+      marginTop: spacing.lg,
       paddingBottom: spacing['2xl'],
+    },
+    parentLinkText: {
+      ...typography.bodySmall,
+      color: theme.colors.textSecondary,
+      textDecorationLine: 'underline',
     },
     footerText: {
       ...typography.body,

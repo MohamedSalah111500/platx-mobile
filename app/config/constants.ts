@@ -14,6 +14,8 @@ export const STORAGE_KEYS = {
   TENANT_LOGO: 'tenant_logo',
   TENANT_COLOR: 'tenant_color',
   PUSH_TOKEN: 'push_token',
+  PARENT_TOKEN: 'parent_token',
+  PARENT_CHILDREN: 'parent_children',
 } as const;
 
 // API request timeout
