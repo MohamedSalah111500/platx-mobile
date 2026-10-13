@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import { StackActions, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
@@ -42,7 +42,7 @@ export default function ParentLinkScreen() {
     setError(null);
     try {
       const linked = await redeem(trimmed);
-      if (linked && adding && navigation.canGoBack()) navigation.goBack();
+      if (linked && adding) navigation.dispatch(StackActions.popTo('ParentHome'));
     } catch (err: any) {
       setError(
         err?.status === 429

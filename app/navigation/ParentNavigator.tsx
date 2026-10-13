@@ -8,6 +8,7 @@ import ParentExamsScreen from '../screens/parent/ParentExamsScreen';
 import ParentHomeworkScreen from '../screens/parent/ParentHomeworkScreen';
 import ParentNotificationsScreen from '../screens/parent/ParentNotificationsScreen';
 import ParentLinkScreen from '../screens/parent/ParentLinkScreen';
+import ParentSettingsScreen from '../screens/parent/ParentSettingsScreen';
 
 const Stack = createNativeStackNavigator<ParentStackParamList>();
 
@@ -25,6 +26,7 @@ export default function ParentNavigator() {
       <Stack.Screen name="ParentHomework" component={ParentHomeworkScreen} />
       <Stack.Screen name="ParentNotifications" component={ParentNotificationsScreen} />
       <Stack.Screen name="ParentLink" component={ParentLinkScreen} />
+      <Stack.Screen name="ParentSettings" component={ParentSettingsScreen} />
     </Stack.Navigator>
   );
 }

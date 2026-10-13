@@ -33,6 +33,7 @@ export type ParentStackParamList = {
   ParentHomework: undefined;
   ParentNotifications: undefined;
   ParentLink: { code?: string } | undefined;
+  ParentSettings: undefined;
 };
 
 export type MainTabParamList = {

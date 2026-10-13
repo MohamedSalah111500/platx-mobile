@@ -76,3 +76,16 @@ export async function unregisterPushNotifications(authToken?: string | null): Pr
     logger.recordError(err, 'Push:unregister');
   }
 }
+
+export type PushPermission = 'granted' | 'undetermined' | 'blocked';
+
+export async function getPushPermission(): Promise<PushPermission> {
+  try {
+    const { status, canAskAgain } = await Notifications.getPermissionsAsync();
+    if (status === 'granted') return 'granted';
+    return canAskAgain ? 'undetermined' : 'blocked';
+  } catch (err) {
+    logger.recordError(err, 'Push:getPermission');
+    return 'blocked';
+  }
+}

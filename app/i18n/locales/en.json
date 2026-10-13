@@ -707,7 +707,12 @@
     "about": "About",
     "version": "Version",
     "account": "Account",
-    "deleteAccountDesc": "Permanently delete your account and personal data"
+    "deleteAccountDesc": "Permanently delete your account and personal data",
+    "notifications": "Notifications",
+    "pushNotifications": "Push notifications",
+    "notificationsOn": "On. Tap to manage them in device settings.",
+    "notificationsOff": "Off. Tap to turn them on.",
+    "notificationsBlocked": "Blocked in device settings. Tap to open settings."
   },
   "deleteAccount": {
     "title": "Delete Account",
@@ -1111,6 +1116,8 @@
     "otherAcademyMessage": "This student belongs to a different academy. Continuing will replace the students you currently follow with this student.",
     "otherAcademyContinue": "Continue",
     "sessionEndedTitle": "Parent access cancelled",
-    "sessionEnded": "Your parent access has been cancelled. Please link again using the student's code."
+    "sessionEnded": "Your parent access has been cancelled. Please link again using the student's code.",
+    "children": "Students",
+    "addChildDesc": "Link another student using a parent code."
   }
 }

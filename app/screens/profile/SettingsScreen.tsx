@@ -1,34 +1,19 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Platform,
-} from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { AppPreferences, LogoutButton, SettingsRow, SettingsSection } from '../../components/settings/SettingsSections';
 import { useTheme } from '../../theme/ThemeProvider';
-import type { ThemeMode } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { useRTL } from '../../i18n/RTLProvider';
-import { SUPPORTED_LANGUAGES, RTL_LANGUAGES } from '../../config/constants';
-import { spacing } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Settings'>;
 
 export default function SettingsScreen({ navigation }: Props) {
-  const { theme, setTheme, themeMode } = useTheme();
+  const { theme } = useTheme();
   const { logout } = useAuth();
-  const { locale, setLocale, t, isRTL } = useRTL();
-  const bgColor = theme.colors.background;
-  // Light pastel icon fills glare in dark mode — use a translucent tint of the icon colour there.
-  const tint = (lightBg: string, color: string) => (theme.dark ? color + '26' : lightBg);
+  const { t } = useRTL();
 
   const handleLogout = () => {
     Alert.alert(t('auth.signOut'), t('auth.signOutConfirm'), [
@@ -37,185 +22,26 @@ export default function SettingsScreen({ navigation }: Props) {
     ]);
   };
 
-  const handleLanguageChange = async (langCode: string) => {
-    if (langCode === locale) return;
-    const directionChanges = RTL_LANGUAGES.includes(langCode) !== isRTL;
-    await setLocale(langCode);
-    // Switching either way flips the layout direction, and RN only applies that
-    // on the next launch.
-    if (directionChanges) {
-      Alert.alert(
-        t('settings.restartRequired'),
-        t('settings.restartMessage'),
-      );
-    }
-  };
-
-  const Chip = ({
-    value,
-    label,
-    currentValue,
-    onPress,
-  }: {
-    value: string;
-    label: string;
-    currentValue: string;
-    onPress: (v: string) => void;
-  }) => {
-    const isActive = currentValue === value;
-    return (
-      <TouchableOpacity
-        style={[
-          styles.chip,
-          {
-            backgroundColor: isActive ? theme.colors.primary : theme.colors.card,
-            borderColor: isActive ? theme.colors.primary : theme.colors.border,
-          },
-        ]}
-        onPress={() => onPress(value)}
-        activeOpacity={0.7}
-      >
-        <Text
-          style={[
-            styles.chipText,
-            { color: isActive ? '#fff' : theme.colors.text },
-          ]}
-        >
-          {label}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
-
   return (
-    <View style={[styles.container, { backgroundColor: bgColor }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader title={t('settings.title')} onBack={() => navigation.goBack()} />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
-      >
-        {/* Theme */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textMuted }]}>
-            {t('settings.appearance')}
-          </Text>
-          <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
-            <View style={styles.cardRow}>
-              <View style={[styles.settingIcon, { backgroundColor: theme.colors.primaryLight }]}>
-                <Ionicons name="color-palette" size={20} color={theme.colors.primary} />
-              </View>
-              <View style={styles.settingInfo}>
-                <Text style={[styles.settingLabel, { color: theme.colors.text }]}>
-                  {t('settings.theme')}
-                </Text>
-                <Text style={[styles.settingDesc, { color: theme.colors.textMuted }]}>
-                  {t('settings.chooseTheme')}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.chipRow}>
-              <Chip value="light" label={t('settings.light')} currentValue={themeMode} onPress={(v) => setTheme(v as ThemeMode)} />
-              <Chip value="dark" label={t('settings.dark')} currentValue={themeMode} onPress={(v) => setTheme(v as ThemeMode)} />
-              <Chip value="system" label={t('settings.system')} currentValue={themeMode} onPress={(v) => setTheme(v as ThemeMode)} />
-            </View>
-          </View>
-        </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <AppPreferences />
 
-        {/* Language */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textMuted }]}>
-            {t('settings.language')}
-          </Text>
-          <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
-            <View style={styles.cardRow}>
-              <View style={[styles.settingIcon, { backgroundColor: tint('#E8F4FD', '#3B82F6') }]}>
-                <Ionicons name="globe" size={20} color="#3B82F6" />
-              </View>
-              <View style={styles.settingInfo}>
-                <Text style={[styles.settingLabel, { color: theme.colors.text }]}>
-                  {t('settings.selectLanguage')}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.chipRow}>
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <Chip
-                  key={lang.code}
-                  value={lang.code}
-                  label={lang.nativeName}
-                  currentValue={locale}
-                  onPress={handleLanguageChange}
-                />
-              ))}
-            </View>
-          </View>
-        </View>
-
-        {/* About */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textMuted }]}>
-            {t('settings.about')}
-          </Text>
-          <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
-            <View style={[styles.cardRow, { paddingBottom: 0 }]}>
-              <View style={[styles.settingIcon, { backgroundColor: tint('#E8F8F0', '#34C38F') }]}>
-                <Ionicons name="information-circle" size={20} color="#34C38F" />
-              </View>
-              <View style={styles.settingInfo}>
-                <Text style={[styles.settingLabel, { color: theme.colors.text }]}>
-                  {t('settings.version')}
-                </Text>
-              </View>
-              <Text style={[styles.versionText, { color: theme.colors.textMuted }]}>1.0.0</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Account */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textMuted }]}>
-            {t('settings.account')}
-          </Text>
-          <TouchableOpacity
-            style={[styles.card, { backgroundColor: theme.colors.card }]}
+        <SettingsSection title={t('settings.account')}>
+          <SettingsRow
+            icon="trash-outline"
+            iconBg={theme.colors.danger + '1A'}
+            iconColor={theme.colors.danger}
+            label={t('deleteAccount.title')}
+            description={t('settings.deleteAccountDesc')}
+            danger
             onPress={() => navigation.navigate('DeleteAccount')}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.cardRow, { paddingBottom: 0 }]}>
-              <View style={[styles.settingIcon, { backgroundColor: theme.colors.danger + '1A' }]}>
-                <Ionicons name="trash-outline" size={20} color={theme.colors.danger} />
-              </View>
-              <View style={styles.settingInfo}>
-                <Text style={[styles.settingLabel, { color: theme.colors.danger }]}>
-                  {t('deleteAccount.title')}
-                </Text>
-                <Text style={[styles.settingDesc, { color: theme.colors.textMuted }]}>
-                  {t('settings.deleteAccountDesc')}
-                </Text>
-              </View>
-              <Ionicons
-                name={isRTL ? 'chevron-back' : 'chevron-forward'}
-                size={18}
-                color={theme.colors.textMuted}
-              />
-            </View>
-          </TouchableOpacity>
-        </View>
+          />
+        </SettingsSection>
 
-        {/* Logout */}
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={[styles.logoutBtn, { backgroundColor: theme.colors.danger + '10' }]}
-            onPress={handleLogout}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="log-out-outline" size={22} color={theme.colors.danger} />
-            <Text style={[styles.logoutText, { color: theme.colors.danger }]}>
-              {t('auth.signOut')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <LogoutButton label={t('auth.signOut')} onPress={handleLogout} />
       </ScrollView>
     </View>
   );
@@ -225,76 +51,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  section: {
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.xl,
-  },
-  sectionTitle: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Cairo_700Bold',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: spacing.sm,
-    marginStart: spacing.xs,
-  },
-  card: {
-    borderRadius: 20,
-    padding: spacing.lg,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingBottom: spacing.md,
-    gap: spacing.md,
-  },
-  settingIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  settingInfo: {
-    flex: 1,
-  },
-  settingLabel: {
-    fontSize: fontSize.base,
-    fontFamily: 'Cairo_600SemiBold',
-  },
-  settingDesc: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Cairo_400Regular',
-    marginTop: 2,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  chip: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  chipText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Cairo_600SemiBold',
-  },
-  versionText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Cairo_600SemiBold',
-  },
-  logoutBtn: {
-    borderRadius: 20,
-    padding: spacing.lg,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  logoutText: {
-    ...typography.button,
+  content: {
+    paddingBottom: 120,
   },
 });

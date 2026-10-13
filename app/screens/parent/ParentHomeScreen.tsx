@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -43,7 +43,6 @@ export default function ParentHomeScreen({ navigation }: Props) {
   const unreadCount = useParentStore((state) => state.unreadCount);
   const refreshChildren = useParentStore((state) => state.refreshChildren);
   const fetchUnreadCount = useParentStore((state) => state.fetchUnreadCount);
-  const logout = useParentStore((state) => state.logout);
   const onLinkRevoked = useLinkRevoked();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,21 +103,6 @@ export default function ParentHomeScreen({ navigation }: Props) {
     load();
   };
 
-  const confirmLogout = () => {
-    Alert.alert(t('parent.logout'), t('parent.logoutConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('parent.logout'), style: 'destructive', onPress: () => logout() },
-    ]);
-  };
-
-  const openMenu = () => {
-    Alert.alert(t('parent.options'), undefined, [
-      { text: t('parent.addChild'), onPress: () => navigation.navigate('ParentLink') },
-      { text: t('parent.logout'), style: 'destructive', onPress: confirmLogout },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
-  };
-
   const styles = createStyles(theme);
   const chevron = isRTL ? 'chevron-back' : 'chevron-forward';
   const stage = child?.educationStage ? t(`educationStages.${child.educationStage}`, { defaultValue: child.educationStage }) : null;
@@ -151,11 +135,11 @@ export default function ParentHomeScreen({ navigation }: Props) {
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.iconButton}
-        onPress={openMenu}
+        onPress={() => navigation.navigate('ParentSettings')}
         accessibilityRole="button"
-        accessibilityLabel={t('parent.options')}
+        accessibilityLabel={t('settings.title')}
       >
-        <Ionicons name="ellipsis-vertical" size={22} color={theme.colors.text} />
+        <Ionicons name="settings-outline" size={22} color={theme.colors.text} />
       </TouchableOpacity>
     </View>
   );
