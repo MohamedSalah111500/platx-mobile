@@ -7,7 +7,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  Image,
 } from 'react-native';
+import axios from 'axios';
+import type { CountryCode } from 'libphonenumber-js/mobile';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -28,13 +31,14 @@ import {
   DEFAULT_REGISTRATION_SETTINGS,
   type RegistrationSettings,
 } from '../../services/api/registration.api';
-import { normalizePhoneNumber } from '../../utils/phoneNumber';
+import { DEFAULT_PHONE_COUNTRY, toE164Phone } from '../../utils/phoneNumber';
 import { EDUCATION_STAGES, type EducationStage } from '../../utils/educationStages';
 import { SelectField } from '../../components/ui/SelectField';
+import { PhoneInput } from '../../components/ui/PhoneInput';
+import { academyStorage } from '../../services/storage/academy.storage';
+import { getFullImageUrl } from '../../utils/imageUrl';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
-
-const SETTINGS_LOOKUP_DELAY_MS = 500;
 
 export default function RegisterScreen({ navigation, route }: Props) {
   const { theme, isDark } = useTheme();
@@ -54,32 +58,62 @@ export default function RegisterScreen({ navigation, route }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [domain, setDomain] = useState(route.params?.domain || '');
+  const [domainInput, setDomainInput] = useState(route.params?.domain || '');
+  const [domain, setDomain] = useState('');
+  const [academyName, setAcademyName] = useState('');
+  const [academyLogo, setAcademyLogo] = useState<string | undefined>();
+  const [lookingUp, setLookingUp] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>(DEFAULT_PHONE_COUNTRY);
   const [educationStage, setEducationStage] = useState<EducationStage | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [registration, setRegistration] = useState<RegistrationSettings>(DEFAULT_REGISTRATION_SETTINGS);
 
-  useEffect(() => {
-    const key = domain.trim();
+  const academyChosen = !!domain;
+
+  const lookUpAcademy = async (input: string) => {
+    const key = input.trim();
     if (!key) {
-      setRegistration(DEFAULT_REGISTRATION_SETTINGS);
+      setFormErrors({ domain: t('auth.domainRequired') });
       return;
     }
-    const controller = new AbortController();
-    const timer = setTimeout(() => {
-      registrationApi
-        .forDomain(key, controller.signal)
-        .then(setRegistration)
-        .catch(() => {
-          if (!controller.signal.aborted) setRegistration(DEFAULT_REGISTRATION_SETTINGS);
-        });
-    }, SETTINGS_LOOKUP_DELAY_MS);
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [domain]);
+    setLookingUp(true);
+    setFormErrors({});
+    clearError();
+    try {
+      const settings = await registrationApi.forDomain(key);
+      const resolved = settings.domain || key;
+      setRegistration(settings);
+      setDomain(resolved);
+      setAcademyName(settings.name || resolved);
+      setAcademyLogo(getFullImageUrl(settings.logoUrl));
+      academyStorage.save({ domain: resolved, name: settings.name, logoUrl: settings.logoUrl });
+    } catch (err) {
+      const notFound = axios.isAxiosError(err) && err.response?.status === 404;
+      setFormErrors({ domain: t(notFound ? 'auth.academyNotFound' : 'auth.academyLookupFailed') });
+      clearError();
+    } finally {
+      setLookingUp(false);
+    }
+  };
+
+  useEffect(() => {
+    if (route.params?.domain) {
+      lookUpAcademy(route.params.domain);
+      return;
+    }
+    academyStorage.get().then((saved) => {
+      if (saved) setDomainInput((current) => current || saved.domain);
+    });
+  }, []);
+
+  const changeAcademy = () => {
+    setDomainInput(domain);
+    setDomain('');
+    setRegistration(DEFAULT_REGISTRATION_SETTINGS);
+    setFormErrors({});
+    clearError();
+  };
 
   const phoneMode = registrationFieldMode(registration, 'phoneNumber');
   const showPhone = phoneMode !== 'Hidden';
@@ -96,11 +130,10 @@ export default function RegisterScreen({ navigation, route }: Props) {
     if (!password.trim()) errors.password = t('auth.passwordRequired');
     else if (!/^[A-Za-z0-9]{6,}$/.test(password)) errors.password = t('auth.passwordMinLength');
     if (password !== confirmPassword) errors.confirmPassword = t('auth.passwordsDoNotMatch');
-    if (!domain.trim()) errors.domain = t('auth.domainRequired');
     if (showPhone) {
       if (!phoneNumber.trim()) {
         if (phoneMode === 'Required') errors.phoneNumber = t('auth.phoneNumberRequired');
-      } else if (!normalizePhoneNumber(phoneNumber)) {
+      } else if (!toE164Phone(phoneNumber, phoneCountry)) {
         errors.phoneNumber = t('auth.phoneNumberInvalid');
       }
     }
@@ -122,14 +155,14 @@ export default function RegisterScreen({ navigation, route }: Props) {
         email: email.trim(),
         password,
         confirmPassword,
-        domain: domain.trim(),
-        ...(showPhone ? { phoneNumber: normalizePhoneNumber(phoneNumber) ?? undefined } : {}),
+        domain,
+        ...(showPhone ? { phoneNumber: toE164Phone(phoneNumber, phoneCountry) ?? undefined } : {}),
         ...(showStage && educationStage ? { educationStage } : {}),
       });
       // Navigate to OTP verification after successful registration
       navigation.navigate('OTPVerification', {
         email: email.trim(),
-        domain: domain.trim(),
+        domain,
         type: 'email_confirm',
         password,
       });
@@ -159,14 +192,10 @@ export default function RegisterScreen({ navigation, route }: Props) {
   };
 
   const handleGoogleSignUp = async () => {
-    if (!domain.trim()) {
-      setFormErrors({ domain: t('auth.domainRequiredForGoogle') });
-      return;
-    }
     clearError();
     setGoogleLoading(true);
     try {
-      await googleLogin(domain.trim());
+      await googleLogin(domain);
     } finally {
       setGoogleLoading(false);
     }
@@ -175,14 +204,10 @@ export default function RegisterScreen({ navigation, route }: Props) {
   // Signing up with Apple creates the account on first authorization, so it needs
   // the academy domain just like the Google flow does.
   const handleAppleSignUp = async () => {
-    if (!domain.trim()) {
-      setFormErrors({ domain: t('auth.domainRequiredForGoogle') });
-      return;
-    }
     clearError();
     setAppleLoading(true);
     try {
-      await appleLogin(domain.trim());
+      await appleLogin(domain);
     } finally {
       setAppleLoading(false);
     }
@@ -238,6 +263,44 @@ export default function RegisterScreen({ navigation, route }: Props) {
       color: theme.colors.primary,
       fontFamily: 'Cairo_600SemiBold',
     },
+    academyCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      padding: spacing.md,
+      marginBottom: spacing.xl,
+      borderRadius: borderRadius.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.card,
+    },
+    academyLogo: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      overflow: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.primary + '1A',
+    },
+    academyInitial: {
+      ...typography.h3,
+      color: theme.colors.primary,
+    },
+    academyName: {
+      ...typography.body,
+      fontFamily: 'Cairo_600SemiBold',
+      color: theme.colors.text,
+    },
+    academyDomain: {
+      ...typography.caption,
+      color: theme.colors.textMuted,
+    },
+    changeLink: {
+      ...typography.body,
+      color: theme.colors.primary,
+      fontFamily: 'Cairo_600SemiBold',
+    },
   });
 
   return (
@@ -252,22 +315,63 @@ export default function RegisterScreen({ navigation, route }: Props) {
       >
         <View style={styles.header}>
           <Text style={styles.title}>{t('auth.createAccount')}</Text>
-          <Text style={styles.subtitle}>{t('auth.registerAsStudent')}</Text>
+          <Text style={styles.subtitle}>
+            {academyChosen ? t('auth.registerAsStudent') : t('auth.chooseAcademyHint')}
+          </Text>
         </View>
 
         {error && <ErrorBanner message={error} />}
 
-        <Input
-          label={t('auth.domain')}
-          placeholder={t('auth.institutionDomain')}
-          value={domain}
-          onChangeText={(text) => {
-            setDomain(text);
-            if (formErrors.domain) setFormErrors((e) => ({ ...e, domain: '' }));
-          }}
-          error={formErrors.domain}
-          autoCapitalize="none"
-        />
+        {!academyChosen ? (
+          <>
+            <Input
+              label={t('auth.academyLabel')}
+              placeholder={t('auth.academyPlaceholder')}
+              hint={t('auth.academyInputHint')}
+              value={domainInput}
+              onChangeText={(text) => {
+                setDomainInput(text);
+                if (formErrors.domain) setFormErrors((e) => ({ ...e, domain: '' }));
+              }}
+              error={formErrors.domain}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              returnKeyType="next"
+              onSubmitEditing={() => lookUpAcademy(domainInput)}
+            />
+            <Button
+              title={t('auth.continue')}
+              onPress={() => lookUpAcademy(domainInput)}
+              loading={lookingUp}
+              fullWidth
+              size="large"
+            />
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>{t('auth.hasAccount')} </Text>
+              <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Text style={styles.footerLink}>{t('auth.signIn')}</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
+        <>
+        <View style={styles.academyCard}>
+          <View style={styles.academyLogo}>
+            {academyLogo ? (
+              <Image source={{ uri: academyLogo }} style={{ width: 44, height: 44 }} resizeMode="contain" />
+            ) : (
+              <Text style={styles.academyInitial}>{academyName.charAt(0).toUpperCase()}</Text>
+            )}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.academyName} numberOfLines={1}>{academyName}</Text>
+            <Text style={styles.academyDomain} numberOfLines={1}>{domain}</Text>
+          </View>
+          <TouchableOpacity onPress={changeAcademy} accessibilityRole="button">
+            <Text style={styles.changeLink}>{t('auth.changeAcademy')}</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.row}>
           <View style={styles.halfInput}>
@@ -334,19 +438,19 @@ export default function RegisterScreen({ navigation, route }: Props) {
         />
 
         {showPhone && (
-          <Input
+          <PhoneInput
             label={phoneMode === 'Required' ? t('auth.phoneNumber') : t('auth.phoneOptional')}
-            placeholder="01012345678"
             value={phoneNumber}
+            country={phoneCountry}
+            onChangeCountry={(country) => {
+              setPhoneCountry(country);
+              if (formErrors.phoneNumber) setFormErrors((e) => ({ ...e, phoneNumber: '' }));
+            }}
             onChangeText={(text) => {
               setPhoneNumber(text);
               if (formErrors.phoneNumber) setFormErrors((e) => ({ ...e, phoneNumber: '' }));
             }}
             error={formErrors.phoneNumber}
-            keyboardType="phone-pad"
-            textContentType="telephoneNumber"
-            autoComplete="tel"
-            maxLength={24}
           />
         )}
 
@@ -440,6 +544,8 @@ export default function RegisterScreen({ navigation, route }: Props) {
             <Text style={styles.footerLink}>{t('auth.signIn')}</Text>
           </TouchableOpacity>
         </View>
+        </>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );

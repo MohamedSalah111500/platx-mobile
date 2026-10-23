@@ -25,6 +25,7 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { GradientBackground } from '../../components/ui/GradientBackground';
 import { isAppleSignInAvailable } from '../../services/auth/appleAuth';
+import { academyStorage } from '../../services/storage/academy.storage';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -104,6 +105,7 @@ export default function LoginScreen({ navigation }: Props) {
     clearError();
     setExternalProvider(provider);
     setDomainInput('');
+    academyStorage.get().then((saved) => saved && setDomainInput((current) => current || saved.domain));
     setDomainModalVisible(true);
   };
 
@@ -111,6 +113,7 @@ export default function LoginScreen({ navigation }: Props) {
     const domain = domainInput.trim();
     if (!domain) return;
     setDomainModalVisible(false);
+    academyStorage.save({ domain });
     const setProviderLoading = externalProvider === 'apple' ? setAppleLoading : setGoogleLoading;
     setProviderLoading(true);
     try {

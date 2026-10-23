@@ -6,6 +6,9 @@ export type RegistrationFieldMode = 'Hidden' | 'Optional' | 'Required';
 export interface RegistrationSettings {
   allowSocialSignUp: boolean;
   fields: { key: string; mode: RegistrationFieldMode }[];
+  domain?: string;
+  name?: string;
+  logoUrl?: string;
 }
 
 export const DEFAULT_REGISTRATION_SETTINGS: RegistrationSettings = {
