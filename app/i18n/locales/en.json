@@ -219,9 +219,10 @@
     "confirmEmailWithEmailLogin": "Your email isn't confirmed. Sign in with your email to confirm it first."
   },
   "welcome": {
-    "greeting": "Welcome 👋",
-    "greetingNamed": "Welcome, {{name}} 👋",
-    "message": "Great to have you back"
+    "greeting": "Welcome",
+    "greetingNamed": "Welcome, {{name}}",
+    "message": "Great to have you back",
+    "poweredBy": "Powered by PlatX"
   },
   "checkout": {
     "title": "Checkout",

@@ -1,97 +1,119 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Image, Animated, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, Image, Animated, Easing, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '../store/auth.store';
 import { useRTL } from '../i18n/RTLProvider';
 import { isValidHexColor, darken } from '../utils/color';
 
 const DEFAULT_ACCENT = '#7c63fd';
-
-const { width: SCREEN_W } = Dimensions.get('window');
-const isTablet = SCREEN_W >= 768;
-
-const VISIBLE_MS = 3000;
-const FADE_MS = 400;
-
-const CARD_SIZE = isTablet ? 180 : 148;
-const LOGO_SIZE = isTablet ? 126 : 102;
+const VISIBLE_MS = 2600;
+const ENTER_MS = 550;
+const EXIT_MS = 350;
+const PROGRESS_WIDTH = 140;
 
 export default function WelcomeSplash() {
   const { t } = useRTL();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const user = useAuthStore((s) => s.user);
   const tenantName = useAuthStore((s) => s.tenantName);
   const tenantLogo = useAuthStore((s) => s.tenantLogo);
   const tenantColor = useAuthStore((s) => s.tenantColor);
   const dismissWelcome = useAuthStore((s) => s.dismissWelcome);
 
-  const accent = isValidHexColor(tenantColor) ? tenantColor : DEFAULT_ACCENT;
-  const gradientColors = [darken(accent, 40), darken(accent, 70)] as const;
-
+  const accent = isValidHexColor(tenantColor) ? tenantColor! : DEFAULT_ACCENT;
+  const deepAccent = darken(accent, 35);
   const [logoFailed, setLogoFailed] = useState(false);
+  const hasLogo = !!tenantLogo && !logoFailed;
 
-  const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.92)).current;
+  const overlay = useRef(new Animated.Value(1)).current;
+  const logoIn = useRef(new Animated.Value(0)).current;
+  const textIn = useRef(new Animated.Value(0)).current;
+  const progress = useRef(new Animated.Value(0)).current;
 
   const firstName = user?.firstName?.trim();
-  const greeting = firstName
-    ? t('welcome.greetingNamed', { name: firstName })
-    : t('welcome.greeting');
+  const greeting = firstName ? t('welcome.greetingNamed', { name: firstName }) : t('welcome.greeting');
+  const logoWidth = Math.min(width * 0.62, 280);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: FADE_MS,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scale, {
-        toValue: 1,
-        friction: 7,
-        tension: 60,
-        useNativeDriver: true,
-      }),
+    Animated.sequence([
+      Animated.timing(logoIn, { toValue: 1, duration: ENTER_MS, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(textIn, { toValue: 1, duration: 380, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start();
 
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: VISIBLE_MS - EXIT_MS,
+      easing: Easing.inOut(Easing.quad),
+      useNativeDriver: false,
+    }).start();
+
     const hold = setTimeout(() => {
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: FADE_MS,
-        useNativeDriver: true,
-      }).start(() => dismissWelcome());
-    }, VISIBLE_MS - FADE_MS);
+      Animated.timing(overlay, { toValue: 0, duration: EXIT_MS, useNativeDriver: true }).start(() => dismissWelcome());
+    }, VISIBLE_MS - EXIT_MS);
 
     return () => clearTimeout(hold);
-  }, [opacity, scale, dismissWelcome]);
+  }, [overlay, logoIn, textIn, progress, dismissWelcome]);
 
-  const logoSource = tenantLogo && !logoFailed
-    ? { uri: tenantLogo }
-    : require('../../assets/images/logo-icon.png');
+  const logoStyle = {
+    opacity: logoIn,
+    transform: [
+      { translateY: logoIn.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) },
+      { scale: logoIn.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) },
+    ],
+  };
+  const textStyle = {
+    opacity: textIn,
+    transform: [{ translateY: textIn.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
+  };
 
   return (
-    <Animated.View style={[styles.overlay, { opacity }]}>
-      <LinearGradient
-        colors={gradientColors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <Animated.View style={[styles.content, { transform: [{ scale }] }]}>
-        <View style={styles.logoCard}>
-          <Image
-            source={logoSource}
-            style={styles.logo}
-            resizeMode="contain"
-            onError={() => setLogoFailed(true)}
+    <Animated.View style={[styles.overlay, { opacity: overlay }]} accessibilityRole="header" accessibilityLabel={tenantName ?? undefined}>
+      <View style={[styles.glow, styles.glowTop, { backgroundColor: accent }]} />
+      <View style={[styles.glow, styles.glowBottom, { backgroundColor: deepAccent }]} />
+
+      <View style={styles.center}>
+        <Animated.View style={[styles.logoWrap, logoStyle]}>
+          {hasLogo ? (
+            <Image
+              source={{ uri: tenantLogo! }}
+              style={{ width: logoWidth, height: logoWidth * 0.55 }}
+              resizeMode="contain"
+              onError={() => setLogoFailed(true)}
+            />
+          ) : (
+            <Text style={[styles.monogram, { color: accent }]}>{(tenantName || 'P').trim().charAt(0).toUpperCase()}</Text>
+          )}
+        </Animated.View>
+
+        <Animated.View style={[styles.textBlock, textStyle]}>
+          {tenantName ? (
+            <Text style={[styles.tenantName, { color: deepAccent }]} numberOfLines={2}>
+              {tenantName}
+            </Text>
+          ) : null}
+          <Text style={styles.greeting} numberOfLines={2}>
+            {greeting}
+          </Text>
+        </Animated.View>
+      </View>
+
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 28 }]}>
+        <View style={styles.track}>
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: accent, opacity: 0.15 }]} />
+          <Animated.View
+            style={[
+              styles.fill,
+              {
+                backgroundColor: accent,
+                width: progress.interpolate({ inputRange: [0, 1], outputRange: [0, PROGRESS_WIDTH] }),
+              },
+            ]}
           />
         </View>
-        {tenantName ? (
-          <Text style={styles.tenantName} numberOfLines={2}>
-            {tenantName}
-          </Text>
-        ) : null}
-        <Text style={styles.greeting}>{greeting}</Text>
-      </Animated.View>
+        <Text style={styles.powered}>{t('welcome.poweredBy')}</Text>
+      </View>
     </Animated.View>
   );
 }
@@ -99,44 +121,75 @@ export default function WelcomeSplash() {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFill,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     zIndex: 100,
+    overflow: 'hidden',
   },
-  content: {
+  glow: {
+    position: 'absolute',
+    width: 420,
+    height: 420,
+    borderRadius: 210,
+    opacity: 0.07,
+  },
+  glowTop: {
+    top: -200,
+    right: -140,
+  },
+  glowBottom: {
+    bottom: -220,
+    left: -160,
+  },
+  center: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 32,
   },
-  logoCard: {
-    width: CARD_SIZE,
-    height: CARD_SIZE,
-    borderRadius: CARD_SIZE * 0.24,
-    backgroundColor: '#FFFFFF',
+  logoWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: isTablet ? 32 : 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 12,
+    marginBottom: 28,
   },
-  logo: {
-    width: LOGO_SIZE,
-    height: LOGO_SIZE,
+  monogram: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 96,
+    lineHeight: 120,
+  },
+  textBlock: {
+    alignItems: 'center',
   },
   tenantName: {
     fontFamily: 'Cairo_700Bold',
-    fontSize: isTablet ? 26 : 22,
-    color: '#FFFFFF',
+    fontSize: 26,
+    lineHeight: 38,
     textAlign: 'center',
-    marginBottom: 6,
-    paddingHorizontal: 8,
   },
   greeting: {
     fontFamily: 'Cairo_400Regular',
-    fontSize: isTablet ? 17 : 15,
-    color: 'rgba(255,255,255,0.8)',
+    fontSize: 16,
+    lineHeight: 26,
+    color: '#5B6170',
     textAlign: 'center',
+    marginTop: 4,
+  },
+  footer: {
+    alignItems: 'center',
+    gap: 14,
+  },
+  track: {
+    width: PROGRESS_WIDTH,
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  fill: {
+    height: 4,
+    borderRadius: 2,
+  },
+  powered: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 13,
+    color: '#9AA0AC',
   },
 });

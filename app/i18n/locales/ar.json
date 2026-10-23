@@ -219,9 +219,10 @@
     "confirmEmailWithEmailLogin": "بريدك الإلكتروني غير مؤكَّد. سجّل الدخول بالبريد الإلكتروني لتأكيده أولًا."
   },
   "welcome": {
-    "greeting": "مرحباً 👋",
-    "greetingNamed": "مرحباً، {{name}} 👋",
-    "message": "سعداء بعودتك"
+    "greeting": "أهلًا بك",
+    "greetingNamed": "أهلًا بك، {{name}}",
+    "message": "سعداء بعودتك",
+    "poweredBy": "بدعم من PlatX"
   },
   "checkout": {
     "title": "إتمام الشراء",
