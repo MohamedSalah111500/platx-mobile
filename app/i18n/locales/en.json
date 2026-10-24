@@ -41,6 +41,9 @@
     "homework": "Homework"
   },
   "homework": {
+    "correctAnswer": "Correct answer",
+    "yourCorrectAnswer": "Your answer is correct",
+    "yourAnswer": "Your answer",
     "title": "Homework",
     "failedToLoad": "Failed to load homework.",
     "notFound": "Homework not found.",

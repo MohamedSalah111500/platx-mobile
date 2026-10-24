@@ -41,6 +41,9 @@
     "homework": "الواجبات"
   },
   "homework": {
+    "correctAnswer": "الإجابة الصحيحة",
+    "yourCorrectAnswer": "إجابتك صحيحة",
+    "yourAnswer": "إجابتك",
     "title": "الواجبات",
     "failedToLoad": "تعذّر تحميل الواجبات.",
     "notFound": "الواجب غير موجود.",

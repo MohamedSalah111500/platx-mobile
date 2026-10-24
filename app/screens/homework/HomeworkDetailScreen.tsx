@@ -312,6 +312,8 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
               onSelectSingle={id => selectSingle(q.id, id)}
               onToggleMulti={id => toggleMulti(q.id, id)}
               onEssay={val => setEssay(q.id, val)}
+              graded={isGraded}
+              score={isGraded ? hw.submission?.answers?.find(x => x.questionId === q.id)?.score ?? null : null}
             />
           ))}
 
@@ -472,6 +474,8 @@ function QuestionCard({
   onSelectSingle,
   onToggleMulti,
   onEssay,
+  graded,
+  score,
 }: {
   q: HomeworkQuestion;
   index: number;
@@ -483,10 +487,15 @@ function QuestionCard({
   onSelectSingle: (id: number) => void;
   onToggleMulti: (id: number) => void;
   onEssay: (val: string) => void;
+  graded: boolean;
+  score: number | null;
 }) {
   const isEssay = q.typeId === HomeworkQuestionType.Essay;
   const isSingle =
     q.typeId === HomeworkQuestionType.SingleChoice || q.typeId === HomeworkQuestionType.TrueFalse;
+  const revealed = graded && q.answers.some(a => a.isCorrect);
+  const scoreColor =
+    score === null ? theme.colors.textMuted : score >= q.maxScore ? theme.colors.success : score <= 0 ? theme.colors.danger : theme.colors.warning;
 
   return (
     <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
@@ -494,9 +503,17 @@ function QuestionCard({
         <View style={[styles.qNum, { backgroundColor: theme.colors.primary + '15' }]}>
           <Text style={[styles.qNumText, { color: theme.colors.primary }]}>{index + 1}</Text>
         </View>
-        <Text style={[styles.qScore, { color: theme.colors.textMuted }]}>
-          {q.maxScore} {t('homework.points')}
-        </Text>
+        {score !== null ? (
+          <View style={[styles.scoreChip, { backgroundColor: scoreColor + '18' }]}>
+            <Text style={[styles.scoreChipText, { color: scoreColor }]}>
+              {score} / {q.maxScore}
+            </Text>
+          </View>
+        ) : (
+          <Text style={[styles.qScore, { color: theme.colors.textMuted }]}>
+            {q.maxScore} {t('homework.points')}
+          </Text>
+        )}
       </View>
 
       <Text style={[styles.qBody, { color: theme.colors.text }]}>{stripHtml(q.questionBody)}</Text>
@@ -522,6 +539,8 @@ function QuestionCard({
         <View style={styles.answers}>
           {q.answers.map(a => {
             const isSel = selected.includes(a.id);
+            const state = revealed && a.isCorrect ? 'correct' : revealed && isSel ? 'wrong' : null;
+            const stateColor = state === 'correct' ? theme.colors.success : state === 'wrong' ? theme.colors.danger : null;
             return (
               <TouchableOpacity
                 key={a.id}
@@ -529,11 +548,15 @@ function QuestionCard({
                   styles.answer,
                   { borderColor: isSel ? theme.colors.primary : theme.colors.border },
                   !readOnly && isSel && { backgroundColor: theme.colors.primary + '08' },
+                  stateColor && { borderColor: stateColor, backgroundColor: stateColor + '12' },
                 ]}
                 onPress={readOnly ? undefined : () => (isSingle ? onSelectSingle(a.id) : onToggleMulti(a.id))}
                 disabled={readOnly}
                 activeOpacity={readOnly ? 1 : 0.7}
               >
+                {stateColor ? (
+                  <Ionicons name={state === 'correct' ? 'checkmark-circle' : 'close-circle'} size={22} color={stateColor} />
+                ) : (
                 <View
                   style={[
                     isSingle ? styles.radioOuter : styles.checkboxOuter,
@@ -548,9 +571,21 @@ function QuestionCard({
                       <Ionicons name="checkmark" size={14} color="#fff" />
                     ))}
                 </View>
-                <Text style={[styles.answerText, { color: theme.colors.text }]}>
-                  {stripHtml(a.answerBody)}
-                </Text>
+                )}
+                <View style={styles.answerBody}>
+                  <Text style={[styles.answerText, { color: theme.colors.text }]}>
+                    {stripHtml(a.answerBody)}
+                  </Text>
+                  {stateColor ? (
+                    <Text style={[styles.answerState, { color: stateColor }]}>
+                      {state === 'wrong'
+                        ? t('homework.yourAnswer')
+                        : isSel
+                          ? t('homework.yourCorrectAnswer')
+                          : t('homework.correctAnswer')}
+                    </Text>
+                  ) : null}
+                </View>
               </TouchableOpacity>
             );
           })}
@@ -649,7 +684,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  answerText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', lineHeight: 22 },
+  answerText: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', lineHeight: 22 },
+  answerBody: { flex: 1 },
+  answerState: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', marginTop: 2 },
+  scoreChip: { paddingHorizontal: 10, paddingVertical: 2, borderRadius: 10 },
+  scoreChipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold' },
   fileRow: {
     flexDirection: 'row',
     alignItems: 'center',
