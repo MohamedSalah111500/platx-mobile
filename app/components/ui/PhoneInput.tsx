@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { CountryCode } from 'libphonenumber-js/mobile';
+import { getExampleNumber, type CountryCode } from 'libphonenumber-js/mobile';
+import examples from 'libphonenumber-js/mobile/examples';
 import { useTheme } from '@theme/ThemeProvider';
 import { spacing } from '@theme/spacing';
 import { typography, fontSize } from '@theme/typography';
@@ -65,7 +66,7 @@ export function PhoneInput({ label, value, country, onChangeText, onChangeCountr
           style={[styles.input, { color: theme.colors.inputText }]}
           value={value}
           onChangeText={onChangeText}
-          placeholder={t('auth.phonePlaceholder')}
+          placeholder={getExampleNumber(selected.code, examples)?.formatNational().replace(/\D/g, '') || t('auth.phonePlaceholder')}
           placeholderTextColor={theme.colors.inputPlaceholder}
           keyboardType="phone-pad"
           textContentType="telephoneNumber"
