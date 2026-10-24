@@ -42,3 +42,8 @@ yarn-error.*
 
 # EAS local credentials (contains keystore passwords)
 credentials.json
+
+# Android upload keystore (kept outside android/, which prebuild regenerates)
+/keystores/
+*.keystore
+!android/app/debug.keystore
