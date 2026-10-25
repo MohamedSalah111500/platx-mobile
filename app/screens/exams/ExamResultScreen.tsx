@@ -172,7 +172,7 @@ export default function ExamResultScreen({ navigation, route }: Props) {
         </View>
 
         {/* Question Results */}
-        {result.showCorrectAnswers && result.questionResults.length > 0 && (
+        {result.questionResults.length > 0 && (
           <View style={styles.questionsSection}>
             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
               {t('exams.questionDetails')}
@@ -187,6 +187,7 @@ export default function ExamResultScreen({ navigation, route }: Props) {
                 onToggle={() => toggleQuestion(qr.questionId)}
                 theme={theme}
                 t={t}
+                revealed={result.showCorrectAnswers === true}
               />
             ))}
           </View>
@@ -203,6 +204,7 @@ function QuestionResultCard({
   onToggle,
   theme,
   t,
+  revealed,
 }: {
   result: ExamQuestionResult;
   index: number;
@@ -210,6 +212,7 @@ function QuestionResultCard({
   onToggle: () => void;
   theme: any;
   t: (key: string) => string;
+  revealed: boolean;
 }) {
   const isCorrect = result.isCorrect;
   // An essay the teacher hasn't graded yet isn't wrong — it has no result.
@@ -279,16 +282,16 @@ function QuestionResultCard({
             let iconName: string | null = null;
             let iconColor = '';
 
-            if (answer.isCorrect) {
+            if (answer.isCorrect || (answer.isSubmittedAnswer && isCorrect)) {
               bgColor = theme.colors.success + '1A';
               borderColor = theme.colors.success;
               iconName = 'checkmark-circle';
               iconColor = theme.colors.success;
-            } else if (answer.isSubmittedAnswer && !answer.isCorrect) {
-              bgColor = theme.colors.warning + '1A';
-              borderColor = theme.colors.warning;
-              iconName = 'alert-circle';
-              iconColor = theme.colors.warning;
+            } else if (answer.isSubmittedAnswer) {
+              bgColor = theme.colors.danger + '1A';
+              borderColor = theme.colors.danger;
+              iconName = 'close-circle';
+              iconColor = theme.colors.danger;
             }
 
             return (
@@ -315,6 +318,9 @@ function QuestionResultCard({
               </View>
             );
           })}
+          {!revealed && !isCorrect && !isPending ? (
+            <Text style={[styles.hiddenNote, { color: theme.colors.textMuted }]}>{t('exams.correctAnswerHidden')}</Text>
+          ) : null}
         </View>
       )}
     </View>
@@ -323,6 +329,7 @@ function QuestionResultCard({
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  hiddenNote: { fontSize: 14, fontFamily: 'Cairo_500Medium', marginTop: spacing.sm },
   scrollContent: {
     padding: spacing.lg,
     paddingBottom: 40,

@@ -121,7 +121,7 @@ export default function ExamsListScreen({ navigation }: Props) {
   const handleExamPress = (exam: OnlineExamListItem) => {
     if (isStudent) {
       // Student: take exam or view results
-      if (exam.isAnswered && exam.isShowCorrectAnswers) {
+      if (exam.isAnswered && (exam.isAutoCorrect ?? exam.isShowCorrectAnswers)) {
         navigation.navigate('ExamResult', { examId: exam.id });
       } else {
         navigation.navigate('ExamTaking', { examId: exam.id });

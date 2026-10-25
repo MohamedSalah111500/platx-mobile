@@ -846,6 +846,7 @@
     "pendingReview": "Awaiting teacher review",
     "timeTaken": "Time Taken",
     "questionDetails": "Question Details",
+    "correctAnswerHidden": "The teacher has not made the correct answer available for this exam.",
     "yourAnswer": "Your Answer",
     "preview": "Preview",
     "deleteExam": "Delete Exam",

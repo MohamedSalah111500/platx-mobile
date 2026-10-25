@@ -846,6 +846,7 @@
     "pendingReview": "في انتظار تصحيح المعلم",
     "timeTaken": "الوقت المستغرق",
     "questionDetails": "تفاصيل الأسئلة",
+    "correctAnswerHidden": "لم يُتح المعلم عرض الإجابة الصحيحة لهذا الاختبار.",
     "yourAnswer": "إجابتك",
     "preview": "معاينة",
     "deleteExam": "حذف الاختبار",

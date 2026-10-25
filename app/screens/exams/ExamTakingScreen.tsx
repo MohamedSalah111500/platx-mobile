@@ -68,7 +68,7 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
       }
 
       if (data.isAnswered) {
-        if (data.isShowCorrectAnswers) {
+        if (data.isAutoCorrect ?? data.isShowCorrectAnswers) {
           navigation.replace('ExamResult', { examId });
           return;
         }
@@ -212,7 +212,7 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
       submittedRef.current = true;
       if (timerRef.current) clearInterval(timerRef.current);
 
-      if (exam.isShowCorrectAnswers) {
+      if (exam.isAutoCorrect ?? exam.isShowCorrectAnswers) {
         Alert.alert(t('common.success'), t('exams.submitSuccess'), [
           { text: t('exams.viewResults'), onPress: () => navigation.replace('ExamResult', { examId }) },
         ]);

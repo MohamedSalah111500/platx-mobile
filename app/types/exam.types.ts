@@ -26,6 +26,7 @@ export interface OnlineExam {
   endDate?: string;
   durationInMin?: number;
   isAnswered?: boolean;
+  isAutoCorrect?: boolean;
   isShowCorrectAnswers?: boolean;
   questions: StudentExamQuestion[];
   createdAt?: string;
@@ -53,6 +54,7 @@ export interface OnlineExamListItem {
   startDate?: string;
   endDate?: string;
   isAnswered?: boolean;
+  isAutoCorrect?: boolean;
   isShowCorrectAnswers?: boolean;
   createdAt?: string;
 }
