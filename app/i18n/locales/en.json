@@ -164,7 +164,6 @@
     "domainRequired": "Domain is required",
     "registerAsStudent": "Register as a student to get started",
     "institutionDomain": "Institution domain",
-    "phoneOptional": "Phone Number (Optional)",
     "minCharacters": "Min 6 characters, letters and numbers only",
     "reenterPassword": "Re-enter password",
     "firstNameRequired": "First name is required",
@@ -216,7 +215,7 @@
     "phoneNumberRequired": "Enter your phone number",
     "phoneNumberInvalid": "This phone number isn't valid for the selected country.",
     "educationStage": "Education stage",
-    "educationStageOptional": "Education stage (optional)",
+    "optional": "optional",
     "educationStagePlaceholder": "Choose your education stage",
     "educationStageRequired": "Choose your education stage",
     "confirmEmailWithEmailLogin": "Your email isn't confirmed. Sign in with your email to confirm it first."

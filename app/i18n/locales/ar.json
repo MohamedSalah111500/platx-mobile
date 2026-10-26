@@ -164,7 +164,6 @@
     "domainRequired": "النطاق مطلوب",
     "registerAsStudent": "سجل كطالب للبدء",
     "institutionDomain": "نطاق المؤسسة",
-    "phoneOptional": "رقم الهاتف (اختياري)",
     "minCharacters": "6 أحرف على الأقل، حروف وأرقام فقط",
     "reenterPassword": "أعد إدخال كلمة المرور",
     "firstNameRequired": "الاسم الأول مطلوب",
@@ -216,7 +215,7 @@
     "phoneNumberRequired": "يرجى إدخال رقم الهاتف.",
     "phoneNumberInvalid": "رقم الهاتف غير صحيح لهذه الدولة.",
     "educationStage": "المرحلة الدراسية",
-    "educationStageOptional": "المرحلة الدراسية (اختياري)",
+    "optional": "اختياري",
     "educationStagePlaceholder": "اختر مرحلتك الدراسية",
     "educationStageRequired": "يرجى اختيار مرحلتك الدراسية",
     "confirmEmailWithEmailLogin": "بريدك الإلكتروني غير مؤكَّد. سجّل الدخول بالبريد الإلكتروني لتأكيده أولًا."

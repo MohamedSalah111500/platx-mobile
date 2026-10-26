@@ -47,6 +47,8 @@ export interface RegisterPayload {
   email: string;
   phoneNumber?: string;
   educationStage?: string;
+  guardianPhoneNumber?: string;
+  fields?: Record<string, string>;
   password: string;
   confirmPassword: string;
   dateOfBirth?: string;

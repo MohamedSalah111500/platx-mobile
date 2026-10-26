@@ -27,12 +27,12 @@ import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { isAppleSignInAvailable } from '../../services/auth/appleAuth';
 import {
   registrationApi,
-  registrationFieldMode,
+  localizedText,
   DEFAULT_REGISTRATION_SETTINGS,
+  type RegistrationField,
   type RegistrationSettings,
 } from '../../services/api/registration.api';
 import { DEFAULT_PHONE_COUNTRY, toE164Phone } from '../../utils/phoneNumber';
-import { EDUCATION_STAGES, type EducationStage } from '../../utils/educationStages';
 import { SelectField } from '../../components/ui/SelectField';
 import { PhoneInput } from '../../components/ui/PhoneInput';
 import { academyStorage } from '../../services/storage/academy.storage';
@@ -43,7 +43,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 export default function RegisterScreen({ navigation, route }: Props) {
   const { theme, isDark } = useTheme();
   const { register, googleLogin, appleLogin, isLoading, error, clearError } = useAuthStore();
-  const { t, isRTL } = useRTL();
+  const { t, isRTL, locale } = useRTL();
   const insets = useSafeAreaInsets();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
@@ -63,9 +63,8 @@ export default function RegisterScreen({ navigation, route }: Props) {
   const [academyName, setAcademyName] = useState('');
   const [academyLogo, setAcademyLogo] = useState<string | undefined>();
   const [lookingUp, setLookingUp] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [phoneCountry, setPhoneCountry] = useState<CountryCode>(DEFAULT_PHONE_COUNTRY);
-  const [educationStage, setEducationStage] = useState<EducationStage | null>(null);
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [phoneCountries, setPhoneCountries] = useState<Record<string, CountryCode>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [registration, setRegistration] = useState<RegistrationSettings>(DEFAULT_REGISTRATION_SETTINGS);
 
@@ -81,7 +80,7 @@ export default function RegisterScreen({ navigation, route }: Props) {
     setFormErrors({});
     clearError();
     try {
-      const settings = await registrationApi.forDomain(key);
+      const settings = await registrationApi.forDomain(key, t);
       const resolved = settings.domain || key;
       setRegistration(settings);
       setDomain(resolved);
@@ -111,15 +110,30 @@ export default function RegisterScreen({ navigation, route }: Props) {
     setDomainInput(domain);
     setDomain('');
     setRegistration(DEFAULT_REGISTRATION_SETTINGS);
+    setFieldValues({});
+    setPhoneCountries({});
     setFormErrors({});
     clearError();
   };
 
-  const phoneMode = registrationFieldMode(registration, 'phoneNumber');
-  const showPhone = phoneMode !== 'Hidden';
-  const stageMode = registrationFieldMode(registration, 'educationStage');
-  const showStage = stageMode !== 'Hidden';
+  const visibleFields = registration.fields.filter((field) => field.mode !== 'Hidden');
   const showSocialSignUp = registration.allowSocialSignUp;
+  const text = (value: RegistrationField['label']) => localizedText(value, locale);
+  const countryOf = (key: string) => phoneCountries[key] ?? DEFAULT_PHONE_COUNTRY;
+
+  const setFieldValue = (key: string, value: string) => {
+    setFieldValues((current) => ({ ...current, [key]: value }));
+    if (formErrors[key]) setFormErrors((e) => ({ ...e, [key]: '' }));
+  };
+
+  const fieldLabel = (field: RegistrationField) =>
+    field.mode === 'Optional' ? `${text(field.label)} (${t('auth.optional')})` : text(field.label);
+
+  const submittedValue = (field: RegistrationField): string | null => {
+    const raw = (fieldValues[field.key] ?? '').trim();
+    if (!raw) return null;
+    return field.type === 'Phone' ? toE164Phone(raw, countryOf(field.key)) : raw;
+  };
 
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
@@ -130,15 +144,13 @@ export default function RegisterScreen({ navigation, route }: Props) {
     if (!password.trim()) errors.password = t('auth.passwordRequired');
     else if (!/^[A-Za-z0-9]{6,}$/.test(password)) errors.password = t('auth.passwordMinLength');
     if (password !== confirmPassword) errors.confirmPassword = t('auth.passwordsDoNotMatch');
-    if (showPhone) {
-      if (!phoneNumber.trim()) {
-        if (phoneMode === 'Required') errors.phoneNumber = t('auth.phoneNumberRequired');
-      } else if (!toE164Phone(phoneNumber, phoneCountry)) {
-        errors.phoneNumber = t('auth.phoneNumberInvalid');
+    for (const field of visibleFields) {
+      const raw = (fieldValues[field.key] ?? '').trim();
+      if (!raw) {
+        if (field.mode === 'Required') errors[field.key] = text(field.requiredMessage);
+      } else if (!submittedValue(field)) {
+        errors[field.key] = text(field.invalidMessage);
       }
-    }
-    if (showStage && stageMode === 'Required' && !educationStage) {
-      errors.educationStage = t('auth.educationStageRequired');
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -148,6 +160,12 @@ export default function RegisterScreen({ navigation, route }: Props) {
     clearError();
     if (!validate()) return;
 
+    const fields: Record<string, string> = {};
+    for (const field of visibleFields) {
+      const value = submittedValue(field);
+      if (value) fields[field.key] = value;
+    }
+
     try {
       await register({
         firstName: firstName.trim(),
@@ -156,8 +174,10 @@ export default function RegisterScreen({ navigation, route }: Props) {
         password,
         confirmPassword,
         domain,
-        ...(showPhone ? { phoneNumber: toE164Phone(phoneNumber, phoneCountry) ?? undefined } : {}),
-        ...(showStage && educationStage ? { educationStage } : {}),
+        fields,
+        phoneNumber: fields.phoneNumber,
+        educationStage: fields.educationStage,
+        guardianPhoneNumber: fields.guardianPhoneNumber,
       });
       // Navigate to OTP verification after successful registration
       navigation.navigate('OTPVerification', {
@@ -168,14 +188,12 @@ export default function RegisterScreen({ navigation, route }: Props) {
       });
     } catch (err: any) {
       const serverErrors = err?.response?.data?.errors ?? {};
-      const fieldErrors = (['phoneNumber', 'educationStage'] as const).filter((key) => serverErrors[key]);
+      const fieldErrors = registration.fields.map((f) => f.key).filter((key) => serverErrors[key]);
       if (fieldErrors.length > 0) {
         setRegistration((current) => ({
           ...current,
           fields: current.fields.map((f) =>
-            fieldErrors.includes(f.key as (typeof fieldErrors)[number]) && f.mode === 'Hidden'
-              ? { ...f, mode: 'Required' }
-              : f
+            fieldErrors.includes(f.key) && f.mode === 'Hidden' ? { ...f, mode: 'Required' } : f
           ),
         }));
         setFormErrors((e) => {
@@ -437,36 +455,47 @@ export default function RegisterScreen({ navigation, route }: Props) {
           secureTextEntry
         />
 
-        {showPhone && (
-          <PhoneInput
-            label={phoneMode === 'Required' ? t('auth.phoneNumber') : t('auth.phoneOptional')}
-            value={phoneNumber}
-            country={phoneCountry}
-            onChangeCountry={(country) => {
-              setPhoneCountry(country);
-              if (formErrors.phoneNumber) setFormErrors((e) => ({ ...e, phoneNumber: '' }));
-            }}
-            onChangeText={(text) => {
-              setPhoneNumber(text);
-              if (formErrors.phoneNumber) setFormErrors((e) => ({ ...e, phoneNumber: '' }));
-            }}
-            error={formErrors.phoneNumber}
-          />
-        )}
-
-        {showStage && (
-          <SelectField
-            label={stageMode === 'Required' ? t('auth.educationStage') : t('auth.educationStageOptional')}
-            placeholder={t('auth.educationStagePlaceholder')}
-            value={educationStage}
-            options={EDUCATION_STAGES.map((stage) => ({ value: stage, label: t(`educationStages.${stage}`) }))}
-            onChange={(stage) => {
-              setEducationStage(stage);
-              if (formErrors.educationStage) setFormErrors((e) => ({ ...e, educationStage: '' }));
-            }}
-            error={formErrors.educationStage}
-          />
-        )}
+        {visibleFields.map((field) => {
+          if (field.type === 'Phone') {
+            return (
+              <PhoneInput
+                key={field.key}
+                label={fieldLabel(field)}
+                value={fieldValues[field.key] ?? ''}
+                country={countryOf(field.key)}
+                onChangeCountry={(country) => {
+                  setPhoneCountries((current) => ({ ...current, [field.key]: country }));
+                  if (formErrors[field.key]) setFormErrors((e) => ({ ...e, [field.key]: '' }));
+                }}
+                onChangeText={(value) => setFieldValue(field.key, value)}
+                error={formErrors[field.key]}
+              />
+            );
+          }
+          if (field.type === 'Select') {
+            return (
+              <SelectField
+                key={field.key}
+                label={fieldLabel(field)}
+                placeholder={text(field.placeholder)}
+                value={fieldValues[field.key] || null}
+                options={field.options.map((option) => ({ value: option.value, label: text(option.label) }))}
+                onChange={(value) => setFieldValue(field.key, value)}
+                error={formErrors[field.key]}
+              />
+            );
+          }
+          return (
+            <Input
+              key={field.key}
+              label={fieldLabel(field)}
+              placeholder={text(field.placeholder)}
+              value={fieldValues[field.key] ?? ''}
+              onChangeText={(value) => setFieldValue(field.key, value)}
+              error={formErrors[field.key]}
+            />
+          );
+        })}
 
         <Button
           title={t('auth.createAccount')}
