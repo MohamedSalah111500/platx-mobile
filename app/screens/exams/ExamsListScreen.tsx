@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -25,7 +25,7 @@ import { fontSize, typography } from '../../theme/typography';
 import { examApi } from '../../services/api/exam.api';
 import { API_CONFIG } from '../../config';
 import type { ExamsStackParamList } from '../../types/navigation.types';
-import type { OnlineExamListItem, ExamHistoryItem } from '../../types/exam.types';
+import type { OnlineExamListItem } from '../../types/exam.types';
 
 type Props = NativeStackScreenProps<ExamsStackParamList, 'ExamsList'>;
 
@@ -36,9 +36,7 @@ export default function ExamsListScreen({ navigation }: Props) {
   const { t, isRTL } = useRTL();
   const { isStudent, user, can } = useAuth();
   const canCreateExam = can('EXAMS_CREATE');
-  const [studentTab, setStudentTab] = useState<'exams' | 'results'>('exams');
   const [exams, setExams] = useState<OnlineExamListItem[]>([]);
-  const [history, setHistory] = useState<ExamHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,19 +50,6 @@ export default function ExamsListScreen({ navigation }: Props) {
       if (p === 1 && !refresh) setLoading(true);
 
       if (isStudent) {
-        if (studentTab === 'results') {
-          if (!user?.studentId) {
-            setHistory([]);
-            setHasMore(false);
-            return;
-          }
-          const result = await examApi.getExamHistory(user.studentId, p, PAGE_SIZE);
-          setHistory(prev => (p === 1 ? result.items : [...prev, ...result.items]));
-          setHasMore(result.items.length >= PAGE_SIZE);
-          setPage(p);
-          return;
-        }
-
         const result = await examApi.getMyExamsPaged(p, PAGE_SIZE);
         setExams(prev => (p === 1 ? result.items : [...prev, ...result.items]));
         setHasMore(result.items.length >= PAGE_SIZE);
@@ -82,7 +67,7 @@ export default function ExamsListScreen({ navigation }: Props) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [t, isStudent, studentTab, user?.studentId]);
+  }, [t, isStudent]);
 
   useFocusEffect(
     useCallback(() => {
@@ -90,20 +75,6 @@ export default function ExamsListScreen({ navigation }: Props) {
       loadExams(1);
     }, [loadExams])
   );
-
-  const isFirstRun = useRef(true);
-  useEffect(() => {
-    if (isFirstRun.current) {
-      isFirstRun.current = false;
-      return;
-    }
-    setPage(1);
-    loadExams(1);
-  }, [studentTab]);
-
-  const handleTabChange = (tab: 'exams' | 'results') => {
-    if (tab !== studentTab) setStudentTab(tab);
-  };
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -228,46 +199,7 @@ export default function ExamsListScreen({ navigation }: Props) {
     );
   };
 
-  const renderHistoryCard = ({ item }: { item: ExamHistoryItem }) => {
-    const passed = item.percentage >= 50;
-    const accent = passed ? theme.colors.success : theme.colors.danger;
-    return (
-      <View style={[styles.examCard, { backgroundColor: theme.colors.card }]}>
-        <View style={[styles.examIconWrap, { backgroundColor: accent + '15' }]}>
-          <Ionicons name="ribbon-outline" size={18} color={accent} />
-        </View>
-        <View style={styles.cardInfo}>
-          <Text style={[styles.examName, { color: theme.colors.text }]} numberOfLines={1}>
-            {item.examName}
-          </Text>
-          <View style={styles.metaRow}>
-            <Text style={[styles.metaText, { color: theme.colors.textMuted }]}>
-              {item.correctAnswersCount}/{item.numberOfQuestions} {t('exams.correct')}
-            </Text>
-            {item.courseName ? (
-              <>
-                <Text style={[styles.metaDot, { color: theme.colors.textMuted }]}>·</Text>
-                <Text style={[styles.metaText, { color: theme.colors.textMuted }]} numberOfLines={1}>
-                  {item.courseName}
-                </Text>
-              </>
-            ) : null}
-          </View>
-        </View>
-        <View style={styles.historyScore}>
-          <Text style={[styles.historyScoreText, { color: accent }]}>
-            {item.studentScore}/{item.totalMarks}
-          </Text>
-          <Text style={[styles.historyPercent, { color: theme.colors.textMuted }]}>
-            {Math.round(item.percentage)}%
-          </Text>
-        </View>
-      </View>
-    );
-  };
-
-  const showResults = isStudent && studentTab === 'results';
-  const listEmpty = showResults ? history.length === 0 : exams.length === 0;
+  const listEmpty = exams.length === 0;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -288,42 +220,20 @@ export default function ExamsListScreen({ navigation }: Props) {
       </View>
 
       {isStudent && (
-        <View style={styles.tabRow}>
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              { backgroundColor: studentTab === 'exams' ? theme.colors.primary : theme.colors.card },
-            ]}
-            onPress={() => handleTabChange('exams')}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[
-                styles.tabButtonText,
-                { color: studentTab === 'exams' ? '#fff' : theme.colors.textMuted },
-              ]}
-            >
-              {t('exams.myExamsTab')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              { backgroundColor: studentTab === 'results' ? theme.colors.primary : theme.colors.card },
-            ]}
-            onPress={() => handleTabChange('results')}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[
-                styles.tabButtonText,
-                { color: studentTab === 'results' ? '#fff' : theme.colors.textMuted },
-              ]}
-            >
-              {t('exams.resultsTab')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.myExamsLink, { backgroundColor: theme.colors.card }]}
+          onPress={() => navigation.navigate('MyExams')}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.examIconWrap, { backgroundColor: theme.colors.primary + '15' }]}>
+            <Ionicons name="ribbon-outline" size={18} color={theme.colors.primary} />
+          </View>
+          <View style={styles.cardInfo}>
+            <Text style={[styles.examName, { color: theme.colors.text }]}>{t('myExams.title')}</Text>
+            <Text style={[styles.myExamsHint, { color: theme.colors.textMuted }]}>{t('myExams.subtitle')}</Text>
+          </View>
+          <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
+        </TouchableOpacity>
       )}
 
       {loading && listEmpty ? (
@@ -333,30 +243,8 @@ export default function ExamsListScreen({ navigation }: Props) {
       ) : listEmpty ? (
         <EmptyState
           icon={<Ionicons name="clipboard-outline" size={48} color={theme.colors.textMuted} />}
-          title={showResults ? t('exams.noResults') : isStudent ? t('exams.noExamsAssigned') : t('exams.noExams')}
-          description={
-            showResults
-              ? t('exams.noResultsMessage')
-              : isStudent
-              ? t('exams.noExamsAssignedMessage')
-              : t('exams.noExamsMessage')
-          }
-        />
-      ) : showResults ? (
-        <FlatList
-          data={history}
-          keyExtractor={item => String(item.studentExamId)}
-          initialNumToRender={8}
-          maxToRenderPerBatch={8}
-          windowSize={9}
-          renderItem={renderHistoryCard}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.colors.primary} />
-          }
-          onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.3}
+          title={isStudent ? t('exams.noExamsAssigned') : t('exams.noExams')}
+          description={isStudent ? t('exams.noExamsAssignedMessage') : t('exams.noExamsMessage')}
         />
       ) : (
         <FlatList
@@ -405,22 +293,18 @@ const styles = StyleSheet.create({
   headerTitle: {
     ...typography.screenTitle,
   },
-  tabRow: {
+  myExamsLink: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.md,
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: 10,
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    padding: spacing.md,
+    borderRadius: 12,
   },
-  tabButtonText: {
+  myExamsHint: {
     fontSize: fontSize.sm,
-    fontFamily: 'Cairo_600SemiBold',
+    fontFamily: 'Cairo_500Medium',
   },
   listContent: {
     paddingHorizontal: spacing.lg,
@@ -461,17 +345,6 @@ const styles = StyleSheet.create({
   },
   metaDot: {
     fontSize: 10,
-  },
-  historyScore: {
-    alignItems: 'flex-end',
-  },
-  historyScoreText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Cairo_700Bold',
-  },
-  historyPercent: {
-    fontSize: 10,
-    fontFamily: 'Cairo_500Medium',
   },
   actionsRow: {
     flexDirection: 'row',

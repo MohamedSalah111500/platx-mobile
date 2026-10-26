@@ -40,6 +40,7 @@ const HIDE_TAB_BAR_SCREENS = [
   'HonorBoard',
   'ExamTaking',
   'ExamResult',
+  'MyExams',
   'Homework',
   'CreateLive',
   'CourseDetail',

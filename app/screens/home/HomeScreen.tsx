@@ -1061,6 +1061,19 @@ export default function HomeScreen({ navigation }: Props) {
             <Text style={styles.quickActionText}>{t('homework.title')}</Text>
           </TouchableOpacity>
 
+          {isStudent && (
+            <TouchableOpacity
+              style={styles.quickActionPill}
+              activeOpacity={0.7}
+              onPress={() => { navigation.getParent()?.navigate('ExamsTab', { screen: 'MyExams' }); }}
+            >
+              <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[3 % ACCENT_COLORS.length]) }]}>
+                <Ionicons name="ribbon-outline" size={16} color={ACCENT_COLORS[3 % ACCENT_COLORS.length].accent} />
+              </View>
+              <Text style={styles.quickActionText}>{t('myExams.title')}</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity
             style={styles.quickActionPill}
             activeOpacity={0.7}

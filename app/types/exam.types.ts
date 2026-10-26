@@ -34,6 +34,7 @@ export interface OnlineExam {
 
 export interface ExamHistoryItem {
   studentExamId: number;
+  examId: number;
   examName: string;
   courseName?: string;
   examDate: string;
@@ -44,6 +45,10 @@ export interface ExamHistoryItem {
   attemptNumber: number;
   numberOfQuestions: number;
   correctAnswersCount: number;
+  incorrectAnswersCount: number;
+  hasPendingReview: boolean;
+  isAutoCorrect: boolean;
+  showCorrectAnswers: boolean;
 }
 
 export interface OnlineExamListItem {

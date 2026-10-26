@@ -1,3 +1,4 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
@@ -38,7 +39,7 @@ export type ParentStackParamList = {
 
 export type MainTabParamList = {
   HomeTab: undefined;
-  ExamsTab: undefined;
+  ExamsTab: NavigatorScreenParams<ExamsStackParamList> | undefined;
   ChatTab: undefined;
   ProfileTab: undefined;
 };
@@ -114,6 +115,7 @@ export type ExamsStackParamList = {
   CreateExam: undefined;
   ExamTaking: { examId: number };
   ExamResult: { examId: number };
+  MyExams: undefined;
 };
 
 export type HomeworkStackParamList = {

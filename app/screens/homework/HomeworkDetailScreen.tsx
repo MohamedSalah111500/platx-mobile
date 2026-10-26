@@ -231,7 +231,7 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
             <View style={{ flex: 1 }}>
               <Text style={[styles.bannerTitle, { color: theme.colors.success }]}>{t('homework.graded')}</Text>
               <Text style={[styles.bannerText, { color: theme.colors.text }]}>
-                {hw.submission?.finalGrade ?? 0} / {hw.totalScore}
+                {`${hw.submission?.finalGrade ?? 0}/${hw.totalScore}`}
               </Text>
             </View>
           </View>
@@ -506,7 +506,7 @@ function QuestionCard({
         {score !== null ? (
           <View style={[styles.scoreChip, { backgroundColor: scoreColor + '18' }]}>
             <Text style={[styles.scoreChipText, { color: scoreColor }]}>
-              {score} / {q.maxScore}
+              {`${score}/${q.maxScore}`}
             </Text>
           </View>
         ) : (

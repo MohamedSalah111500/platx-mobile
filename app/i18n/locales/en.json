@@ -1136,5 +1136,16 @@
     "sessionEnded": "Your parent access has been cancelled. Please link again using the student's code.",
     "children": "Students",
     "addChildDesc": "Link another student using a parent code."
+  },
+  "myExams": {
+    "title": "My exams",
+    "subtitle": "Every exam you have taken, with its result and your answers.",
+    "empty": "You have not taken any exam yet.",
+    "loadFailed": "Your exams could not be loaded.",
+    "passed": "Passed",
+    "failed": "Not passed",
+    "pending": "Waiting for grading",
+    "pendingHint": "The result appears once the teacher grades the exam.",
+    "viewDetails": "View details"
   }
 }
