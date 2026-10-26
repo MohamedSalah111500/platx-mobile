@@ -24,7 +24,8 @@
       },
       "android": {
         "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=arm64-v8a"
+        "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=arm64-v8a",
+        "credentialsSource": "local"
       },
       "ios": {
         "simulator": false
