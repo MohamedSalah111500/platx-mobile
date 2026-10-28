@@ -105,7 +105,10 @@
     "recordFailed": "Couldn't start recording.",
     "recordVoice": "Record voice comment",
     "stopRecording": "Stop recording",
-    "voiceReady": "Voice comment ready"
+    "voiceReady": "Voice comment ready",
+    "teacherFiles": "Homework files",
+    "teacherFilesHint": "Download the files, solve them, then upload your answer.",
+    "openFileFailed": "Could not open the file."
   },
   "auth": {
     "academyLabel": "Academy",

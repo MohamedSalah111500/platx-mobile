@@ -9,6 +9,7 @@ import {
   Alert,
   Image,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -276,6 +277,28 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
             <Text style={[styles.instructions, { color: theme.colors.text }]}>
               {stripHtml(hw.instructions)}
             </Text>
+          </View>
+        ) : null}
+
+        {hw.attachments?.length ? (
+          <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+            <Text style={[styles.sectionLabel, { color: theme.colors.textMuted }]}>
+              {t('homework.teacherFiles')}
+            </Text>
+            <Text style={[styles.emptyFiles, { color: theme.colors.textMuted }]}>{t('homework.teacherFilesHint')}</Text>
+            {hw.attachments.map(f => (
+              <TouchableOpacity
+                key={f.id}
+                style={[styles.fileRow, { borderColor: theme.colors.border }]}
+                onPress={() => Linking.openURL(absUrl(f.url)).catch(() => Alert.alert(t('homework.openFileFailed')))}
+              >
+                <Ionicons name="document-text-outline" size={18} color={theme.colors.primary} />
+                <Text style={[styles.fileName, { color: theme.colors.text }]} numberOfLines={1}>
+                  {f.name || `#${f.id}`}
+                </Text>
+                <Ionicons name="download-outline" size={18} color={theme.colors.primary} />
+              </TouchableOpacity>
+            ))}
           </View>
         ) : null}
 

@@ -105,7 +105,10 @@
     "recordFailed": "تعذّر بدء التسجيل.",
     "recordVoice": "تسجيل تعليق صوتي",
     "stopRecording": "إيقاف التسجيل",
-    "voiceReady": "التعليق الصوتي جاهز"
+    "voiceReady": "التعليق الصوتي جاهز",
+    "teacherFiles": "ملفات الواجب",
+    "teacherFilesHint": "حمّل الملفات وحُلّها، ثم ارفع إجابتك.",
+    "openFileFailed": "تعذّر فتح الملف."
   },
   "auth": {
     "academyLabel": "المنصة",

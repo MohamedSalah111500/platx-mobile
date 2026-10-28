@@ -87,6 +87,7 @@ export interface StudentHomework {
   dueDate?: string | null;
   isClosed: boolean;
   questions: HomeworkQuestion[];
+  attachments?: HomeworkUploadedFile[];
   submission?: HomeworkSubmission | null;
 }
 
