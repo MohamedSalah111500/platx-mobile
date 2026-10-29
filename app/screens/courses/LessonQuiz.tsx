@@ -227,13 +227,13 @@ export default function LessonQuiz({ examId, onFinished }: Props) {
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, padding: spacing.xl },
-  muted: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium' },
+  muted: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
   wrap: { padding: spacing.xl, paddingBottom: 40 },
   progressRow: { marginBottom: spacing.lg },
-  progressText: { fontSize: 12, fontFamily: 'Cairo_500Medium', marginBottom: 6 },
+  progressText: { fontSize: 14, fontFamily: 'Cairo_500Medium', marginBottom: 6, textAlign: 'left' },
   progressBar: { height: 6, borderRadius: 999, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 999 },
-  question: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', lineHeight: 26, marginBottom: spacing.lg },
+  question: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', lineHeight: 26, marginBottom: spacing.lg, textAlign: 'left' },
   answer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -251,9 +251,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   markerSquare: { borderRadius: 7 },
-  answerText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', lineHeight: 22 },
+  answerText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', lineHeight: 22, textAlign: 'left' },
   feedback: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, padding: spacing.md, marginTop: spacing.md },
-  feedbackText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
+  feedbackText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
   actions: { marginTop: spacing.lg, alignItems: 'flex-end' },
   btnPrimary: {
     flexDirection: 'row',
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderRadius: 12,
   },
-  btnPrimaryText: { color: '#fff', fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold' },
+  btnPrimaryText: { color: '#fff', fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   btnOutline: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -274,10 +274,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: spacing.md,
   },
-  btnOutlineText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold' },
+  btnOutlineText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   resultHead: { borderRadius: 16, padding: spacing.xl, alignItems: 'center', gap: 6, marginBottom: spacing.lg },
-  resultTitle: { color: '#fff', fontSize: fontSize.lg, fontFamily: 'Cairo_700Bold' },
-  resultSub: { color: 'rgba(255,255,255,0.9)', fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium' },
+  resultTitle: { color: '#fff', fontSize: fontSize.lg, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  resultSub: { color: 'rgba(255,255,255,0.9)', fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
   passBadge: { marginTop: 6, backgroundColor: 'rgba(255,255,255,0.22)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999 },
-  passBadgeText: { color: '#fff', fontSize: 12, fontFamily: 'Cairo_600SemiBold' },
+  passBadgeText: { color: '#fff', fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
 });

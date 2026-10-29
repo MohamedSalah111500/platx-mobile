@@ -9,7 +9,7 @@ export const fontFamily = {
 
 // Font sizes
 export const fontSize = {
-  xs: 12,
+  xs: 14,
   sm: 14,
   base: 16,
   lg: 18,
@@ -54,53 +54,63 @@ export const typography = {
     fontFamily: fontFamily.bold,
     fontSize: fontSize['2xl'],
     lineHeight: 34,
+    textAlign: 'left' as const,
   },
   // headerTitle: centred title in a header bar with a back button.
   headerTitle: {
     fontFamily: fontFamily.bold,
     fontSize: fontSize.lg,
     lineHeight: 28,
+    textAlign: 'left' as const,
   },
   // sectionTitle: heading of a section inside a screen.
   sectionTitle: {
     fontFamily: fontFamily.bold,
     fontSize: fontSize.lg,
     lineHeight: 28,
+    textAlign: 'left' as const,
   },
   h1: {
     fontFamily: fontFamily.bold,
     fontSize: fontSize['4xl'],
     lineHeight: Math.round(fontSize['4xl'] * lineHeightMultiplier.tight),
+    textAlign: 'left' as const,
   },
   h2: {
     fontFamily: fontFamily.bold,
     fontSize: fontSize['3xl'],
     lineHeight: Math.round(fontSize['3xl'] * lineHeightMultiplier.tight),
+    textAlign: 'left' as const,
   },
   h3: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize['2xl'],
     lineHeight: Math.round(fontSize['2xl'] * lineHeightMultiplier.tight),
+    textAlign: 'left' as const,
   },
   h4: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.xl,
     lineHeight: Math.round(fontSize.xl * lineHeightMultiplier.normal),
+    textAlign: 'left' as const,
   },
   body: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.base,
     lineHeight: Math.round(fontSize.base * lineHeightMultiplier.normal),
+    textAlign: 'left' as const,
   },
   bodySmall: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.sm,
     lineHeight: Math.round(fontSize.sm * lineHeightMultiplier.normal),
+    textAlign: 'left' as const,
   },
   caption: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.xs,
     lineHeight: Math.round(fontSize.xs * lineHeightMultiplier.normal),
+    textAlign: 'left' as const,
   },
   // Button labels: centred in the button and allowed to shrink, so a long Arabic
   // label never spills past the button or pushes its icon out. `includeFontPadding`

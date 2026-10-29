@@ -19,6 +19,7 @@ import {
   type HomeworkSubmissionListItem,
 } from '../../types/homework.types';
 
+import { appDateLocale } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<HomeworkStackParamList, 'HomeworkSubmissions'>;
 
 export default function HomeworkSubmissionsScreen({ navigation, route }: Props) {
@@ -81,7 +82,7 @@ export default function HomeworkSubmissionsScreen({ navigation, route }: Props) 
               <>
                 <Text style={[styles.dot, { color: theme.colors.textMuted }]}>·</Text>
                 <Text style={[styles.metaText, { color: theme.colors.textMuted }]}>
-                  {new Date(item.submittedAt).toLocaleDateString()}
+                  {new Date(item.submittedAt).toLocaleDateString(appDateLocale())}
                 </Text>
               </>
             )}
@@ -145,12 +146,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold' },
+  avatarText: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   info: { flex: 1, gap: 3 },
-  name: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
+  name: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap' },
-  metaText: { fontSize: 11, fontFamily: 'Cairo_500Medium' },
-  dot: { fontSize: 11 },
+  metaText: { fontSize: 14, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
+  dot: { fontSize: 14, textAlign: 'left' },
   aiChip: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  aiChipText: { fontSize: 10, fontFamily: 'Cairo_600SemiBold' },
+  aiChipText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
 });

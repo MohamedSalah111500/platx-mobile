@@ -233,8 +233,8 @@ const styles = StyleSheet.create({
   image: { width: '100%', height: '100%' },
 
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, padding: spacing.xl },
-  emptyTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', marginTop: spacing.sm },
-  emptySub: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular' },
+  emptyTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', marginTop: spacing.sm, textAlign: 'left' },
+  emptySub: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
 
   commentRow: {
     flexDirection: 'row',
@@ -248,19 +248,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: { fontSize: 13, fontFamily: 'Cairo_700Bold' },
+  avatarText: { fontSize: 14, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   bubble: {
     flex: 1,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
   },
   bubbleHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  authorName: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', flexShrink: 1 },
+  authorName: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', flexShrink: 1, textAlign: 'left' },
   staffPill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: borderRadius.full },
-  staffPillText: { fontSize: 10, fontFamily: 'Cairo_700Bold' },
-  commentText: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', lineHeight: 20, marginTop: 4 },
+  staffPillText: { fontSize: 14, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  commentText: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', lineHeight: 20, marginTop: 4, textAlign: 'left' },
   bubbleFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
-  timeText: { fontSize: 11, fontFamily: 'Cairo_400Regular' },
+  timeText: { fontSize: 14, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
 
   inputBar: {
     flexDirection: 'row',
@@ -281,6 +281,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_400Regular',
     maxHeight: 100,
     paddingVertical: Platform.OS === 'ios' ? 6 : spacing.sm,
+    textAlign: 'left',
   },
   sendBtn: {
     width: 42,

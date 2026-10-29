@@ -26,6 +26,7 @@ import { liveApi } from '../../services/api/live.api';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 import { type LiveSession, LiveClassroomType } from '../../types/live.types';
 
+import { appDateLocale } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'LiveSessions'>;
 
 export default function LiveSessionsListScreen({ navigation }: Props) {
@@ -152,13 +153,13 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
       <View style={styles.sessionFooter}>
         {item.liveType === LiveClassroomType.External && item.scheduledAt ? (
           <Text style={styles.sessionTime}>
-            {new Date(item.scheduledAt).toLocaleString('en', {
+            {new Date(item.scheduledAt).toLocaleString(appDateLocale(), {
               month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
             })}
           </Text>
         ) : item.startedAt ? (
           <Text style={styles.sessionTime}>
-            {t('live.started')} {new Date(item.startedAt).toLocaleTimeString('en', {
+            {t('live.started')} {new Date(item.startedAt).toLocaleTimeString(appDateLocale(), {
               hour: '2-digit',
               minute: '2-digit',
             })}
@@ -186,8 +187,6 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
       padding: spacing.lg,
       backgroundColor: theme.colors.card,
       borderRadius: borderRadius.xl,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
     },
     sessionHeader: {
       flexDirection: 'row',

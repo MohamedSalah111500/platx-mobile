@@ -42,5 +42,5 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
     borderWidth: 1,
   },
-  text: { fontSize: 12, fontFamily: 'Cairo_600SemiBold' },
+  text: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
 });

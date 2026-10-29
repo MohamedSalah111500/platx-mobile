@@ -35,11 +35,13 @@ import { CoursePrice } from '../../components/course/CoursePrice';
 import { REQUEST_ONLY } from '../../config/storePolicy';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { useRTL } from '../../i18n/RTLProvider';
+import { useDisplayFormat } from '../../hooks/useDisplayFormat';
 import { useSound } from '../../hooks/useSound';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { PartPurchaseSheet, type PartPurchase } from '../../components/course/PartPurchaseSheet';
 import { formatAmount } from '../../utils/price';
 
+import { appDateLocale } from '../../utils/dateLocale';
 type Props = {
   navigation: NativeStackScreenProps<any, any>['navigation'];
   route: { params: { courseId: number } };
@@ -63,6 +65,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
   const { theme } = useTheme();
   const { user, isStudent, isAdmin, isStaff, domain } = useAuth();
   const { t, isRTL } = useRTL();
+  const format = useDisplayFormat();
   const { play } = useSound();
   const insets = useSafeAreaInsets();
 
@@ -442,12 +445,12 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
 
           {/* Stats row */}
           <View style={[styles.statsRow, { borderColor: lineColor }]}>
-            {course.totalHours != null && (
+            {Math.round(course.totalHours ?? 0) > 0 && (
               <>
                 <View style={styles.statItem}>
-                  <Ionicons name="time-outline" size={16} color="#F5A623" />
-                  <Text style={[styles.statValue, { color: theme.colors.text }]}>{course.totalHours}h</Text>
-                  <Text style={[styles.statLabel, { color: theme.colors.textMuted }]}>{t('courses.total')}</Text>
+                  <Ionicons name="time-outline" size={16} color={theme.colors.primary} />
+                  <Text style={[styles.statValue, { color: theme.colors.text }]}>{Math.round(course.totalHours ?? 0)}</Text>
+                  <Text style={[styles.statLabel, { color: theme.colors.textMuted }]}>{t('courses.hours')}</Text>
                 </View>
                 <View style={[styles.statDivider, { backgroundColor: lineColor }]} />
               </>
@@ -461,8 +464,8 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
               <>
                 <View style={[styles.statDivider, { backgroundColor: lineColor }]} />
                 <View style={styles.statItem}>
-                  <Ionicons name="globe-outline" size={16} color="#3B82F6" />
-                  <Text style={[styles.statValue, { color: theme.colors.text }]}>{course.language}</Text>
+                  <Ionicons name="globe-outline" size={16} color={theme.colors.primary} />
+                  <Text style={[styles.statValue, { color: theme.colors.text }]}>{format.language(course.language)}</Text>
                   <Text style={[styles.statLabel, { color: theme.colors.textMuted }]}>{t('courses.lang')}</Text>
                 </View>
               </>
@@ -491,7 +494,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                 <View style={styles.metaPill}>
                   <Ionicons name="calendar-outline" size={14} color={theme.colors.textMuted} />
                   <Text style={[styles.metaPillText, { color: theme.colors.textSecondary }]}>
-                    {t('courses.updated')} {new Date(course.updateTime).toLocaleDateString()}
+                    {t('courses.updated')} {new Date(course.updateTime).toLocaleDateString(appDateLocale())}
                   </Text>
                 </View>
               )}
@@ -567,7 +570,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
             <View style={styles.sectionsHeadRow}>
               <Text style={[styles.sectionsHeading, { color: theme.colors.text }]}>{t('courses.lessons')}</Text>
               <Text style={[styles.sectionsCount, { color: theme.colors.textMuted }]}>
-                {totalLessons} {t('courses.lessons')}
+                {t('home.lessonsCount', { count: totalLessons })}
               </Text>
             </View>
 
@@ -588,7 +591,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                     <View style={styles.sectionMeta}>
                       <Text style={[styles.sectionTitle, { color: theme.colors.text }]} numberOfLines={1}>{section.title}</Text>
                       <Text style={[styles.sectionSubtitle, { color: theme.colors.textMuted }]}>
-                        {lessonCount} {t('courses.lessons')}
+                        {t('home.lessonsCount', { count: lessonCount })}
                       </Text>
                     </View>
                     {canBuyParts && owns(section) ? (
@@ -639,7 +642,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                     const durationMin = durationSec > 0 ? Math.max(1, Math.round(durationSec / 60)) : null;
 
                     const iconName = done ? 'checkmark-circle' : isLink ? 'link' : isFile ? 'download' : isDoc ? 'document-text' : isQuiz ? 'clipboard' : 'play-circle';
-                    const iconColor = done ? '#34C38F' : isLink ? '#0EA5E9' : isFile ? '#8B5CF6' : isDoc ? '#3B82F6' : isQuiz ? '#F59E0B' : theme.colors.primary;
+                    const iconColor = done ? theme.colors.success : theme.colors.primary;
                     const iconBg = iconColor + (theme.dark ? '26' : '18');
                     const pillAlpha = theme.dark ? '26' : '1A';
 
@@ -674,9 +677,9 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                                 <Text style={[styles.lessonMetaText, { color: theme.colors.textMuted }]}>{durationMin} {t('exams.min')}</Text>
                               </View>
                             )}
-                            {isDoc && <View style={[styles.lessonTypePill, { backgroundColor: '#3B82F6' + pillAlpha }]}><Text style={[styles.lessonTypePillText, { color: '#3B82F6' }]}>{t('courses.document')}</Text></View>}
-                            {isFile && <View style={[styles.lessonTypePill, { backgroundColor: '#8B5CF6' + pillAlpha }]}><Text style={[styles.lessonTypePillText, { color: '#8B5CF6' }]}>{t('courses.file')}</Text></View>}
-                            {isLink && <View style={[styles.lessonTypePill, { backgroundColor: '#0EA5E9' + pillAlpha }]}><Text style={[styles.lessonTypePillText, { color: '#0EA5E9' }]}>{t('courses.link')}</Text></View>}
+                            {isDoc && <View style={[styles.lessonTypePill, { backgroundColor: theme.colors.primary + pillAlpha }]}><Text style={[styles.lessonTypePillText, { color: theme.colors.primary }]}>{t('courses.document')}</Text></View>}
+                            {isFile && <View style={[styles.lessonTypePill, { backgroundColor: theme.colors.primary + pillAlpha }]}><Text style={[styles.lessonTypePillText, { color: theme.colors.primary }]}>{t('courses.file')}</Text></View>}
+                            {isLink && <View style={[styles.lessonTypePill, { backgroundColor: theme.colors.primary + pillAlpha }]}><Text style={[styles.lessonTypePillText, { color: theme.colors.primary }]}>{t('courses.link')}</Text></View>}
                             {isQuiz && <View style={[styles.lessonTypePill, { backgroundColor: '#F59E0B' + pillAlpha }]}><Text style={[styles.lessonTypePillText, { color: '#F59E0B' }]}>{t('courses.exam')}</Text></View>}
                           </View>
                           {forSale && (
@@ -695,11 +698,11 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                         </View>
 
                         {/* Lock or play arrow */}
-                        <View style={[styles.lessonArrow, { backgroundColor: (locked ? theme.colors.textMuted : theme.colors.primary) + (theme.dark ? '26' : '14') }]}>
+                        <View style={styles.lessonArrow}>
                           <Ionicons
                             name={locked ? 'lock-closed' : (isRTL ? 'chevron-back' : 'chevron-forward')}
-                            size={14}
-                            color={locked ? theme.colors.textMuted : theme.colors.primary}
+                            size={18}
+                            color={theme.colors.textMuted}
                           />
                         </View>
                       </TouchableOpacity>
@@ -725,7 +728,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                 title={t('courses.parts.continue')}
                 onPress={handleWatch}
                 size="large"
-                icon={<Ionicons name="play-circle" size={22} color="#fff" />}
+                icon={<Ionicons name="play-circle" size={22} color={theme.colors.onPrimary} />}
                 style={{ borderRadius: 16, flex: 1 }}
               />
               {requestStatus === 'pending' ? (
@@ -757,7 +760,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
               title={t('courses.watch')}
               onPress={handleWatch}
               size="large"
-              icon={<Ionicons name="play-circle" size={22} color="#fff" />}
+              icon={<Ionicons name="play-circle" size={22} color={theme.colors.onPrimary} />}
               style={{ borderRadius: 16, flex: isOwner && !isFree ? 1 : undefined }}
               fullWidth={!(isOwner && !isFree)}
             />
@@ -845,7 +848,6 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     marginBottom: spacing.lg,
     borderRadius: borderRadius.xl,
-    borderWidth: 1,
     paddingVertical: spacing.xs,
   },
   manageHeading: {
@@ -856,6 +858,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xs,
     letterSpacing: 0.4,
     textTransform: 'uppercase',
+    textAlign: 'left',
   },
   manageRow: {
     flexDirection: 'row',
@@ -865,8 +868,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   manageIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  manageTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold' },
-  manageSub: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular' },
+  manageTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  manageSub: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
 
   backBtnFloat: {
     position: 'absolute',
@@ -937,13 +940,13 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xl,
     borderRadius: 22,
     padding: spacing.xl,
-    borderWidth: 1,
   },
   courseTitle: {
     fontSize: fontSize.xl,
     fontFamily: 'Cairo_700Bold',
     lineHeight: 30,
     marginBottom: spacing.sm,
+    textAlign: 'left',
   },
   instructorRow: {
     flexDirection: 'row',
@@ -961,6 +964,7 @@ const styles = StyleSheet.create({
   instructorName: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
   statsRow: {
     flexDirection: 'row',
@@ -982,15 +986,18 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   statLabel: {
-    fontSize: 10,
+    fontSize: 14,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
   description: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_400Regular',
     lineHeight: 22,
+    textAlign: 'left',
   },
   extraMetaRow: {
     flexDirection: 'row',
@@ -1004,8 +1011,9 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   metaPillText: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
 
   // Certificate card
@@ -1016,7 +1024,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     marginHorizontal: spacing.xl,
     borderRadius: 18,
-    borderWidth: 1,
     padding: spacing.lg,
   },
   certIcon: {
@@ -1029,11 +1036,13 @@ const styles = StyleSheet.create({
   certTitle: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   certSub: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_500Medium',
     marginTop: 2,
+    textAlign: 'left',
   },
 
   // Sections
@@ -1054,10 +1063,10 @@ const styles = StyleSheet.create({
   sectionsCount: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
   sectionCard: {
     borderRadius: 18,
-    borderWidth: 1,
     overflow: 'hidden',
     marginBottom: spacing.sm,
   },
@@ -1078,16 +1087,19 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_700Bold',
     color: '#fff',
+    textAlign: 'left',
   },
   sectionMeta: { flex: 1 },
   sectionTitle: {
     fontSize: fontSize.base,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   sectionSubtitle: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_400Regular',
     marginTop: 1,
+    textAlign: 'left',
   },
 
   // Lessons
@@ -1100,7 +1112,7 @@ const styles = StyleSheet.create({
   },
   lessonNum: {
     width: 18,
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
     textAlign: 'center',
   },
@@ -1116,6 +1128,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_500Medium',
     lineHeight: 20,
+    textAlign: 'left',
   },
   lessonMeta: {
     flexDirection: 'row',
@@ -1129,8 +1142,9 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   lessonMetaText: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_400Regular',
+    textAlign: 'left',
   },
   lessonTypePill: {
     paddingHorizontal: 7,
@@ -1138,8 +1152,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   lessonTypePillText: {
-    fontSize: 10,
+    fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   lessonArrow: {
     width: 26,
@@ -1198,6 +1213,7 @@ const styles = StyleSheet.create({
   partChipText: {
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   lessonPartChip: {
     alignSelf: 'flex-start',

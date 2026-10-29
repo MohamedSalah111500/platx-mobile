@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Image,
-  Dimensions,
-  Platform,
-  TextInput,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -17,46 +15,58 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
-import { Avatar } from '../../components/ui/Avatar';
 import { useRTL } from '../../i18n/RTLProvider';
-import { spacing, borderRadius } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
+import { useDisplayFormat } from '../../hooks/useDisplayFormat';
+import { spacing } from '../../theme/spacing';
+import { typography, fontFamily, fontSize } from '../../theme/typography';
 import { newsApi } from '../../services/api/news.api';
 import { eventsApi, CALENDAR_VIEW_TYPE } from '../../services/api/events.api';
 import { coursesApi } from '../../services/api/courses.api';
 import { dashboardApi, type DashboardStats } from '../../services/api/dashboard.api';
+import { honorBoardApi, type HonorBoardEntry } from '../../services/api/honor-board.api';
+import { reportsApi } from '../../services/api/reports.api';
 import type { HomeStackParamList } from '../../types/navigation.types';
 import type { NewsItem } from '../../types/news.types';
 import type { EventItem } from '../../types/event.types';
 import type { Course, Enrollment } from '../../types/course.types';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { toLocalDateString } from '../../utils/date';
-import { GradientBackground } from '../../components/ui/GradientBackground';
-import { studentsApi } from '../../services/api/students.api';
-import { honorBoardApi, type HonorBoardEntry } from '../../services/api/honor-board.api';
-import { reportsApi } from '../../services/api/reports.api';
 import { effectivePrice, formatPrice } from '../../utils/price';
+import { Avatar } from '../../components/ui/Avatar';
 import SectionHeader from '../../components/ui/SectionHeader';
+import { SearchBar } from '../../components/ui/SearchBar';
 import { Spinner } from '../../components/ui/Spinner';
+import { Chip } from '../../components/ui/Chip';
+import { MediaCard } from '../../components/ui/MediaCard';
+import { RowCard } from '../../components/ui/RowCard';
+import { PlayCircle } from '../../components/ui/PlayCircle';
 import { useNotificationsStore } from '../../store/notifications.store';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { useTabBarSpace } from '../../navigation/tabBar';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Home'>;
 
-// Accent palette for cards
-const ACCENT_COLORS = [
-  { bg: '#EDE8FF', accent: '#7c63fd' },
-  { bg: '#FFF3E0', accent: '#F5A623' },
-  { bg: '#E8F8F0', accent: '#34C38F' },
-  { bg: '#FCE8EC', accent: '#F46A6A' },
-];
+type EnrolledCourse = Course & { progressPct: number };
+
+type QuickAction = {
+  key: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+};
+
+type ReportsSummary = { avgAttendance: number; avgExamScore: number };
+
+const average = (values: number[]) =>
+  values.length ? Math.round(values.reduce((sum, v) => sum + v, 0) / values.length) : 0;
 
 export default function HomeScreen({ navigation }: Props) {
   const { theme, isDark } = useTheme();
-  const { user, role, domain, isStudent, isStaff, isAdmin, can } = useAuth();
-  const { t, isRTL, locale } = useRTL();
+  const { user, domain, isStudent, isStaff, isAdmin, can } = useAuth();
+  const { t, locale } = useRTL();
+  const format = useDisplayFormat();
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useTabBarSpace();
+  const { width: windowWidth } = useWindowDimensions();
 
   const [news, setNews] = useState<NewsItem[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -66,112 +76,93 @@ export default function HomeScreen({ navigation }: Props) {
   const [newsError, setNewsError] = useState<string | null>(null);
   const [coursesError, setCoursesError] = useState<string | null>(null);
   const [honorTop3, setHonorTop3] = useState<HonorBoardEntry[]>([]);
+  const [reportsSummary, setReportsSummary] = useState<ReportsSummary | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  // First paint: sections are hidden until their data arrives, so show a spinner
-  // instead of an empty screen.
   const [initialLoading, setInitialLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
-  const [reportsSummary, setReportsSummary] = useState<{ avgAttendance: number; avgExamScore: number; groupsCount: number; examsCount: number } | null>(null);
 
   const isTeacherOrAdmin = isStaff || isAdmin;
+  const canReports = can('REPORTS');
+  const canManageNews = can('MANAGE_NEWS');
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
   const fetchUnreadCount = useNotificationsStore((s) => s.fetchUnreadCount);
+  const isWide = windowWidth >= 600;
 
   useEffect(() => {
     if (isStudent) fetchUnreadCount();
   }, [isStudent, fetchUnreadCount]);
-  const canReports = can('REPORTS');
-  const canManageNews = can('MANAGE_NEWS');
 
-  // ------------------------------------------------------------------ data
-  const loadData = async () => {
-    if (isTeacherOrAdmin) {
-      try {
-        const statsData = await dashboardApi.getStats();
-        setStats(statsData);
-      } catch {
-        // stats may not be available
-      }
-    }
-    if (canReports) {
-      try {
-        const [attendance, exams] = await Promise.all([
-          reportsApi.getAttendanceReports(),
-          reportsApi.getExamReports(),
-        ]);
-        const avgAttendance = attendance.length
-          ? attendance.reduce((sum, r) => sum + r.attendancePercentage, 0) / attendance.length
-          : 0;
-        const avgExamScore = exams.length
-          ? exams.reduce((sum, r) => sum + r.successRate, 0) / exams.length
-          : 0;
-        setReportsSummary({
-          avgAttendance: Math.round(avgAttendance),
-          avgExamScore: Math.round(avgExamScore),
-          groupsCount: attendance.length,
-          examsCount: exams.length,
-        });
-      } catch {
-        // reports may not be available
-      }
-    }
-    await loadNews();
+  const loadStats = async () => {
+    if (!isTeacherOrAdmin) return;
     try {
-      const coursesRes = (isTeacherOrAdmin || !domain)
-        ? await coursesApi.getAll(1, 6)
-        : await coursesApi.getPublic(domain, 1, 6);
-      setCourses(coursesRes.items || []);
-      setCoursesError(null);
-    } catch (err: any) {
-      console.error('[Home] courses load failed', err);
-      setCoursesError(err?.userMessage || t('courses.failedToLoadCoursesList'));
-      setCourses([]);
-    }
-    try {
-      const today = toLocalDateString(new Date());
-      const eventsRes = isTeacherOrAdmin
-        ? await eventsApi.getAll(today, CALENDAR_VIEW_TYPE.Month)
-        : await eventsApi.getAllForStudent(today, CALENDAR_VIEW_TYPE.Month);
-      setEvents(Array.isArray(eventsRes) ? eventsRes.slice(0, 3) : []);
+      setStats(await dashboardApi.getStats());
     } catch {
-      // events may not be available
+      setStats(null);
     }
+  };
+
+  const loadReports = async () => {
+    if (!canReports) return;
     try {
-      const now = new Date();
-      const entries = await honorBoardApi.getRankings(now.getMonth() + 1, now.getFullYear());
-      setHonorTop3(entries.sort((a, b) => a.rank - b.rank).slice(0, 3));
+      const [attendance, exams] = await Promise.all([
+        reportsApi.getAttendanceReports(),
+        reportsApi.getExamReports(),
+      ]);
+      setReportsSummary({
+        avgAttendance: average(attendance.map((r) => r.attendancePercentage)),
+        avgExamScore: average(exams.map((r) => r.successRate)),
+      });
     } catch {
-      // honor board may not be available
+      setReportsSummary(null);
     }
   };
 
   const loadNews = async () => {
     try {
-      const newsRes = await newsApi.getAll(1, 3, undefined, domain ?? undefined);
-      setNews(newsRes.items || []);
+      const res = await newsApi.getAll(1, 3, undefined, domain ?? undefined);
+      setNews(res.items || []);
       setNewsError(null);
     } catch (err: any) {
-      console.error('[Home] news load failed', err);
       setNewsError(err?.userMessage || t('errors.failedToLoad'));
       setNews([]);
     }
   };
 
-  // Coming back from publishing a news item (or from any other screen) should show
-  // it straight away, without reloading the whole dashboard.
-  const skipFirstFocus = useRef(true);
-  useFocusEffect(
-    useCallback(() => {
-      if (skipFirstFocus.current) {
-        skipFirstFocus.current = false;
-        return;
-      }
-      loadNews();
-    }, [domain]),
-  );
+  const loadCourses = async () => {
+    try {
+      const res = isTeacherOrAdmin || !domain
+        ? await coursesApi.getAll(1, 6)
+        : await coursesApi.getPublic(domain, 1, 6);
+      setCourses(res.items || []);
+      setCoursesError(null);
+    } catch (err: any) {
+      setCoursesError(err?.userMessage || t('courses.failedToLoadCoursesList'));
+      setCourses([]);
+    }
+  };
 
-  // Only students own courses. The student id is resolved from /Students/me
-  // after login, so this re-runs once it arrives.
+  const loadEvents = async () => {
+    try {
+      const today = toLocalDateString(new Date());
+      const res = isTeacherOrAdmin
+        ? await eventsApi.getAll(today, CALENDAR_VIEW_TYPE.Month)
+        : await eventsApi.getAllForStudent(today, CALENDAR_VIEW_TYPE.Month);
+      setEvents(Array.isArray(res) ? res.slice(0, 3) : []);
+    } catch {
+      setEvents([]);
+    }
+  };
+
+  const loadHonorBoard = async () => {
+    try {
+      const now = new Date();
+      const entries = await honorBoardApi.getRankings(now.getMonth() + 1, now.getFullYear());
+      setHonorTop3([...entries].sort((a, b) => a.rank - b.rank).slice(0, 3));
+    } catch {
+      setHonorTop3([]);
+    }
+  };
+
   const loadEnrollments = async () => {
     if (!isStudent || !user?.studentId) {
       setEnrollments([]);
@@ -184,622 +175,216 @@ export default function HomeScreen({ navigation }: Props) {
     }
   };
 
+  const loadAll = () =>
+    Promise.all([loadStats(), loadReports(), loadNews(), loadCourses(), loadEvents(), loadHonorBoard()]);
+
   useEffect(() => {
-    loadData().finally(() => setInitialLoading(false));
+    loadAll().finally(() => setInitialLoading(false));
   }, []);
 
   useEffect(() => {
     loadEnrollments();
   }, [isStudent, user?.studentId]);
 
-  // Enrollment rows embed the course; fall back to the enrollment's own
-  // lesson count when the nested course doesn't carry it.
-  const enrolledCourses: Course[] = enrollments
-    .filter((e) => e.course)
-    .map((e) => ({
-      ...(e.course as Course),
-      id: e.courseId,
-      totalLessons: e.course?.totalLessons ?? e.totalLessons,
-    }));
+  const skipFirstFocus = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (skipFirstFocus.current) {
+        skipFirstFocus.current = false;
+        return;
+      }
+      loadNews();
+    }, [domain]),
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([loadData(), loadEnrollments()]);
+    await Promise.all([loadAll(), loadEnrollments()]);
     setRefreshing(false);
   };
 
-  // ------------------------------------------------------------------ helpers
-  const getGreeting = () => {
+  const enrolledCourses = useMemo<EnrolledCourse[]>(
+    () =>
+      enrollments
+        .filter((e) => e.course)
+        .map((e) => ({
+          ...(e.course as Course),
+          id: e.courseId,
+          totalLessons: e.course?.totalLessons ?? e.totalLessons,
+          progressPct: Math.max(0, Math.min(100, Math.round(e.progressPercentage ?? e.progress ?? 0))),
+        })),
+    [enrollments],
+  );
+
+  const greeting = (() => {
     const hour = new Date().getHours();
     if (hour < 12) return t('home.goodMorning');
     if (hour < 18) return t('home.goodAfternoon');
     return t('home.goodEvening');
+  })();
+
+  const fullName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
+  const goProfile = () => navigation.getParent()?.navigate('ProfileTab');
+  const openCourse = (courseId: number) => navigation.navigate('CourseDetail', { courseId });
+
+  const coursePrice = (course: Course) => {
+    if (course.isFree || course.price === 0) return t('courses.free');
+    if (course.price == null) return null;
+    return formatPrice(effectivePrice(course.price, course.discountPrice), course.currencyCode, locale);
   };
 
-  const firstName = user?.firstName || '';
+  const quickActions: QuickAction[] = [
+    { key: 'courses', icon: 'book-outline', label: t('courses.title'), onPress: () => navigation.navigate('CoursesList') },
+    { key: 'homework', icon: 'document-text-outline', label: t('homework.title'), onPress: () => navigation.navigate('Homework') },
+    ...(isStudent
+      ? [{ key: 'exams', icon: 'ribbon-outline' as const, label: t('myExams.title'), onPress: () => navigation.navigate('MyExams') }]
+      : []),
+    { key: 'live', icon: 'videocam-outline', label: t('home.live'), onPress: () => navigation.navigate('LiveSessions') },
+    { key: 'groups', icon: 'people-outline', label: t('groups.title'), onPress: () => navigation.navigate('Groups') },
+    { key: 'chat', icon: 'chatbubbles-outline', label: t('chat.title'), onPress: () => navigation.getParent()?.navigate('ChatTab') },
+    ...(isTeacherOrAdmin
+      ? [
+          { key: 'requests', icon: 'mail-unread-outline' as const, label: t('enrollmentRequests.title'), onPress: () => navigation.navigate('EnrollmentRequests') },
+          ...(canManageNews
+            ? [{ key: 'news', icon: 'newspaper-outline' as const, label: t('createNews.new'), onPress: () => navigation.navigate('CreateNews') }]
+            : []),
+          { key: 'notify', icon: 'megaphone-outline' as const, label: t('sendNotification.title'), onPress: () => navigation.navigate('SendNotification') },
+        ]
+      : []),
+  ];
 
-  // ------------------------------------------------------------------ palette
-  const CARD_BG = isDark ? theme.colors.card : '#FFFFFF';
-  const SEARCH_BG = isDark ? theme.colors.surface : '#FFFFFF';
-  const PRIMARY = theme.colors.primary;
-  const DARK_CARD = isDark ? '#3D2196' : '#1B1464';
-  const LIGHT_CARD = isDark ? theme.colors.surface : theme.colors.primaryLight;
-  const SOFT_BORDER = isDark ? theme.colors.border : theme.colors.divider;
-  // Pastel accent fills glare on dark cards — use a translucent tint there.
-  const accentBg = (p: { bg: string; accent: string }) => (isDark ? p.accent + '26' : p.bg);
+  const styles = useMemo(() => {
+    const ink = theme.colors.text;
+    return StyleSheet.create({
+      page: { flex: 1, backgroundColor: theme.colors.background },
+      statusMask: { position: 'absolute', top: 0, start: 0, end: 0, height: insets.top, backgroundColor: theme.colors.background },
+      scrollContent: { paddingTop: insets.top + spacing.lg, paddingBottom: tabBarSpace },
+      gutter: { paddingHorizontal: spacing.xl },
 
-  const CARD_WIDTH = SCREEN_WIDTH * 0.42;
+      header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.xl, gap: spacing.md },
+      headerText: { flex: 1, alignItems: 'flex-start' },
+      headerName: { fontFamily: fontFamily.bold, fontSize: fontSize.lg, lineHeight: 28, color: ink, textAlign: 'left' },
+      greetingRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+      greeting: { ...typography.bodySmall, color: theme.colors.textSecondary },
+      iconButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: theme.colors.card,
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      bellDot: {
+        position: 'absolute',
+        top: 11,
+        end: 12,
+        width: 9,
+        height: 9,
+        borderRadius: 5,
+        backgroundColor: theme.colors.danger,
+        borderWidth: 2,
+        borderColor: theme.colors.card,
+      },
 
-  // ------------------------------------------------------------------ styles
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-    },
-    scrollContent: {
-      paddingBottom: insets.bottom + 100,
-    },
+      headline: {
+        fontFamily: fontFamily.bold,
+        fontSize: fontSize['2xl'],
+        lineHeight: 36,
+        color: ink,
+        textAlign: 'left',
+        paddingHorizontal: spacing.xl,
+        marginTop: spacing.lg,
+      },
+      search: { marginHorizontal: spacing.xl, marginTop: spacing.md },
+      chips: { paddingHorizontal: spacing.xl, gap: spacing.sm, paddingTop: spacing.md, paddingBottom: spacing.lg },
 
-    /* ── Header ───────────────────────────────────────────────── */
-    header: {
-      paddingTop: insets.top + spacing.lg,
-      paddingHorizontal: spacing.xl,
-      paddingBottom: spacing.md,
-    },
-    headerRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    headerUserPress: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    avatarCircle: {
-      width: 50,
-      height: 50,
-      borderRadius: 25,
-      backgroundColor: PRIMARY,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    avatarText: {
-      color: '#FFFFFF',
-      fontSize: fontSize.lg,
-      fontFamily: 'Cairo_700Bold',
-    },
-    avatarImage: {
-      width: '100%',
-      height: '100%',
-      borderRadius: 25,
-    },
-    headerTextBlock: {
-      flex: 1,
-      marginStart: spacing.md,
-    },
-    headerWelcome: {
-      ...typography.caption,
-      color: theme.colors.textSecondary,
-      letterSpacing: 0.3,
-    },
-    headerName: {
-      ...typography.h4,
-      color: theme.colors.text,
-      fontFamily: 'Cairo_700Bold',
-    },
-    bellButton: {
-      width: 46,
-      height: 46,
-      borderRadius: 23,
-      backgroundColor: CARD_BG,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    bellDot: {
-      position: 'absolute',
-      top: 12,
-      // `end` so the dot sits on the bell the same way in Arabic and English.
-      end: 13,
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: '#F46A6A',
-      borderWidth: 1.5,
-      borderColor: CARD_BG,
-    },
+      tintCard: {
+        marginHorizontal: spacing.xl,
+        borderRadius: 28,
+        backgroundColor: theme.colors.primaryLight,
+        padding: spacing.lg,
+        overflow: 'hidden',
+      },
+      hero: { padding: spacing.md },
+      heroStats: { flexDirection: 'row', alignItems: 'center' },
+      heroStat: { flex: 1, alignItems: 'center' },
+      heroDivider: { width: 1, height: 32, backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' },
+      heroValue: { fontFamily: fontFamily.bold, fontSize: fontSize['2xl'], lineHeight: 32, color: ink, textAlign: 'center' },
+      heroLabel: { ...typography.bodySmall, lineHeight: 20, color: theme.colors.textSecondary, textAlign: 'center' },
 
-    /* ── Main Heading ─────────────────────────────────────────── */
-    mainHeading: {
-      ...typography.screenTitle,
-      color: theme.colors.text,
-      paddingHorizontal: spacing.xl,
-      marginTop: spacing.lg,
-      marginBottom: spacing.lg,
-    },
+      featuredBody: { flexDirection: 'row', gap: spacing.lg },
+      featuredText: { flex: 1, alignItems: 'flex-start' },
+      eyebrow: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: theme.colors.primaryDark, textAlign: 'left' },
+      featuredTitle: { fontFamily: fontFamily.bold, fontSize: fontSize.lg, lineHeight: 28, color: ink, textAlign: 'left', marginTop: spacing.xs },
+      featuredSub: { ...typography.bodySmall, color: theme.colors.textSecondary, marginTop: spacing.xs },
+      featuredImage: { width: 112, height: 84, borderRadius: 18, backgroundColor: theme.colors.card },
+      progressTrack: {
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)',
+        marginTop: spacing.md,
+        overflow: 'hidden',
+      },
+      progressFill: { height: '100%', borderRadius: 4, backgroundColor: theme.colors.primary },
+      progressLabel: { ...typography.bodySmall, color: theme.colors.textSecondary, marginTop: spacing.xs },
 
-    /* ── Search Bar ───────────────────────────────────────────── */
-    searchBarContainer: {
-      marginHorizontal: spacing.xl,
-      marginBottom: spacing['2xl'],
-    },
-    searchBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: SEARCH_BG,
-      borderRadius: borderRadius.full,
-      paddingHorizontal: spacing.lg,
-      height: 50,
-      borderWidth: 1,
-      borderColor: SOFT_BORDER,
-      gap: spacing.sm,
-    },
-    searchInput: {
-      flex: 1,
-      ...typography.bodySmall,
-      color: theme.colors.text,
-      paddingVertical: 0,
-    },
+      cta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        minHeight: 52,
+        borderRadius: 999,
+        backgroundColor: isDark ? theme.colors.background : theme.colors.card,
+        paddingStart: spacing.lg,
+        paddingEnd: 6,
+        paddingVertical: 6,
+        gap: spacing.md,
+        marginTop: spacing.md,
+      },
+      ctaText: { flex: 1, justifyContent: 'center', alignItems: 'flex-start' },
+      ctaLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.base, lineHeight: 22, color: ink, textAlign: 'left' },
+      ctaSub: { ...typography.bodySmall, lineHeight: 20, color: theme.colors.textSecondary },
 
-    /* ── Stat Cards (2 horizontal) ────────────────────────────── */
-    statCardsRow: {
-      flexDirection: 'row',
-      paddingHorizontal: spacing.xl,
-      gap: spacing.md,
-      marginBottom: spacing['2xl'],
-    },
-    statCardDark: {
-      flex: 1,
-      backgroundColor: DARK_CARD,
-      borderRadius: borderRadius['2xl'],
-      padding: spacing.sm,
-      minHeight: 80,
-      justifyContent: 'space-between',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 10,
-      elevation: 2,
-    },
-    statCardLight: {
-      flex: 1,
-      backgroundColor: LIGHT_CARD,
-      borderRadius: borderRadius['2xl'],
-      padding: spacing.sm,
-      minHeight: 80,
-      justifyContent: 'space-between',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.06,
-      shadowRadius: 10,
-      elevation: 2,
-    },
-    statIconRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    statIconCircle: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    statValue: {
-      fontSize: fontSize.lg,
-      fontFamily: 'Cairo_700Bold',
-      marginTop: spacing.xs,
-    },
-    statLabel: {
-      ...typography.caption,
-      fontSize: 10,
-      fontFamily: 'Cairo_500Medium',
-    },
+      section: { marginTop: spacing['2xl'] },
+      list: { paddingHorizontal: spacing.xl, gap: spacing.sm },
+      courseRow: { paddingHorizontal: spacing.xl, gap: spacing.sm, flexDirection: isWide ? 'row' : 'column' },
+      courseCell: isWide ? { flex: 1 } : { width: '100%' },
 
-    /* ── Teacher / Admin 3-column stats ───────────────────────── */
-    adminStatsRow: {
-      flexDirection: 'row',
-      paddingHorizontal: spacing.xl,
-      gap: spacing.md,
-      marginBottom: spacing['2xl'],
-    },
-    adminStatCard: {
-      flex: 1,
-      backgroundColor: CARD_BG,
-      borderRadius: borderRadius['2xl'],
-      padding: spacing.sm,
-      alignItems: 'center',
-      
-    },
-    adminStatIconCircle: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: spacing.xs,
-    },
-    adminStatValue: {
-      fontSize: fontSize.base,
-      fontFamily: 'Cairo_700Bold',
-      color: theme.colors.text,
-    },
-    adminStatLabel: {
-      fontSize: 10,
-      fontFamily: 'Cairo_500Medium',
-      color: theme.colors.textSecondary,
-      marginTop: 2,
-      textAlign: 'center',
-    },
+      honorAvatars: { flexDirection: 'row', paddingStart: 10 },
+      honorAvatar: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        borderWidth: 2,
+        borderColor: theme.colors.card,
+        backgroundColor: theme.colors.primaryLight,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+        marginStart: -10,
+      },
+      honorInitial: { fontFamily: fontFamily.bold, fontSize: fontSize.sm, color: theme.colors.primaryDark, textAlign: 'left' },
+      fill: { width: '100%', height: '100%' },
+      tile: {
+        width: 60,
+        height: 60,
+        borderRadius: 16,
+        backgroundColor: theme.colors.primaryLight,
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      dateDay: { fontFamily: fontFamily.bold, fontSize: fontSize.lg, lineHeight: 24, color: theme.colors.primaryDark, textAlign: 'left' },
+      dateMonth: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, lineHeight: 20, color: theme.colors.primaryDark, textAlign: 'left' },
 
-    /* ── Reports mini-widget (Staff/Admin) ───────────────────── */
-    reportsWidget: {
-      flexDirection: 'row',
-      backgroundColor: CARD_BG,
-      borderRadius: borderRadius['2xl'],
-      marginHorizontal: spacing.xl,
-      marginBottom: spacing['2xl'],
-      padding: spacing.lg,
-      alignItems: 'center',
-      gap: spacing.md,
-    },
-    reportsWidgetIcon: {
-      width: 44,
-      height: 44,
-      borderRadius: 14,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    reportsWidgetMetrics: {
-      flex: 1,
-      flexDirection: 'row',
-      gap: spacing.lg,
-    },
-    reportsWidgetMetric: {
-      // flex-start already follows the layout direction (right edge in RTL).
-      alignItems: 'flex-start',
-    },
-    reportsWidgetValue: {
-      fontSize: fontSize.lg,
-      fontFamily: 'Cairo_700Bold',
-      color: theme.colors.text,
-    },
-    reportsWidgetLabel: {
-      fontSize: 10,
-      fontFamily: 'Cairo_500Medium',
-      color: theme.colors.textSecondary,
-    },
+      message: { ...typography.bodySmall, textAlign: 'center', marginHorizontal: spacing.xl, paddingVertical: spacing.lg },
+    });
+  }, [theme, isDark, insets.top, tabBarSpace, isWide]);
 
-    /* ── Quick Actions (horizontal slider) ────────────────────── */
-    quickActionsScroll: {
-      paddingStart: spacing.xl,
-      paddingEnd: spacing.md,
-      marginBottom: spacing['2xl'],
-    },
-    quickActionPill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: CARD_BG,
-      borderRadius: borderRadius.full,
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.lg,
-      marginEnd: spacing.sm,
-      gap: 8,
-      borderWidth: 1,
-      borderColor: SOFT_BORDER,
-    },
-    quickActionIconSmall: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    quickActionText: {
-      ...typography.caption,
-      fontFamily: 'Cairo_600SemiBold',
-      color: theme.colors.text,
-    },
+  const featured = enrolledCourses[0];
+  const otherEnrolled = enrolledCourses.slice(1, 3);
+  const featuredImage = featured ? getFullImageUrl(featured.previewImageUrl) : null;
 
-    /* ── Horizontal Course Cards ──────────────────────────────── */
-    courseScrollContent: {
-      paddingStart: spacing.xl,
-      paddingEnd: spacing.md,
-    },
-    courseCard: {
-      width: CARD_WIDTH,
-      backgroundColor: CARD_BG,
-      borderRadius: borderRadius['3xl'],
-      marginEnd: spacing.md,
-      overflow: 'hidden',
-    },
-    courseImageWrapper: {
-      height: 120,
-      backgroundColor: accentBg(ACCENT_COLORS[0]),
-      justifyContent: 'center',
-      alignItems: 'center',
-      overflow: 'hidden',
-    },
-    courseImage: {
-      width: '100%',
-      height: '100%',
-    },
-    courseImageOverlay: {
-      position: 'absolute',
-      bottom: spacing.sm,
-      right: spacing.sm,
-    },
-    courseBadge: {
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 3,
-      borderRadius: borderRadius.full,
-      backgroundColor: 'rgba(255,255,255,0.9)',
-    },
-    courseBadgeText: {
-      ...typography.caption,
-      fontFamily: 'Cairo_700Bold',
-      color: '#1B1464',
-    },
-    courseInfo: {
-      padding: spacing.md,
-    },
-    courseTitle: {
-      ...typography.bodySmall,
-      fontFamily: 'Cairo_700Bold',
-      color: theme.colors.text,
-      marginBottom: spacing.xs,
-    },
-    courseInstructor: {
-      ...typography.caption,
-      color: theme.colors.textSecondary,
-      marginBottom: spacing.sm,
-    },
-    courseMetaRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-    },
-    courseMeta: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-    },
-    courseMetaText: {
-      ...typography.caption,
-      color: theme.colors.textMuted,
-    },
-
-    /* ── News Cards ───────────────────────────────────────────── */
-    newsCard: {
-      flexDirection: 'row',
-      backgroundColor: CARD_BG,
-      borderRadius: borderRadius['3xl'],
-      overflow: 'hidden',
-      marginHorizontal: spacing.xl,
-      marginBottom: spacing.md,
-      
-    },
-    newsImageContainer: {
-      width: 100,
-      height: 100,
-    },
-    newsImage: {
-      width: '100%',
-      height: '100%',
-    },
-    newsImagePlaceholder: {
-      width: '100%',
-      height: '100%',
-      backgroundColor: accentBg(ACCENT_COLORS[0]),
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    newsContent: {
-      flex: 1,
-      padding: spacing.md,
-      justifyContent: 'center',
-    },
-    newsTitle: {
-      ...typography.bodySmall,
-      fontFamily: 'Cairo_600SemiBold',
-      color: theme.colors.text,
-    },
-    newsSubtitle: {
-      ...typography.caption,
-      color: theme.colors.textSecondary,
-      marginTop: 2,
-    },
-    newsDate: {
-      ...typography.caption,
-      color: theme.colors.textMuted,
-      marginTop: spacing.xs,
-    },
-
-    /* ── Event Cards ──────────────────────────────────────────── */
-    eventCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: CARD_BG,
-      borderRadius: borderRadius['3xl'],
-      padding: spacing.md,
-      marginHorizontal: spacing.xl,
-      marginBottom: spacing.sm,
-      
-    },
-    eventDateBox: {
-      width: 54,
-      height: 54,
-      borderRadius: borderRadius.xl,
-      backgroundColor: accentBg(ACCENT_COLORS[0]),
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginEnd: spacing.md,
-    },
-    eventDay: {
-      fontSize: fontSize.lg,
-      fontFamily: 'Cairo_700Bold',
-      color: PRIMARY,
-    },
-    eventMonth: {
-      ...typography.caption,
-      color: PRIMARY,
-      fontFamily: 'Cairo_600SemiBold',
-    },
-    eventInfo: {
-      flex: 1,
-    },
-    eventTitle: {
-      ...typography.bodySmall,
-      color: theme.colors.text,
-      fontFamily: 'Cairo_600SemiBold',
-    },
-    eventTime: {
-      ...typography.caption,
-      color: theme.colors.textMuted,
-      marginTop: 2,
-    },
-
-    /* ── Empty state ──────────────────────────────────────────── */
-    emptyText: {
-      ...typography.bodySmall,
-      color: theme.colors.textMuted,
-      textAlign: 'center',
-      paddingVertical: spacing['2xl'],
-    },
-    errorText: {
-      ...typography.body,
-      textAlign: 'center',
-      marginHorizontal: spacing.xl,
-      paddingVertical: spacing.lg,
-    },
-
-    /* ── Section spacing ──────────────────────────────────────── */
-    sectionSpacing: {
-      marginTop: spacing.lg,
-      marginBottom: spacing.sm,
-    },
-
-    /* ── Honor Board ───────────────────────────────────────────── */
-    honorCard: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      marginHorizontal: spacing.xl,
-      marginBottom: spacing.sm,
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.lg,
-      borderRadius: 16,
-      gap: spacing.sm,
-      
-    },
-    honorRank: {
-      width: 28,
-      height: 28,
-      borderRadius: 9,
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-    },
-    honorRankText: {
-      fontSize: 13,
-      fontFamily: 'Cairo_700Bold' as const,
-    },
-    honorAvatar: {
-      width: 36,
-      height: 36,
-      borderRadius: 12,
-      overflow: 'hidden' as const,
-    },
-    honorAvatarImg: {
-      width: '100%' as any,
-      height: '100%' as any,
-    },
-    honorAvatarFallback: {
-      width: '100%' as any,
-      height: '100%' as any,
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-    },
-    honorInitial: {
-      fontSize: 15,
-      fontFamily: 'Cairo_700Bold' as const,
-    },
-    honorName: {
-      flex: 1,
-      fontSize: fontSize.sm,
-      fontFamily: 'Cairo_600SemiBold' as const,
-    },
-    honorScore: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      gap: 3,
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 8,
-    },
-    honorScoreText: {
-      fontSize: 11,
-      fontFamily: 'Cairo_700Bold' as const,
-      color: '#F5A623',
-    },
-
-    /* ── Top 3 honor tree inside stat card ─────────────────── */
-    honorTree: {
-      alignItems: 'center',
-      marginTop: spacing.sm,
-    },
-    honorTreeTop: {
-      alignItems: 'center',
-      marginBottom: 4,
-    },
-    honorTreeBottom: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      gap: spacing.md,
-    },
-    honorTreeItem: {
-      alignItems: 'center',
-    },
-    honorTreeAvatar: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      justifyContent: 'center',
-      alignItems: 'center',
-      overflow: 'hidden' as const,
-      borderWidth: 2,
-    },
-    honorTreeAvatarGold: {
-      borderColor: '#FFD54F',
-      backgroundColor: 'rgba(255,213,79,0.2)',
-    },
-    honorTreeAvatarSilver: {
-      borderColor: '#BDBDBD',
-      backgroundColor: 'rgba(189,189,189,0.2)',
-    },
-    honorTreeAvatarBronze: {
-      borderColor: '#FFB74D',
-      backgroundColor: 'rgba(255,183,77,0.2)',
-    },
-    honorTreeAvatarImg: {
-      width: '100%' as any,
-      height: '100%' as any,
-    },
-    honorTreeInitials: {
-      color: '#FFFFFF',
-      fontSize: 11,
-      fontFamily: 'Cairo_700Bold',
-    },
-    honorTreeName: {
-      color: 'rgba(255,255,255,0.8)',
-      fontSize: 8,
-      fontFamily: 'Cairo_600SemiBold',
-      marginTop: 2,
-      maxWidth: 60,
-      textAlign: 'center',
-    },
-  });
-
-  // ------------------------------------------------------------------ RENDER
   return (
-    <GradientBackground style={styles.container}>
+    <View style={styles.page}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -807,637 +392,245 @@ export default function HomeScreen({ navigation }: Props) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={PRIMARY}
-            colors={[PRIMARY]}
+            tintColor={theme.colors.primary}
+            colors={[theme.colors.primary]}
           />
         }
       >
-        {/* ────────────── HEADER ────────────── */}
         <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <TouchableOpacity
-              style={styles.headerUserPress}
-              activeOpacity={0.7}
-              onPress={() => navigation.getParent()?.navigate('ProfileTab')}
-            >
-              <Avatar
-                self
-                dimension={50}
-                name={`${firstName} ${user?.lastName || ''}`.trim()}
-                style={styles.avatarCircle}
-              />
-              <View style={styles.headerTextBlock}>
-                <Text style={styles.headerWelcome}>{getGreeting()}</Text>
-                <Text style={styles.headerName} numberOfLines={1}>
-                  {firstName} {user?.lastName || ''}
-                </Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.bellButton}
-              activeOpacity={0.7}
-              onPress={() => navigation.navigate('NotificationsList')}
-            >
-              <Ionicons
-                name="notifications-outline"
-                size={22}
-                color={theme.colors.text}
-              />
-              {unreadCount > 0 && <View style={styles.bellDot} />}
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={styles.headerText} activeOpacity={0.7} onPress={goProfile}>
+            <Text style={styles.headerName} numberOfLines={1}>{fullName}</Text>
+            <View style={styles.greetingRow}>
+              <Ionicons name="sunny-outline" size={16} color={theme.colors.textSecondary} />
+              <Text style={styles.greeting}>{greeting}</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconButton}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('NotificationsList')}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.alerts')}
+          >
+            <Ionicons name="notifications-outline" size={22} color={theme.colors.text} />
+            {unreadCount > 0 && <View style={styles.bellDot} />}
+          </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.7} onPress={goProfile} accessibilityRole="button" accessibilityLabel={fullName}>
+            <Avatar self dimension={52} name={fullName} />
+          </TouchableOpacity>
         </View>
 
-        {/* ────────────── MAIN HEADING ────────────── */}
-        <Text style={styles.mainHeading}>
-          {t('home.startLearning')}
-        </Text>
+        <Text style={styles.headline}>{t('home.headline')}</Text>
 
-        {/* ────────────── SEARCH BAR ────────────── */}
-        <View style={styles.searchBarContainer}>
-          <View style={styles.searchBar}>
-            <Ionicons
-              name="search"
-              size={20}
-              color={theme.colors.textMuted}
-            />
-            <TextInput
-              style={[styles.searchInput, { color: theme.colors.text }]}
-              placeholder={`${t('courses.searchCourses')}`}
-              placeholderTextColor={theme.colors.inputPlaceholder}
-              value={searchText}
-              onChangeText={setSearchText}
-              returnKeyType="search"
-              onSubmitEditing={() => {
-                const q = searchText.trim();
-                if (q) {
-                  navigation.navigate('CoursesList', { search: q });
-                } else {
-                  navigation.navigate('CoursesList');
-                }
-              }}
-            />
-            {searchText.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchText('')} activeOpacity={0.6}>
-                <Ionicons name="close-circle" size={18} color={theme.colors.textMuted} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
+        <SearchBar
+          style={styles.search}
+          value={searchText}
+          onChangeText={setSearchText}
+          placeholder={t('courses.searchCourses')}
+          onSubmit={() => {
+            const q = searchText.trim();
+            navigation.navigate('CoursesList', q ? { search: q } : undefined);
+          }}
+        />
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+          {quickActions.map((action) => (
+            <Chip key={action.key} icon={action.icon} label={action.label} onPress={action.onPress} />
+          ))}
+        </ScrollView>
 
         {initialLoading && <Spinner />}
 
-        {/* ────────────── STAT CARDS ────────────── */}
-        {isTeacherOrAdmin ? (
-          /* Teacher / Admin: 3-column stats */
-          <View style={styles.adminStatsRow}>
-            <View style={styles.adminStatCard}>
-              <View style={[styles.adminStatIconCircle, { backgroundColor: accentBg(ACCENT_COLORS[0]) }]}>
-                <Ionicons name="people" size={17} color={ACCENT_COLORS[0].accent} />
-              </View>
-              <Text style={styles.adminStatValue}>{stats?.totalStudents ?? '-'}</Text>
-              <Text style={styles.adminStatLabel}>{t('home.students')}</Text>
-            </View>
-            <View style={styles.adminStatCard}>
-              <View style={[styles.adminStatIconCircle, { backgroundColor: accentBg(ACCENT_COLORS[1]) }]}>
-                <Ionicons name="school" size={17} color={ACCENT_COLORS[1].accent} />
-              </View>
-              <Text style={styles.adminStatValue}>{stats?.totalLecturers ?? '-'}</Text>
-              <Text style={styles.adminStatLabel}>{t('home.lecturers')}</Text>
-            </View>
-            <View style={styles.adminStatCard}>
-              <View style={[styles.adminStatIconCircle, { backgroundColor: accentBg(ACCENT_COLORS[2]) }]}>
-                <Ionicons name="book" size={17} color={ACCENT_COLORS[2].accent} />
-              </View>
-              <Text style={styles.adminStatValue}>{stats?.totalOnlineCourses ?? '-'}</Text>
-              <Text style={styles.adminStatLabel}>{t('courses.title')}</Text>
-            </View>
-          </View>
-        ) : null}
-
-        {/* ────────────── REPORTS WIDGET (Staff/Admin) ────────────── */}
-        {canReports && reportsSummary && (
-          <TouchableOpacity
-            style={styles.reportsWidget}
-            activeOpacity={0.8}
-            onPress={() => {
-              navigation.getParent()?.navigate('ProfileTab', { screen: 'Reports', initial: false });
-            }}
-          >
-            <View style={[styles.reportsWidgetIcon, { backgroundColor: theme.colors.primaryLight }]}>
-              <Ionicons name="bar-chart" size={22} color={PRIMARY} />
-            </View>
-            <View style={styles.reportsWidgetMetrics}>
-              <View style={styles.reportsWidgetMetric}>
-                <Text style={styles.reportsWidgetValue}>{reportsSummary.avgAttendance}%</Text>
-                <Text style={styles.reportsWidgetLabel}>{t('reports.attendanceTab')}</Text>
-              </View>
-              <View style={styles.reportsWidgetMetric}>
-                <Text style={styles.reportsWidgetValue}>{reportsSummary.avgExamScore}%</Text>
-                <Text style={styles.reportsWidgetLabel}>{t('reports.examsTab')}</Text>
-              </View>
-            </View>
-            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
-          </TouchableOpacity>
-        )}
-
-        {isStudent && (
-          /* Student: 2 horizontal metric cards (dark + light) */
-          <View style={styles.statCardsRow}>
-            {/* Dark card -- Honor Board Top 3 */}
-            <TouchableOpacity
-              style={styles.statCardDark}
-              activeOpacity={0.85}
-              onPress={() => {
-                navigation.getParent()?.navigate('ProfileTab', { screen: 'HonorBoard', initial: false });
-              }}
-            >
-              <View style={styles.statIconRow}>
-                <View style={[styles.statIconCircle, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
-                  <Ionicons name="trophy" size={16} color="#FFD54F" />
-                </View>
-                <Ionicons name="medal-outline" size={14} color="rgba(255,255,255,0.5)" />
-              </View>
-              {honorTop3.length > 0 ? (
-                <View style={styles.honorTree}>
-                  {/* Top 1 - center */}
-                  {honorTop3[0] && (
-                    <View style={styles.honorTreeTop}>
-                      {(() => {
-                        const s = honorTop3[0];
-                        const parts = (s.studentName || '').trim().split(/\s+/);
-                        const ini = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
-                        return (
-                          <View style={styles.honorTreeItem}>
-                            <View style={[styles.honorTreeAvatar, styles.honorTreeAvatarGold]}>
-                              {s.studentProfileImage ? (
-                                <Image source={{ uri: getFullImageUrl(s.studentProfileImage) }} style={styles.honorTreeAvatarImg} />
-                              ) : (
-                                <Text style={styles.honorTreeInitials}>{ini}</Text>
-                              )}
-                            </View>
-                            <Text style={styles.honorTreeName} numberOfLines={1}>{parts.slice(0, 2).join(' ')}</Text>
-                          </View>
-                        );
-                      })()}
-                    </View>
-                  )}
-                  {/* Bottom row - rank 2 & 3 */}
-                  {honorTop3.length > 1 && (
-                    <View style={styles.honorTreeBottom}>
-                      {honorTop3.slice(1, 3).map((s, i) => {
-                        const parts = (s.studentName || '').trim().split(/\s+/);
-                        const ini = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
-                        return (
-                          <View key={s.id} style={styles.honorTreeItem}>
-                            <View style={[styles.honorTreeAvatar, i === 0 ? styles.honorTreeAvatarSilver : styles.honorTreeAvatarBronze]}>
-                              {s.studentProfileImage ? (
-                                <Image source={{ uri: getFullImageUrl(s.studentProfileImage) }} style={styles.honorTreeAvatarImg} />
-                              ) : (
-                                <Text style={styles.honorTreeInitials}>{ini}</Text>
-                              )}
-                            </View>
-                            <Text style={styles.honorTreeName} numberOfLines={1}>{parts.slice(0, 2).join(' ')}</Text>
-                          </View>
-                        );
-                      })}
-                    </View>
-                  )}
-                </View>
-              ) : (
-                <View>
-                  <Text style={[styles.statLabel, { color: 'rgba(255,255,255,0.7)' }]}>
-                    {t('honorBoard.title')}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-
-            {/* Light card -- Learning Hours */}
-            <View style={styles.statCardLight}>
-              <View style={styles.statIconRow}>
-                <View style={[styles.statIconCircle, { backgroundColor: theme.colors.primaryLight }]}>
-                  <Ionicons name="time" size={16} color={PRIMARY} />
-                </View>
-                <Ionicons name="trending-up" size={14} color={isDark ? theme.colors.textMuted : theme.colors.primary} />
-              </View>
-              <View>
-                <Text style={[styles.statValue, { color: isDark ? theme.colors.text : theme.colors.primaryDark }]}>
-                  {enrolledCourses.reduce((sum, c) => sum + (c.totalHours || 0), 0)}h
-                </Text>
-                <Text style={[styles.statLabel, { color: isDark ? theme.colors.textSecondary : '#74788D' }]}>
-                  {t('courses.duration')}
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* ────────────── QUICK ACTIONS (horizontal slider) ────────────── */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.quickActionsScroll}
-        >
-          <TouchableOpacity
-            style={styles.quickActionPill}
-            activeOpacity={0.7}
-            onPress={() => { navigation.navigate('CoursesList'); }}
-          >
-            <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[0]) }]}>
-              <Ionicons name="book-outline" size={16} color={ACCENT_COLORS[0].accent} />
-            </View>
-            <Text style={styles.quickActionText}>{t('courses.title')}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.quickActionPill}
-            activeOpacity={0.7}
-            onPress={() => { navigation.navigate('Homework'); }}
-          >
-            <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[2]) }]}>
-              <Ionicons name="document-text-outline" size={16} color={ACCENT_COLORS[2].accent} />
-            </View>
-            <Text style={styles.quickActionText}>{t('homework.title')}</Text>
-          </TouchableOpacity>
-
-          {isStudent && (
-            <TouchableOpacity
-              style={styles.quickActionPill}
-              activeOpacity={0.7}
-              onPress={() => { navigation.getParent()?.navigate('ExamsTab', { screen: 'MyExams' }); }}
-            >
-              <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[3 % ACCENT_COLORS.length]) }]}>
-                <Ionicons name="ribbon-outline" size={16} color={ACCENT_COLORS[3 % ACCENT_COLORS.length].accent} />
-              </View>
-              <Text style={styles.quickActionText}>{t('myExams.title')}</Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity
-            style={styles.quickActionPill}
-            activeOpacity={0.7}
-            onPress={() => { navigation.getParent()?.navigate('ChatTab'); }}
-          >
-            <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[1]) }]}>
-              <Ionicons name="chatbubbles-outline" size={16} color={ACCENT_COLORS[1].accent} />
-            </View>
-            <Text style={styles.quickActionText}>{t('chat.title')}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.quickActionPill}
-            activeOpacity={0.7}
-            onPress={() => {
-              navigation.getParent()?.navigate('ProfileTab', { screen: 'Groups', initial: false });
-            }}
-          >
-            <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[2]) }]}>
-              <Ionicons name="people-outline" size={16} color={ACCENT_COLORS[2].accent} />
-            </View>
-            <Text style={styles.quickActionText}>{t('groups.title')}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.quickActionPill}
-            activeOpacity={0.7}
-            onPress={() => {
-              navigation.getParent()?.navigate('ProfileTab', { screen: 'LiveSessions', initial: false });
-            }}
-          >
-            <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[3]) }]}>
-              <Ionicons name="videocam-outline" size={16} color={ACCENT_COLORS[3].accent} />
-            </View>
-            <Text style={styles.quickActionText}>{t('home.live')}</Text>
-          </TouchableOpacity>
-
-          {isTeacherOrAdmin && (
-            <>
-              <TouchableOpacity
-                style={styles.quickActionPill}
-                activeOpacity={0.7}
-                onPress={() => { navigation.navigate('EnrollmentRequests'); }}
-              >
-                <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[1]) }]}>
-                  <Ionicons name="mail-unread-outline" size={16} color={ACCENT_COLORS[1].accent} />
-                </View>
-                <Text style={styles.quickActionText}>{t('enrollmentRequests.title')}</Text>
-              </TouchableOpacity>
-
-              {canManageNews && (
-                <TouchableOpacity
-                  style={styles.quickActionPill}
-                  activeOpacity={0.7}
-                  onPress={() => { navigation.navigate('CreateNews'); }}
-                >
-                  <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[2]) }]}>
-                    <Ionicons name="newspaper-outline" size={16} color={ACCENT_COLORS[2].accent} />
+        {isTeacherOrAdmin && (
+          <View style={[styles.tintCard, styles.hero]}>
+            <View style={styles.heroStats}>
+              {[
+                { key: 'students', value: stats?.totalStudents, label: t('home.students') },
+                { key: 'lecturers', value: stats?.totalLecturers, label: t('home.lecturers') },
+                { key: 'courses', value: stats?.totalOnlineCourses, label: t('courses.title') },
+              ].map((s, i) => (
+                <React.Fragment key={s.key}>
+                  {i > 0 && <View style={styles.heroDivider} />}
+                  <View style={styles.heroStat}>
+                    <Text style={styles.heroValue}>{s.value ?? '–'}</Text>
+                    <Text style={styles.heroLabel} numberOfLines={1}>{s.label}</Text>
                   </View>
-                  <Text style={styles.quickActionText}>{t('createNews.new')}</Text>
-                </TouchableOpacity>
-              )}
-
+                </React.Fragment>
+              ))}
+            </View>
+            {canReports && (
               <TouchableOpacity
-                style={styles.quickActionPill}
-                activeOpacity={0.7}
-                onPress={() => { navigation.navigate('SendNotification'); }}
+                style={styles.cta}
+                activeOpacity={0.85}
+                onPress={() => navigation.navigate('Reports')}
+                accessibilityRole="button"
+                accessibilityLabel={t('reports.title')}
               >
-                <View style={[styles.quickActionIconSmall, { backgroundColor: accentBg(ACCENT_COLORS[0]) }]}>
-                  <Ionicons name="megaphone-outline" size={16} color={ACCENT_COLORS[0].accent} />
-                </View>
-                <Text style={styles.quickActionText}>{t('sendNotification.title')}</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </ScrollView>
-
-        {/* ────────────── ENROLLED COURSES (list) ────────────── */}
-        {isStudent && enrolledCourses.length > 0 && (
-          <View style={styles.sectionSpacing}>
-            <SectionHeader
-              title={t('home.enrolledCourses')}
-              onSeeAll={() => navigation.navigate('CoursesList')}
-            />
-
-            {enrolledCourses.slice(0, 3).map((course, idx) => {
-              const palette = ACCENT_COLORS[idx % ACCENT_COLORS.length];
-              const imageUrl = getFullImageUrl(course.previewImageUrl);
-              return (
-                <TouchableOpacity
-                  key={course.id}
-                  activeOpacity={0.85}
-                  onPress={() => {
-                    navigation.navigate('CourseDetail', { courseId: course.id });
-                  }}
-                  style={{
-                    flexDirection: 'row',
-                    backgroundColor: CARD_BG,
-                    borderRadius: borderRadius['3xl'],
-                    overflow: 'hidden',
-                    marginHorizontal: spacing.xl,
-                    marginBottom: spacing.md,
-                  }}
-                >
-                  {/* Left image */}
-                  <View
-                    style={{
-                      width: 100,
-                      height: 100,
-                      backgroundColor: accentBg(palette),
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                  >
-                    {imageUrl ? (
-                      <Image
-                        source={{ uri: imageUrl }}
-                        style={{ width: '100%', height: '100%' }}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <Ionicons name="book" size={32} color={palette.accent} />
-                    )}
-                  </View>
-                  {/* Right info */}
-                  <View style={{ flex: 1, padding: spacing.md, justifyContent: 'center' }}>
-                    <Text
-                      style={{
-                        ...typography.bodySmall,
-                        fontFamily: 'Cairo_700Bold',
-                        color: theme.colors.text,
-                        marginBottom: 4,
-                      }}
-                      numberOfLines={2}
-                    >
-                      {course.title || course.name}
+                <View style={styles.ctaText}>
+                  <Text style={styles.ctaLabel}>{t('reports.title')}</Text>
+                  {reportsSummary ? (
+                    <Text style={styles.ctaSub} numberOfLines={2}>
+                      {t('reports.attendanceTab')} {format.percent(reportsSummary.avgAttendance)}  ·  {t('reports.examsTab')} {format.percent(reportsSummary.avgExamScore)}
                     </Text>
-                    {course.instructorName ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}>
-                        <Ionicons name="person-outline" size={12} color={theme.colors.textSecondary} />
-                        <Text
-                          style={{
-                            ...typography.caption,
-                            color: theme.colors.textSecondary,
-                            flexShrink: 1,
-                          }}
-                          numberOfLines={1}
-                        >
-                          {course.instructorName}
-                        </Text>
-                      </View>
-                    ) : null}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-                      {course.totalLessons != null && (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                          <Ionicons name="play-circle-outline" size={12} color={theme.colors.textMuted} />
-                          <Text style={{ ...typography.caption, color: theme.colors.textMuted }}>
-                            {course.totalLessons} {t('courses.lessons')}
-                          </Text>
-                        </View>
-                      )}
-                      {course.totalHours != null && (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                          <Ionicons name="time-outline" size={12} color={theme.colors.textMuted} />
-                          <Text style={{ ...typography.caption, color: theme.colors.textMuted }}>
-                            {course.totalHours}h
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                  {/* Arrow */}
-                  <View style={{ justifyContent: 'center', paddingEnd: spacing.md }}>
-                    <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+                  ) : null}
+                </View>
+                <PlayCircle icon="forward" />
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
-        {/* ────────────── POPULAR / RECENT COURSES (horizontal) ────────────── */}
+        {isStudent && featured && (
+          <TouchableOpacity
+            style={styles.tintCard}
+            activeOpacity={0.9}
+            onPress={() => openCourse(featured.id)}
+            accessibilityRole="button"
+            accessibilityLabel={featured.title || featured.name}
+          >
+            <View style={styles.featuredBody}>
+              <View style={styles.featuredText}>
+                <Text style={styles.eyebrow}>{t('home.continueLearning')}</Text>
+                <Text style={styles.featuredTitle} numberOfLines={3}>{featured.title || featured.name}</Text>
+                {featured.instructorName ? (
+                  <Text style={styles.featuredSub} numberOfLines={1}>{t('common.by')} {featured.instructorName}</Text>
+                ) : null}
+                {format.courseMeta(featured) ? <Text style={styles.featuredSub}>{format.courseMeta(featured)}</Text> : null}
+              </View>
+              {featuredImage ? <Image source={{ uri: featuredImage }} style={styles.featuredImage} resizeMode="cover" /> : null}
+            </View>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${featured.progressPct}%` }]} />
+            </View>
+            <Text style={styles.progressLabel}>{t('home.progressDone', { pct: featured.progressPct })}</Text>
+            <View style={styles.cta}>
+              <View style={styles.ctaText}>
+                <Text style={styles.ctaLabel}>
+                  {featured.progressPct > 0 ? t('home.continueLearning') : t('home.startLearning')}
+                </Text>
+              </View>
+              <PlayCircle />
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {isStudent && otherEnrolled.length > 0 && (
+          <View style={styles.section}>
+            <SectionHeader title={t('home.enrolledCourses')} onSeeAll={() => navigation.navigate('CoursesList')} />
+            <View style={styles.list}>
+              {otherEnrolled.map((course) => (
+                <RowCard
+                  key={course.id}
+                  title={course.title || course.name || ""}
+                  subtitle={t('home.progressDone', { pct: course.progressPct })}
+                  imageUrl={getFullImageUrl(course.previewImageUrl)}
+                  icon="book-outline"
+                  trailing={<PlayCircle size={36} />}
+                  onPress={() => openCourse(course.id)}
+                />
+              ))}
+            </View>
+          </View>
+        )}
+
+        {isStudent && honorTop3.length > 0 && (
+          <View style={[styles.list, styles.section]}>
+            <RowCard
+              title={t('honorBoard.title')}
+              subtitle={honorTop3[0].studentName}
+              icon="trophy-outline"
+              onPress={() => navigation.navigate('HonorBoard')}
+              trailing={
+                <View style={styles.honorAvatars}>
+                  {honorTop3.map((s) => {
+                    const image = getFullImageUrl(s.studentProfileImage);
+                    return (
+                      <View key={s.id} style={styles.honorAvatar}>
+                        {image ? (
+                          <Image source={{ uri: image }} style={styles.fill} />
+                        ) : (
+                          <Text style={styles.honorInitial}>{(s.studentName || '').trim().charAt(0).toUpperCase()}</Text>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              }
+            />
+          </View>
+        )}
+
         {coursesError ? (
-          <Text style={[styles.errorText, { color: theme.colors.danger }]}>{coursesError}</Text>
+          <Text style={[styles.message, { color: theme.colors.danger }]}>{coursesError}</Text>
         ) : courses.length > 0 ? (
-          <View style={styles.sectionSpacing}>
+          <View style={styles.section}>
             <SectionHeader
               title={isTeacherOrAdmin ? t('home.recentCourses') : t('home.popularCourses')}
               onSeeAll={() => navigation.navigate('CoursesList')}
             />
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.courseScrollContent}
-            >
-              {courses.slice(0, 6).map((course, idx) => {
-                const palette = ACCENT_COLORS[idx % ACCENT_COLORS.length];
-                const imageUrl = getFullImageUrl(course.previewImageUrl);
-                return (
-                  <TouchableOpacity
-                    key={course.id}
-                    style={styles.courseCard}
-                    activeOpacity={0.85}
-                    onPress={() => {
-                      navigation.navigate('CourseDetail', { courseId: course.id });
-                    }}
-                  >
-                    <View style={[styles.courseImageWrapper, { backgroundColor: accentBg(palette) }]}>
-                      {imageUrl ? (
-                        <Image
-                          source={{ uri: imageUrl }}
-                          style={styles.courseImage}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <Ionicons name="book" size={36} color={palette.accent} />
-                      )}
-                      {/* Badge */}
-                      {(course.isFree || course.price === 0) ? (
-                        <View style={[styles.courseImageOverlay]}>
-                          <View style={styles.courseBadge}>
-                            <Text style={styles.courseBadgeText}>{t('courses.free')}</Text>
-                          </View>
-                        </View>
-                      ) : course.price != null ? (
-                        <View style={[styles.courseImageOverlay]}>
-                          <View style={styles.courseBadge}>
-                            <Text style={styles.courseBadgeText}>
-                              {formatPrice(effectivePrice(course.price, course.discountPrice), course.currencyCode, locale)}
-                            </Text>
-                          </View>
-                        </View>
-                      ) : null}
-                    </View>
-                    <View style={styles.courseInfo}>
-                      <Text style={styles.courseTitle} numberOfLines={2}>
-                        {course.title || course.name}
-                      </Text>
-                      {course.instructorName ? (
-                        <Text style={styles.courseInstructor} numberOfLines={1}>
-                          {course.instructorName}
-                        </Text>
-                      ) : null}
-                      <View style={styles.courseMetaRow}>
-                        {course.totalLessons != null && (
-                          <View style={styles.courseMeta}>
-                            <Ionicons name="play-circle-outline" size={13} color={theme.colors.textMuted} />
-                            <Text style={styles.courseMetaText}>
-                              {course.totalLessons} {t('courses.lessons')}
-                            </Text>
-                          </View>
-                        )}
-                        {course.totalHours != null && (
-                          <View style={styles.courseMeta}>
-                            <Ionicons name="time-outline" size={13} color={theme.colors.textMuted} />
-                            <Text style={styles.courseMetaText}>{course.totalHours}h</Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+            <View style={styles.courseRow}>
+              {courses.slice(0, 2).map((course) => (
+                <MediaCard
+                  key={course.id}
+                  style={styles.courseCell}
+                  title={course.title || course.name || ""}
+                  meta={format.courseMeta(course)}
+                  badge={coursePrice(course)}
+                  imageUrl={getFullImageUrl(course.previewImageUrl)}
+                  onPress={() => openCourse(course.id)}
+                />
+              ))}
+            </View>
           </View>
         ) : null}
 
-        {/* ────────────── UPCOMING EVENTS ────────────── */}
         {events.length > 0 && (
-          <View style={styles.sectionSpacing}>
+          <View style={styles.section}>
             <SectionHeader title={t('home.upcomingEvents')} />
-            {events.map((event) => {
-              const date = new Date(event.startDate);
-              return (
-                <TouchableOpacity
+            <View style={styles.list}>
+              {events.map((event) => (
+                <RowCard
                   key={event.id}
-                  style={styles.eventCard}
-                  activeOpacity={0.85}
-                  onPress={() => {
-                    navigation.navigate('EventDetail', { eventId: event.id });
-                  }}
-                >
-                  <View style={styles.eventDateBox}>
-                    <Text style={styles.eventDay}>{date.getDate()}</Text>
-                    <Text style={styles.eventMonth}>
-                      {date.toLocaleString('en', { month: 'short' })}
-                    </Text>
-                  </View>
-                  <View style={styles.eventInfo}>
-                    <Text style={styles.eventTitle} numberOfLines={1}>
-                      {event.title}
-                    </Text>
-                    <Text style={styles.eventTime}>
-                      {date.toLocaleTimeString('en', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name={isRTL ? 'chevron-back' : 'chevron-forward'}
-                    size={18}
-                    color={theme.colors.textMuted}
-                  />
-                </TouchableOpacity>
-              );
-            })}
+                  title={event.title}
+                  titleLines={1}
+                  subtitle={format.time(event.startDate)}
+                  onPress={() => navigation.navigate('EventDetail', { eventId: event.id })}
+                  leading={
+                    <View style={styles.tile}>
+                      <Text style={styles.dateDay}>{new Date(event.startDate).getDate()}</Text>
+                      <Text style={styles.dateMonth}>{format.month(event.startDate)}</Text>
+                    </View>
+                  }
+                />
+              ))}
+            </View>
           </View>
         )}
 
-        {/* ────────────── LATEST NEWS ────────────── */}
-        <View style={[styles.sectionSpacing, { marginTop: spacing['2xl'] }]}>
+        <View style={styles.section}>
           <SectionHeader title={t('home.latestNews')} />
           {newsError ? (
-            <Text style={[styles.errorText, { color: theme.colors.danger }]}>{newsError}</Text>
+            <Text style={[styles.message, { color: theme.colors.danger }]}>{newsError}</Text>
           ) : news.length > 0 ? (
-
-            news.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.newsCard}
-                activeOpacity={0.85}
-                onPress={() => { navigation.navigate('NewsDetail', { newsId: item.id, newsItem: item }); }}
-              >
-                <View style={styles.newsImageContainer}>
-                  {getFullImageUrl(item.imageUrl || item.imageURl) ? (
-                    <Image
-                      source={{ uri: getFullImageUrl(item.imageUrl || item.imageURl)! }}
-                      style={styles.newsImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.newsImagePlaceholder}>
-                      <Ionicons name="newspaper-outline" size={28} color={ACCENT_COLORS[0].accent} />
-                    </View>
-                  )}
-                </View>
-                <View style={styles.newsContent}>
-                  <Text style={styles.newsTitle} numberOfLines={2}>
-                    {item.title}
-                  </Text>
-                  {item.subTitle ? (
-                    <Text style={styles.newsSubtitle} numberOfLines={1}>
-                      {item.subTitle}
-                    </Text>
-                  ) : null}
-                  <Text style={styles.newsDate}>
-                    {item.createdAt
-                      ? new Date(item.createdAt).toLocaleDateString('en', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })
-                      : 'N/A'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))
+            <View style={styles.list}>
+              {news.map((item) => (
+                <RowCard
+                  key={item.id}
+                  title={item.title}
+                  subtitle={item.subTitle}
+                  meta={item.createdAt ? format.date(item.createdAt) : null}
+                  imageUrl={getFullImageUrl(item.imageUrl || item.imageURl)}
+                  icon="newspaper-outline"
+                  onPress={() => navigation.navigate('NewsDetail', { newsId: item.id, newsItem: item })}
+                />
+              ))}
+            </View>
           ) : (
-            <Text style={styles.emptyText}>{t('home.noNewsAvailable')}</Text>
+            <Text style={[styles.message, { color: theme.colors.textMuted }]}>{t('home.noNewsAvailable')}</Text>
           )}
         </View>
       </ScrollView>
-    </GradientBackground>
+      <View style={styles.statusMask} />
+    </View>
   );
 }

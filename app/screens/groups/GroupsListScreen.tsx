@@ -102,7 +102,7 @@ export default function GroupsListScreen({ navigation }: Props) {
           {item.studentsCount != null && (
             <View style={styles.statItem}>
               <Ionicons name="school-outline" size={12} color={theme.colors.textMuted} />
-              <Text style={styles.groupMembers}>{item.studentsCount} {t('groups.students')}</Text>
+              <Text style={styles.groupMembers}>{t('home.studentsCount', { count: item.studentsCount })}</Text>
             </View>
           )}
           {item.nextDueDate ? (
@@ -130,8 +130,6 @@ export default function GroupsListScreen({ navigation }: Props) {
       padding: spacing.lg,
       backgroundColor: theme.colors.card,
       borderRadius: borderRadius.xl,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
     },
     groupIcon: {
       width: 48,

@@ -15,11 +15,6 @@ import { getAppVersion } from '../../utils/version';
 import { spacing } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 
-function useTint() {
-  const { theme } = useTheme();
-  return (lightBg: string, color: string) => (theme.dark ? color + '26' : lightBg);
-}
-
 function Chip({
   value,
   label,
@@ -38,8 +33,7 @@ function Chip({
       style={[
         styles.chip,
         {
-          backgroundColor: isActive ? theme.colors.primary : theme.colors.card,
-          borderColor: isActive ? theme.colors.primary : theme.colors.border,
+          backgroundColor: isActive ? theme.colors.text : theme.colors.background,
         },
       ]}
       onPress={() => onPress(value)}
@@ -47,7 +41,7 @@ function Chip({
       accessibilityRole="button"
       accessibilityState={{ selected: isActive }}
     >
-      <Text style={[styles.chipText, { color: isActive ? '#fff' : theme.colors.text }]}>{label}</Text>
+      <Text style={[styles.chipText, { color: isActive ? theme.colors.background : theme.colors.text }]}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -156,7 +150,6 @@ function AppearanceSection() {
 function LanguageSection() {
   const { theme } = useTheme();
   const { locale, setLocale, t, isRTL } = useRTL();
-  const tint = useTint();
 
   const handleLanguageChange = async (langCode: string) => {
     if (langCode === locale) return;
@@ -171,8 +164,8 @@ function LanguageSection() {
     <SettingsSection title={t('settings.language')}>
       <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
         <View style={styles.cardRow}>
-          <View style={[styles.settingIcon, { backgroundColor: tint('#E8F4FD', '#3B82F6') }]}>
-            <Ionicons name="globe" size={20} color="#3B82F6" />
+          <View style={[styles.settingIcon, { backgroundColor: theme.colors.primaryLight }]}>
+            <Ionicons name="globe" size={20} color={theme.colors.primary} />
           </View>
           <View style={styles.settingInfo}>
             <Text style={[styles.settingLabel, { color: theme.colors.text }]}>{t('settings.selectLanguage')}</Text>
@@ -202,7 +195,7 @@ const PERMISSION_DESCRIPTION: Record<PushPermission, string> = {
 
 function NotificationsSection() {
   const { t } = useRTL();
-  const tint = useTint();
+  const { theme } = useTheme();
   const [permission, setPermission] = useState<PushPermission | null>(null);
   const previous = useRef<PushPermission | null>(null);
 
@@ -236,8 +229,8 @@ function NotificationsSection() {
     <SettingsSection title={t('settings.notifications')}>
       <SettingsRow
         icon="notifications"
-        iconBg={tint('#FFF4E5', '#F5A623')}
-        iconColor="#F5A623"
+        iconBg={theme.colors.primaryLight}
+        iconColor={theme.colors.primary}
         label={t('settings.pushNotifications')}
         description={permission ? t(PERMISSION_DESCRIPTION[permission]) : undefined}
         onPress={permission ? handlePress : undefined}
@@ -248,13 +241,13 @@ function NotificationsSection() {
 
 function AboutSection() {
   const { t } = useRTL();
-  const tint = useTint();
+  const { theme } = useTheme();
   return (
     <SettingsSection title={t('settings.about')}>
       <SettingsRow
         icon="information-circle"
-        iconBg={tint('#E8F8F0', '#34C38F')}
-        iconColor="#34C38F"
+        iconBg={theme.colors.primaryLight}
+        iconColor={theme.colors.primary}
         label={t('settings.version')}
         value={getAppVersion()}
       />
@@ -285,6 +278,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: spacing.sm,
     marginStart: spacing.xs,
+    textAlign: 'left',
   },
   card: {
     borderRadius: 20,
@@ -309,11 +303,13 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: fontSize.base,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   settingDesc: {
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_400Regular',
     marginTop: 2,
+    textAlign: 'left',
   },
   chipRow: {
     flexDirection: 'row',
@@ -322,18 +318,19 @@ const styles = StyleSheet.create({
   chip: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 14,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
   },
   chipText: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   versionText: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   logoutBtn: {
     borderRadius: 20,

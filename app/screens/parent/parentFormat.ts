@@ -2,7 +2,7 @@ import type { ThemeColors } from '../../theme/themes';
 import { parseServerDate } from '../../utils/date';
 import { ATTENDANCE_STATUS, type AttendanceCounts, type AttendanceStatus } from '../../services/api/sessions.api';
 
-const localeTag = (locale: string): string => (locale === 'ar' ? 'ar-EG' : 'en-GB');
+const localeTag = (locale: string): string => (locale === 'ar' ? 'ar-EG-u-ca-gregory-nu-latn' : 'en-GB');
 
 export const COUNT_KEYS: { status: AttendanceStatus; key: keyof AttendanceCounts }[] = [
   { status: ATTENDANCE_STATUS.Present, key: 'present' },

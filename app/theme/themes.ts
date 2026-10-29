@@ -1,10 +1,12 @@
 import { colors } from './colors';
-import { isValidHexColor, lighten, darken, ensureContrastOn } from '../utils/color';
+import { isValidHexColor, lighten, darken, ensureContrastOn, contrastRatio } from '../utils/color';
 
 export interface ThemeColors {
   primary: string;
   primaryLight: string;
   primaryDark: string;
+  onPrimary: string;
+  heroBackground: string;
   background: string;
   backgroundGradientFrom: string;
   backgroundGradientTo: string;
@@ -54,6 +56,7 @@ export function buildTheme(dark: boolean, accentColor?: string | null): Theme {
   // mid-grey and reads as a solid button.
   const primaryLight = dark ? darken(primary, 55) : lighten(primary, 88);
   const primaryDark = dark ? lighten(primary, 25) : darken(primary, 15);
+  const onPrimary = contrastRatio('#FFFFFF', primary) >= 3 ? '#FFFFFF' : '#18181B';
 
   if (dark) {
     return {
@@ -62,6 +65,8 @@ export function buildTheme(dark: boolean, accentColor?: string | null): Theme {
         primary,
         primaryLight,
         primaryDark,
+        onPrimary,
+        heroBackground: colors.secondary[800],
 
         background: colors.secondary[900],
         backgroundGradientFrom: colors.secondary[800],
@@ -108,6 +113,8 @@ export function buildTheme(dark: boolean, accentColor?: string | null): Theme {
       primary,
       primaryLight,
       primaryDark,
+      onPrimary,
+      heroBackground: primary,
 
       // Cards are white, so the page behind them can't also be pure white or
       // every card loses its edges (nothing here carries a shadow).

@@ -25,6 +25,7 @@ import { reservationsApi } from '../../services/api/reservations.api';
 import { REQUEST_ONLY } from '../../config/storePolicy';
 import type { HomeStackParamList } from '../../types/navigation.types';
 
+import { BackButton } from '../../components/ui/BackButton';
 type Props = NativeStackScreenProps<HomeStackParamList, 'EnrollStudent'>;
 
 export default function EnrollStudentScreen({ navigation, route }: Props) {
@@ -98,9 +99,7 @@ export default function EnrollStudentScreen({ navigation, route }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm, borderBottomColor: theme.colors.divider }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={22} color={theme.colors.text} />
-        </TouchableOpacity>
+        <BackButton onPress={() => navigation.goBack()} />
         <View style={{ flex: 1 }}>
           <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>
             {t('enrollStudent.title')}
@@ -195,7 +194,7 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 22, height: 32, justifyContent: 'center', alignItems: 'flex-start' },
   headerTitle: { ...typography.headerTitle },
-  headerSubtitle: { fontSize: fontSize.xs, fontFamily: 'Cairo_400Regular' },
+  headerSubtitle: { fontSize: fontSize.xs, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
 
   studentRow: {
     flexDirection: 'row',
@@ -212,13 +211,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold' },
-  studentName: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
-  studentEmail: { fontSize: 12, fontFamily: 'Cairo_400Regular', marginTop: 2 },
+  avatarText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  studentName: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  studentEmail: { fontSize: 14, fontFamily: 'Cairo_400Regular', marginTop: 2, textAlign: 'left' },
   enrollPill: {
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: borderRadius.full,
   },
-  enrollPillText: { fontSize: 12, fontFamily: 'Cairo_700Bold' },
+  enrollPillText: { fontSize: 14, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
 });

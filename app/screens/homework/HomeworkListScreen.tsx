@@ -28,6 +28,7 @@ import {
   type HomeworkListItem,
 } from '../../types/homework.types';
 
+import { BackButton } from '../../components/ui/BackButton';
 type Props = NativeStackScreenProps<HomeworkStackParamList, 'HomeworkList'>;
 
 const PAGE_SIZE = 20;
@@ -201,13 +202,7 @@ export default function HomeworkListScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: theme.colors.card }]}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
-        >
-          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={20} color={theme.colors.text} />
-        </TouchableOpacity>
+        <BackButton onPress={() => navigation.goBack()} />
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{t('homework.title')}</Text>
       </View>
 
@@ -289,6 +284,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   metaRow: {
     flexDirection: 'row',
@@ -297,10 +293,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   metaText: {
-    fontSize: 10,
+    fontSize: 14,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
   metaDot: {
-    fontSize: 10,
+    fontSize: 14,
+    textAlign: 'left',
   },
 });

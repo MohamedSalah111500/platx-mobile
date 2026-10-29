@@ -20,6 +20,7 @@ import { typography } from '../../theme/typography';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import type { HomeStackParamList } from '../../types/navigation.types';
 
+import { appDateLocale } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<HomeStackParamList, 'NewsDetail'>;
 
 export default function NewsDetailScreen({ navigation, route }: Props) {
@@ -31,7 +32,7 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     try {
-      return new Date(dateStr).toLocaleDateString('en', {
+      return new Date(dateStr).toLocaleDateString(appDateLocale(), {
         year: 'numeric',
         month: 'long',
         day: 'numeric',

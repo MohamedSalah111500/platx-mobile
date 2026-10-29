@@ -25,6 +25,8 @@ import type { ChatStackParamList } from '../../types/navigation.types';
 import type { ChatMessage } from '../../types/chat.types';
 import { isOwnMessage as checkIsOwnMessage } from './isOwnMessage';
 
+import { BackButton } from '../../components/ui/BackButton';
+import { appDateLocale } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<ChatStackParamList, 'ChatRoom'>;
 
 const AVATAR_COLORS = [
@@ -126,7 +128,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
   const formatTime = (dateStr?: string) => {
     if (!dateStr) return '';
     try {
-      return new Date(dateStr).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' });
+      return new Date(dateStr).toLocaleTimeString(appDateLocale(), { hour: '2-digit', minute: '2-digit' });
     } catch {
       return '';
     }
@@ -140,7 +142,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
       const oneDay = 86400000;
       if (diff < oneDay && now.getDate() === d.getDate()) return t('chat.today');
       if (diff < 2 * oneDay && now.getDate() - d.getDate() === 1) return t('chat.yesterday');
-      return d.toLocaleDateString('en', { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+      return d.toLocaleDateString(appDateLocale(), { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
     } catch {
       return '';
     }
@@ -222,13 +224,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: theme.colors.divider }]}>
-        <TouchableOpacity
-          style={[styles.backBtn, { backgroundColor: theme.colors.surface }]}
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color={theme.colors.text} />
-        </TouchableOpacity>
+        <BackButton onPress={() => navigation.goBack()} />
         <View style={[styles.headerAvatar, { backgroundColor: theme.colors.primaryLight }]}>
           {isStaffChat ? (
             <Text style={[styles.headerAvatarText, { color: theme.colors.primary }]}>{headerInitial}</Text>
@@ -246,7 +242,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
               : isSubGroupChat
                 ? t('groups.subGroups')
                 : membersCount != null
-                  ? `${membersCount} ${t('chat.members')}`
+                  ? t('home.membersCount', { count: membersCount })
                   : t('chat.groupChat')}
           </Text>
         </View>
@@ -340,10 +336,11 @@ const styles = StyleSheet.create({
   headerAvatarText: {
     fontSize: 17,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   headerInfo: { flex: 1, gap: 1 },
   headerName: { ...typography.body, fontFamily: 'Cairo_700Bold' },
-  headerSub: { fontSize: fontSize.xs },
+  headerSub: { fontSize: fontSize.xs, textAlign: 'left' },
   // Messages
   messagesList: { flex: 1 },
   dateSeparator: {
@@ -358,7 +355,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 10,
   },
-  dateText: { fontSize: fontSize.xs, fontFamily: 'Cairo_600SemiBold' },
+  dateText: { fontSize: fontSize.xs, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
   // Message rows
   msgRow: {
     flexDirection: 'row',
@@ -375,7 +372,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginEnd: spacing.xs,
   },
-  msgAvatarText: { fontSize: 12, fontFamily: 'Cairo_700Bold' },
+  msgAvatarText: { fontSize: 14, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   msgContent: { maxWidth: '78%' },
   msgContentOwn: { alignItems: 'flex-end' },
   msgContentOther: { alignItems: 'flex-start' },
@@ -384,6 +381,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_700Bold',
     marginBottom: 2,
     marginStart: 4,
+    textAlign: 'left',
   },
   bubble: {
     paddingHorizontal: spacing.md,
@@ -401,10 +399,11 @@ const styles = StyleSheet.create({
   },
   bubbleTextOwn: { color: '#fff' },
   timeInBubble: {
-    fontSize: 10,
+    fontSize: 14,
     fontFamily: 'Cairo_500Medium',
     marginTop: 4,
     alignSelf: 'flex-end',
+    textAlign: 'left',
   },
   timeOwn: { color: 'rgba(255,255,255,0.7)' },
   // Input bar

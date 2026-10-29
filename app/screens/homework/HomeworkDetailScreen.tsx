@@ -35,6 +35,7 @@ import {
   type StudentHomework,
 } from '../../types/homework.types';
 
+import { appDateLocale } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<HomeworkStackParamList, 'HomeworkDetail'>;
 
 const stripHtml = (s?: string | null) => (s || '').replace(/<[^>]*>/g, '');
@@ -196,7 +197,7 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
   const dueLabel = useMemo(() => {
     if (!hw || hw.isAlwaysOpen || !hw.dueDate) return null;
     try {
-      return new Date(hw.dueDate).toLocaleDateString();
+      return new Date(hw.dueDate).toLocaleDateString(appDateLocale());
     } catch {
       return null;
     }
@@ -391,7 +392,7 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
         {!readOnly && (
           <View style={styles.actions}>
             <TouchableOpacity
-              style={[styles.draftBtn, { borderColor: theme.colors.border }, (saving || uploading) && { opacity: 0.6 }]}
+              style={[styles.draftBtn, { backgroundColor: theme.dark ? theme.colors.border : theme.colors.card }, (saving || uploading) && { opacity: 0.6 }]}
               onPress={() => save(true)}
               disabled={saving || uploading}
               activeOpacity={0.7}
@@ -628,8 +629,8 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: 12,
   },
-  bannerTitle: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold' },
-  bannerText: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold' },
+  bannerTitle: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  bannerText: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   metaRow: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
   metaChip: {
     flexDirection: 'row',
@@ -639,13 +640,14 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 10,
   },
-  metaChipText: { fontSize: 11, fontFamily: 'Cairo_600SemiBold' },
+  metaChipText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
   card: { borderRadius: 16, padding: spacing.lg, gap: spacing.sm },
   sectionLabel: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_700Bold',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    textAlign: 'left',
   },
   instructions: { ...typography.body },
   audioBtn: {
@@ -657,7 +659,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 4,
   },
-  audioBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
+  audioBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
   qHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -665,9 +667,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   qNum: { width: 30, height: 30, borderRadius: 9, justifyContent: 'center', alignItems: 'center' },
-  qNumText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold' },
-  qScore: { fontSize: 11, fontFamily: 'Cairo_600SemiBold' },
-  qBody: { fontSize: fontSize.base, fontFamily: 'Cairo_500Medium', lineHeight: 24 },
+  qNumText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  qScore: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  qBody: { fontSize: fontSize.base, fontFamily: 'Cairo_500Medium', lineHeight: 24, textAlign: 'left' },
   qImage: { width: '100%', height: 180, borderRadius: 12 },
   essayInput: {
     minHeight: 100,
@@ -707,11 +709,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  answerText: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', lineHeight: 22 },
+  answerText: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', lineHeight: 22, textAlign: 'left' },
   answerBody: { flex: 1 },
-  answerState: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', marginTop: 2 },
+  answerState: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', marginTop: 2, textAlign: 'left' },
   scoreChip: { paddingHorizontal: 10, paddingVertical: 2, borderRadius: 10 },
-  scoreChipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold' },
+  scoreChipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   fileRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -721,8 +723,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
   },
-  fileName: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium' },
-  emptyFiles: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium' },
+  fileName: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
+  emptyFiles: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
   uploadBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -734,7 +736,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginTop: 4,
   },
-  uploadBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
+  uploadBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   draftBtn: {
     flex: 1,
@@ -742,11 +744,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    borderWidth: 1.5,
-    borderRadius: 14,
+    borderRadius: 999,
     paddingVertical: 12,
   },
-  draftBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
+  draftBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
   submitBtn: {
     flex: 1.4,
     flexDirection: 'row',

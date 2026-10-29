@@ -197,14 +197,14 @@ export default function WalletScreen({ navigation }: Props) {
             {redeeming ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.primaryText}>{t('wallet.topUp')}</Text>}
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.scanButton, { borderColor: theme.colors.primary }]}
+            style={[styles.scanButton, { backgroundColor: theme.dark ? theme.colors.border : theme.colors.background }]}
             onPress={() => setScanning(true)}
             disabled={redeeming}
             accessibilityRole="button"
             accessibilityLabel={t('wallet.scan')}
           >
-            <Ionicons name="scan" size={20} color={theme.colors.primary} />
-            <Text style={[styles.scanText, { color: theme.colors.primary }]}>{t('wallet.scan')}</Text>
+            <Ionicons name="scan" size={20} color={theme.colors.text} />
+            <Text style={[styles.scanText, { color: theme.colors.text }]}>{t('wallet.scan')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -249,7 +249,7 @@ export default function WalletScreen({ navigation }: Props) {
                       </Text>
                     )}
                     <Text style={[styles.rowDetails, { color: theme.colors.textMuted }]}>
-                      {new Date(item.createdAt).toLocaleString(locale === 'ar' ? 'ar-EG' : 'en-GB')}
+                      {new Date(item.createdAt).toLocaleString(locale === 'ar' ? 'ar-EG-u-ca-gregory-nu-latn' : 'en-GB')}
                     </Text>
                   </View>
                   <Text style={[styles.rowAmount, { color }]}>
@@ -293,6 +293,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontFamily: 'Cairo_700Bold',
     color: '#FFFFFF',
+    textAlign: 'left',
   },
   card: {
     borderRadius: 20,
@@ -337,8 +338,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    borderWidth: 1.5,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.full,
     paddingHorizontal: spacing.lg,
   },
   scanText: {
@@ -351,6 +351,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: spacing.sm,
     marginStart: spacing.xs,
+    textAlign: 'left',
   },
   errorCard: {
     flexDirection: 'row',

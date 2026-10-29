@@ -12,6 +12,7 @@
     "noResults": "لا توجد نتائج",
     "retry": "إعادة المحاولة",
     "back": "رجوع",
+    "share": "مشاركة",
     "next": "التالي",
     "done": "تم",
     "close": "إغلاق",
@@ -29,7 +30,8 @@
     "justNow": "الآن",
     "minutesAgo": "منذ {{count}} دقيقة",
     "hoursAgo": "منذ {{count}} ساعة",
-    "daysAgo": "منذ {{count}} يوم"
+    "daysAgo": "منذ {{count}} يوم",
+    "and": " و"
   },
   "tabs": {
     "home": "الرئيسية",
@@ -291,7 +293,42 @@
     "live": "مباشر",
     "alerts": "التنبيهات",
     "startLearning": "ابدأ التعلم",
-    "enrolledCourses": "الدورات المسجلة"
+    "enrolledCourses": "الدورات المسجلة",
+    "viewCourse": "عرض الدورة",
+    "headline": "لنتعلّم شيئًا جديدًا اليوم!",
+    "continueLearning": "أكمل التعلّم",
+    "progressDone": "أنجزت ⁦{{pct}}%⁩",
+    "clearSearch": "مسح البحث",
+    "lessonsCount_0": "لا توجد دروس",
+    "lessonsCount_1": "درس واحد",
+    "lessonsCount_2": "درسان",
+    "lessonsCount_3": "{{count}} دروس",
+    "lessonsCount_4": "{{count}} درسًا",
+    "lessonsCount_5": "{{count}} درس",
+    "hoursCount_0": "أقل من ساعة",
+    "hoursCount_1": "ساعة واحدة",
+    "hoursCount_2": "ساعتان",
+    "hoursCount_3": "{{count}} ساعات",
+    "hoursCount_4": "{{count}} ساعة",
+    "hoursCount_5": "{{count}} ساعة",
+    "studentsCount_0": "لا يوجد طلاب",
+    "studentsCount_1": "طالب واحد",
+    "studentsCount_2": "طالبان",
+    "studentsCount_3": "{{count}} طلاب",
+    "studentsCount_4": "{{count}} طالبًا",
+    "studentsCount_5": "{{count}} طالب",
+    "membersCount_0": "لا يوجد أعضاء",
+    "membersCount_1": "عضو واحد",
+    "membersCount_2": "عضوان",
+    "membersCount_3": "{{count}} أعضاء",
+    "membersCount_4": "{{count}} عضوًا",
+    "membersCount_5": "{{count}} عضو",
+    "minutesCount_0": "أقل من دقيقة",
+    "minutesCount_1": "دقيقة واحدة",
+    "minutesCount_2": "دقيقتان",
+    "minutesCount_3": "{{count}} دقائق",
+    "minutesCount_4": "{{count}} دقيقة",
+    "minutesCount_5": "{{count}} دقيقة"
   },
   "courses": {
     "title": "الدورات",
@@ -304,7 +341,7 @@
     "joinRequestPending": "طلب الانضمام قيد المراجعة",
     "lang": "اللغة",
     "total": "المدة",
-    "discountOff": "خصم {{pct}}%",
+    "discountOff": "خصم ⁦{{pct}}%⁩",
     "requestRejected": "تم رفض طلبك السابق، يمكنك إرسال طلب جديد.",
     "enrolled": "مسجل",
     "continue": "متابعة التعلم",
@@ -911,10 +948,7 @@
   "updateRequired": {
     "title": "يلزم تحديث التطبيق",
     "body": "هذا الإصدار لم يعد مدعومًا. حدّث التطبيق من المتجر للمتابعة والاستفادة من أحدث المميزات.",
-    "current": "إصدارك الحالي",
-    "latest": "أحدث إصدار",
     "update": "تحديث الآن",
-    "hint": "بعد التحديث افتح التطبيق مرة أخرى.",
     "storeFailed": "تعذّر فتح المتجر."
   },
   "profilePhoto": {
@@ -1149,5 +1183,14 @@
     "pending": "بانتظار التصحيح",
     "pendingHint": "ستظهر النتيجة بعد أن يصحح المعلم الامتحان.",
     "viewDetails": "عرض التفاصيل"
+  },
+  "languages": {
+    "arabic": "العربية",
+    "english": "الإنجليزية",
+    "french": "الفرنسية",
+    "german": "الألمانية",
+    "spanish": "الإسبانية",
+    "italian": "الإيطالية",
+    "turkish": "التركية"
   }
 }

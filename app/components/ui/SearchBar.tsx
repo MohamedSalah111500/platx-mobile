@@ -10,7 +10,6 @@ interface SearchBarProps {
   onChangeText: (text: string) => void;
   placeholder?: string;
   onSubmit?: () => void;
-  /** Border radius — defaults to 14 */
   radius?: number;
   style?: ViewStyle;
 }
@@ -20,24 +19,23 @@ export function SearchBar({
   onChangeText,
   placeholder,
   onSubmit,
-  radius = 14,
+  radius = 999,
   style,
 }: SearchBarProps) {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
 
   return (
     <View
       style={[
         styles.container,
         {
-          backgroundColor: isDark ? theme.colors.surface : theme.colors.card,
+          backgroundColor: theme.colors.card,
           borderRadius: radius,
-          borderColor: isDark ? theme.colors.border : theme.colors.divider,
         },
         style,
       ]}
     >
-      <Ionicons name="search" size={18} color={theme.colors.textMuted} />
+      <Ionicons name="search" size={20} color={theme.colors.textMuted} />
       <TextInput
         style={[styles.input, { color: theme.colors.text }]}
         value={value}
@@ -61,16 +59,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    height: 44,
-    borderWidth: 1,
+    height: 48,
   },
   input: {
     flex: 1,
     marginStart: spacing.sm,
     paddingVertical: 0,
-    // No lineHeight: bodySmall's 21 is too tight for 16px Cairo inside a single-line input.
     fontFamily: typography.bodySmall.fontFamily,
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
+    textAlign: 'left',
   },
 });
 

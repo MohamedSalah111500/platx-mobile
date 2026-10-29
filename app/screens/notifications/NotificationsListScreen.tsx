@@ -21,6 +21,8 @@ import { typography } from '../../theme/typography';
 import { parseServerDate } from '../../utils/date';
 
 
+import { BackButton } from '../../components/ui/BackButton';
+import { appDateLocale } from '../../utils/dateLocale';
 export default function NotificationsListScreen() {
   const { theme, isDark } = useTheme();
   const { user, role, isStudent } = useAuth();
@@ -131,9 +133,7 @@ export default function NotificationsListScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7} hitSlop={8}>
-            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color={theme.colors.text} />
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} />
           <Text style={styles.headerTitle}>{t('notifications.title')}</Text>
           {isStudent && unreadCount > 0 && (
             <View style={styles.badge}>
@@ -201,7 +201,7 @@ function getTimeAgo(
   if (hours < 24) return t('notifications.hoursAgo', { count: hours });
   const days = Math.floor(hours / 24);
   if (days < 7) return t('notifications.daysAgo', { count: days });
-  return date.toLocaleDateString();
+  return date.toLocaleDateString(appDateLocale());
 }
 
 function createStyles(theme: any, isDark: boolean) {
@@ -243,8 +243,9 @@ function createStyles(theme: any, isDark: boolean) {
     },
     badgeText: {
       color: '#fff',
-      fontSize: 12,
+      fontSize: 14,
       fontFamily: 'Cairo_700Bold',
+      textAlign: 'left',
     },
     markAll: {
       flexDirection: 'row',
@@ -256,9 +257,10 @@ function createStyles(theme: any, isDark: boolean) {
       backgroundColor: isDark ? theme.colors.primary + '26' : theme.colors.primaryLight,
     },
     markAllText: {
-      fontSize: 12,
+      fontSize: 14,
       fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.primary,
+      textAlign: 'left',
     },
     openRow: {
       flexDirection: 'row',
@@ -267,9 +269,10 @@ function createStyles(theme: any, isDark: boolean) {
       marginTop: 6,
     },
     openText: {
-      fontSize: 12,
+      fontSize: 14,
       fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.primary,
+      textAlign: 'left',
     },
     listContent: {
       paddingHorizontal: 16,
@@ -314,21 +317,25 @@ function createStyles(theme: any, isDark: boolean) {
       color: theme.colors.textSecondary,
       flex: 1,
       marginEnd: 8,
+      textAlign: 'left',
     },
     cardTitleUnread: {
       fontFamily: 'Cairo_700Bold',
       color: theme.colors.text,
+      textAlign: 'left',
     },
     cardBody: {
       fontSize: 14,
       lineHeight: 21,
       fontFamily: 'Cairo_400Regular',
       color: theme.colors.textMuted,
+      textAlign: 'left',
     },
     cardTime: {
-      fontSize: 12,
+      fontSize: 14,
       fontFamily: 'Cairo_400Regular',
       color: theme.colors.textMuted,
+      textAlign: 'left',
     },
     unreadDot: {
       width: 8,

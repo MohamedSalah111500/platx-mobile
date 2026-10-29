@@ -242,8 +242,8 @@ export default function ParentHomeScreen({ navigation }: Props) {
                 </View>
               </TouchableOpacity>
 
-              <View style={[styles.card, styles.pointsCard, { backgroundColor: theme.colors.primary }]}>
-                <Ionicons name="wallet" size={26} color="#FFFFFF" />
+              <View style={[styles.card, styles.pointsCard, { backgroundColor: theme.colors.primaryLight }]}>
+                <Ionicons name="wallet" size={26} color={theme.colors.primary} />
                 <Text style={styles.pointsLabel}>{t('parent.points')}</Text>
                 <Text style={styles.pointsValue}>
                   {`${formatAmount(summary.wallet.balance)} ${t('wallet.points')}`}
@@ -350,8 +350,9 @@ function createStyles(theme: Theme) {
     },
     unreadText: {
       color: '#FFFFFF',
-      fontSize: 11,
+      fontSize: 14,
       fontFamily: 'Cairo_700Bold',
+      textAlign: 'left',
     },
     emptyWrap: {
       flex: 1,
@@ -439,12 +440,12 @@ function createStyles(theme: Theme) {
     },
     pointsLabel: {
       ...typography.body,
-      color: '#FFFFFF',
+      color: theme.colors.textSecondary,
     },
     pointsValue: {
       ...typography.h3,
       fontFamily: 'Cairo_700Bold',
-      color: '#FFFFFF',
+      color: theme.colors.text,
     },
     examRow: {
       flexDirection: 'row',

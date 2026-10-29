@@ -1,7 +1,7 @@
 import type { ThemeColors } from '../../theme/themes';
 import { ATTENDANCE_STATUS, asUtcDate, type AttendanceStatus } from '../../services/api/sessions.api';
 
-const localeTag = (locale: string): string => (locale === 'ar' ? 'ar-EG' : 'en-GB');
+const localeTag = (locale: string): string => (locale === 'ar' ? 'ar-EG-u-ca-gregory-nu-latn' : 'en-GB');
 
 export function formatSessionDate(startsAt: string, locale: string): string {
   return new Date(startsAt).toLocaleString(localeTag(locale), {

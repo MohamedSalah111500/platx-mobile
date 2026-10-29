@@ -36,7 +36,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius['2xl'],
     padding: spacing.md,
     marginBottom: spacing.lg,
-    borderStartWidth: 3,
   },
   text: {
     ...typography.bodySmall,

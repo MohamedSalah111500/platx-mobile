@@ -154,6 +154,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
     marginBottom: spacing.sm,
+    textAlign: 'left',
   },
   inputContainer: {
     flexDirection: 'row',

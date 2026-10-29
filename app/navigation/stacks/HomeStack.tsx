@@ -16,13 +16,26 @@ import EnrollmentRequestsScreen from '../../screens/courses/EnrollmentRequestsSc
 import SendNotificationScreen from '../../screens/notifications/SendNotificationScreen';
 import CreateNewsScreen from '../../screens/news/CreateNewsScreen';
 import NotificationsListScreen from '../../screens/notifications/NotificationsListScreen';
+import GroupsScreen from '../../screens/groups/GroupsListScreen';
+import GroupDetailScreen from '../../screens/groups/GroupDetailScreen';
+import SubGroupDetailScreen from '../../screens/groups/SubGroupDetailScreen';
+import LiveSessionsScreen from '../../screens/live/LiveSessionsListScreen';
+import CreateLiveScreen from '../../screens/live/CreateLiveScreen';
+import HonorBoardScreen from '../../screens/profile/HonorBoardScreen';
+import ReportsListScreen from '../../screens/reports/ReportsListScreen';
+import AttendanceDetailScreen from '../../screens/reports/AttendanceDetailScreen';
+import ExamReportDetailScreen from '../../screens/reports/ExamReportDetailScreen';
+import MyExamsScreen from '../../screens/exams/MyExamsScreen';
+import ExamResultScreen from '../../screens/exams/ExamResultScreen';
+import { useStackContentStyle } from '../tabBar';
 import HomeworkStack from './HomeworkStack';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
 export default function HomeStack() {
+  const screenOptions = useStackContentStyle();
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={screenOptions}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="NewsDetail" component={NewsDetailScreen} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} />
@@ -38,6 +51,17 @@ export default function HomeStack() {
       <Stack.Screen name="SendNotification" component={SendNotificationScreen} />
       <Stack.Screen name="CreateNews" component={CreateNewsScreen} />
       <Stack.Screen name="Homework" component={HomeworkStack} />
+      <Stack.Screen name="Groups" component={GroupsScreen} />
+      <Stack.Screen name="GroupDetail" component={GroupDetailScreen} />
+      <Stack.Screen name="SubGroupDetail" component={SubGroupDetailScreen} />
+      <Stack.Screen name="LiveSessions" component={LiveSessionsScreen} />
+      <Stack.Screen name="CreateLive" component={CreateLiveScreen} />
+      <Stack.Screen name="HonorBoard" component={HonorBoardScreen} />
+      <Stack.Screen name="Reports" component={ReportsListScreen} />
+      <Stack.Screen name="AttendanceDetail" component={AttendanceDetailScreen} />
+      <Stack.Screen name="ExamReportDetail" component={ExamReportDetailScreen} />
+      <Stack.Screen name="MyExams" component={MyExamsScreen} />
+      <Stack.Screen name="ExamResult" component={ExamResultScreen} />
     </Stack.Navigator>
   );
 }

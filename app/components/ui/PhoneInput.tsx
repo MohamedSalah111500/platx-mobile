@@ -146,6 +146,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
     marginBottom: spacing.sm,
+    textAlign: 'left',
   },
   field: {
     flexDirection: 'row',
@@ -165,10 +166,12 @@ const styles = StyleSheet.create({
   },
   flag: {
     fontSize: 20,
+    textAlign: 'left',
   },
   callingCode: {
     fontSize: fontSize.base,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   input: {
     flex: 1,
@@ -215,6 +218,7 @@ const styles = StyleSheet.create({
     height: '100%',
     fontSize: fontSize.base,
     fontFamily: 'Cairo_400Regular',
+    textAlign: 'left',
   },
   option: {
     flexDirection: 'row',
@@ -228,10 +232,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.base,
     fontFamily: 'Cairo_400Regular',
+    textAlign: 'left',
   },
   optionCode: {
     fontSize: fontSize.base,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   empty: {
     ...typography.body,

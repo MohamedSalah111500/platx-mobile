@@ -13,6 +13,7 @@ import { spacing, borderRadius } from '@theme/spacing';
 import { typography } from '@theme/typography';
 
 const isIOS = Platform.OS === 'ios';
+const NO_BREAK_SPACE = ' ';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
 type ButtonSize = 'small' | 'medium' | 'large';
@@ -70,12 +71,8 @@ export function Button({
         shadowRadius: 8,
         elevation: 3,
       },
-      secondary: { backgroundColor: theme.colors.surface },
-      outline: {
-        backgroundColor: 'transparent',
-        borderWidth: 1.5,
-        borderColor: theme.colors.primary,
-      },
+      secondary: { backgroundColor: theme.dark ? theme.colors.border : theme.colors.background },
+      outline: { backgroundColor: theme.dark ? theme.colors.border : theme.colors.background },
       danger: { backgroundColor: theme.colors.danger },
       ghost: { backgroundColor: 'transparent' },
     };
@@ -93,15 +90,15 @@ export function Button({
     const sizeStyles: Record<ButtonSize, TextStyle> = {
       // Android needs lineHeight >= 1.4 x fontSize or Cairo clips; iOS centres the
       // label itself and sits it high when it is given one.
-      small: { ...typography.buttonSmall, fontSize: 13, lineHeight: isIOS ? undefined : 19 },
+      small: { ...typography.buttonSmall, fontSize: 14, lineHeight: isIOS ? undefined : 20 },
       medium: { ...typography.button, fontSize: 15, lineHeight: isIOS ? undefined : 21 },
       large: { ...typography.button, fontSize: 16, lineHeight: isIOS ? undefined : 23 },
     };
 
     const variantStyles: Record<ButtonVariant, TextStyle> = {
-      primary: { color: '#ffffff' },
+      primary: { color: theme.colors.onPrimary },
       secondary: { color: theme.colors.text },
-      outline: { color: theme.colors.primary },
+      outline: { color: theme.colors.text },
       danger: { color: '#ffffff' },
       ghost: { color: theme.colors.primary },
     };
@@ -124,11 +121,13 @@ export function Button({
       return (
         <ActivityIndicator
           color={
-            variant === 'outline' || variant === 'ghost'
+            variant === 'ghost'
               ? theme.colors.primary
-              : variant === 'secondary'
+              : variant === 'secondary' || variant === 'outline'
                 ? theme.colors.text
-                : '#ffffff'
+                : variant === 'primary'
+                  ? theme.colors.onPrimary
+                  : '#ffffff'
           }
         />
       );
@@ -137,8 +136,8 @@ export function Button({
     return (
       <>
         {icon && iconPosition === 'left' && icon}
-        <Text style={[getTextStyle(), textStyle]}>
-          {title}
+        <Text style={[getTextStyle(), textStyle]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+          {title.replace(/ /g, NO_BREAK_SPACE)}
         </Text>
         {icon && iconPosition === 'right' && icon}
       </>

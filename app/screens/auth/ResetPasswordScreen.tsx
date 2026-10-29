@@ -95,7 +95,6 @@ export default function ResetPasswordScreen({ navigation, route }: Props) {
       borderRadius: borderRadius.lg,
       padding: spacing.md,
       marginBottom: spacing.lg,
-      borderStartWidth: 3,
       borderStartColor: theme.colors.danger,
     },
     errorText: {

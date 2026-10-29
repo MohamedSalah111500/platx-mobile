@@ -18,6 +18,7 @@ import { PAYMENT_METHOD_INSTAPAY, PAYMENT_METHOD_VODAFONE, type PendingReservati
 import { REQUEST_ONLY } from '../../config/storePolicy';
 import type { HomeStackParamList } from '../../types/navigation.types';
 
+import { appDateLocale } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<HomeStackParamList, 'EnrollmentRequests'>;
 
 export default function EnrollmentRequestsScreen({ navigation, route }: Props) {
@@ -110,7 +111,7 @@ export default function EnrollmentRequestsScreen({ navigation, route }: Props) {
             <Text style={styles.name} numberOfLines={1}>{studentName(item)}</Text>
             {item.student?.email ? <Text style={styles.email} numberOfLines={1}>{item.student.email}</Text> : null}
           </View>
-          <Text style={styles.date}>{new Date(item.requestDate || item.creationTime || Date.now()).toLocaleDateString()}</Text>
+          <Text style={styles.date}>{new Date(item.requestDate || item.creationTime || Date.now()).toLocaleDateString(appDateLocale())}</Text>
         </View>
 
         {!courseId && (item.course?.name || item.course?.title) ? (
@@ -192,28 +193,26 @@ export default function EnrollmentRequestsScreen({ navigation, route }: Props) {
 function createStyles(theme: any) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
-    courseName: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', color: theme.colors.textSecondary },
+    courseName: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', color: theme.colors.textSecondary, textAlign: 'left' },
     list: { paddingHorizontal: spacing.lg, paddingTop: spacing.xs },
     card: {
       backgroundColor: theme.colors.card,
       borderRadius: borderRadius.xl,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
       padding: spacing.md,
       gap: spacing.sm,
     },
     cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: theme.colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
-    name: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', color: theme.colors.text },
-    email: { fontSize: fontSize.xs, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted },
-    date: { fontSize: fontSize.xs, fontFamily: 'Cairo_500Medium', color: theme.colors.textMuted },
+    name: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', color: theme.colors.text, textAlign: 'left' },
+    email: { fontSize: fontSize.xs, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'left' },
+    date: { fontSize: fontSize.xs, fontFamily: 'Cairo_500Medium', color: theme.colors.textMuted, textAlign: 'left' },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    metaText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', color: theme.colors.textSecondary },
+    metaText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', color: theme.colors.textSecondary, textAlign: 'left' },
     messageBox: { backgroundColor: theme.colors.surface, borderRadius: borderRadius.md, padding: spacing.sm },
-    messageText: { fontSize: fontSize.sm, lineHeight: 20, fontFamily: 'Cairo_400Regular', color: theme.colors.textSecondary },
+    messageText: { fontSize: fontSize.sm, lineHeight: 20, fontFamily: 'Cairo_400Regular', color: theme.colors.textSecondary, textAlign: 'left' },
     proof: { width: '100%', height: 160, borderRadius: borderRadius.lg, backgroundColor: theme.colors.surface },
     actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
     actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: spacing.sm + 2, borderRadius: borderRadius.full },
-    actionText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold' },
+    actionText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   });
 }

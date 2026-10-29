@@ -26,6 +26,7 @@ import { API_CONFIG } from '../../config';
 import type { ExamsStackParamList } from '../../types/navigation.types';
 import type { OnlineExam, StudentExamQuestion } from '../../types/exam.types';
 
+import { BackButton } from '../../components/ui/BackButton';
 type Props = NativeStackScreenProps<ExamsStackParamList, 'ExamTaking'>;
 
 export default function ExamTakingScreen({ navigation, route }: Props) {
@@ -323,12 +324,7 @@ export default function ExamTakingScreen({ navigation, route }: Props) {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header with timer */}
       <View style={[styles.examHeader, { backgroundColor: theme.colors.card }]}>
-        <TouchableOpacity
-          style={[styles.backBtn, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primary + '15' }]}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color={theme.colors.text} />
-        </TouchableOpacity>
+        <BackButton onPress={() => navigation.goBack()} />
         <View style={styles.examHeaderCenter}>
           <Text style={[styles.examHeaderTitle, { color: theme.colors.text }]} numberOfLines={1}>
             {exam.name}
@@ -540,8 +536,9 @@ const styles = StyleSheet.create({
     ...typography.headerTitle,
   },
   questionCount: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
   timerBadge: {
     flexDirection: 'row',
@@ -552,8 +549,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   timerText: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   // Scroll
   scrollView: { flex: 1 },
@@ -584,6 +582,7 @@ const styles = StyleSheet.create({
   questionNumText: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   questionTypeBadge: {
     flexDirection: 'row',
@@ -591,14 +590,16 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   questionTypeText: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
   questionBody: {
     fontSize: fontSize.base,
     fontFamily: 'Cairo_500Medium',
     lineHeight: 24,
     marginBottom: spacing.md,
+    textAlign: 'left',
   },
   questionImage: {
     width: '100%',
@@ -657,6 +658,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_500Medium',
     lineHeight: 22,
+    textAlign: 'left',
   },
   // Submit
   submitButton: {
@@ -692,6 +694,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontFamily: 'Cairo_700Bold',
     marginBottom: spacing.xl,
+    textAlign: 'left',
   },
   countdownRow: {
     flexDirection: 'row',
@@ -707,10 +710,12 @@ const styles = StyleSheet.create({
   countdownNum: {
     fontSize: 28,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   countdownUnit: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
   examInfoRow: {
     flexDirection: 'row',
@@ -721,5 +726,6 @@ const styles = StyleSheet.create({
   examInfoText: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
 });

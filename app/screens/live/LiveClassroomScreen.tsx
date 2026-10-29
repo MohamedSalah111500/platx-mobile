@@ -1276,7 +1276,7 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: DARK.danger,
     fontFamily: 'Cairo_700Bold',
-    fontSize: 11,
+    fontSize: 14,
   },
   topBarTitle: {
     ...typography.body,
@@ -1376,8 +1376,9 @@ const styles = StyleSheet.create({
   },
   unreadText: {
     color: '#fff',
-    fontSize: 10,
+    fontSize: 14,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
 
   // Chat Overlay
@@ -1429,6 +1430,7 @@ const styles = StyleSheet.create({
     color: DARK.text,
     paddingVertical: Platform.OS === 'ios' ? 10 : 8,
     fontSize: 14,
+    textAlign: 'left',
   },
   chatSendBtn: {
     width: 36,

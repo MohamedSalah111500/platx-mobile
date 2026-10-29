@@ -19,13 +19,15 @@ import HonorBoardScreen from '../../screens/profile/HonorBoardScreen';
 import HomeworkStack from './HomeworkStack';
 import ReportsListScreen from '../../screens/reports/ReportsListScreen';
 import AttendanceDetailScreen from '../../screens/reports/AttendanceDetailScreen';
+import { useStackContentStyle } from '../tabBar';
 import ExamReportDetailScreen from '../../screens/reports/ExamReportDetailScreen';
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
 
 export default function ProfileStack() {
+  const screenOptions = useStackContentStyle();
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={screenOptions}>
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />

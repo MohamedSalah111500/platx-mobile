@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, Platform, StyleSheet, Dimensions } from 'react-native';
+import { View, Pressable, StyleSheet, Dimensions } from 'react-native';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const isTablet = SCREEN_W >= 768;
@@ -9,8 +9,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../theme/ThemeProvider';
 import { useRTL } from '../i18n/RTLProvider';
-import { spacing, borderRadius } from '../theme/spacing';
+import { spacing } from '../theme/spacing';
 import type { MainTabParamList } from '../types/navigation.types';
+import { TAB_BAR_HEIGHT, HIDE_TAB_BAR_SCREENS } from './tabBar';
 
 // Import stacks
 import HomeStack from './stacks/HomeStack';
@@ -27,46 +28,11 @@ const TAB_ICONS: Record<string, [string, string]> = {
   ProfileTab: ['person', 'person-outline'],
 };
 
-// Screens where the tab bar should be hidden
-const HIDE_TAB_BAR_SCREENS = [
-  'ChatRoom',
-  'LessonPlayer',
-  'LiveClassroom',
-  'GroupDetail',
-  'SubGroupDetail',
-  'NewsDetail',
-  'EventDetail',
-  'NotificationDetail',
-  'HonorBoard',
-  'ExamTaking',
-  'ExamResult',
-  'MyExams',
-  'Homework',
-  'CreateLive',
-  'CourseDetail',
-  'NotificationsList',
-  'Reports',
-  'AttendanceDetail',
-  'MySessions',
-  'Sessions',
-  'SessionAttendance',
-  'ExamReportDetail',
-];
-
 function shouldHideTabBar(route: any): boolean {
   const routeName = getFocusedRouteNameFromRoute(route);
   return HIDE_TAB_BAR_SCREENS.includes(routeName as string);
 }
 
-// Height of the bar itself (safe-area inset is added on top).
-const TAB_BAR_HEIGHT = isTablet ? 76 : 68;
-
-/**
- * Custom bottom bar: a rounded surface docked to the bottom edge, no top rule,
- * neutral (non-brand) active state — icon sits in a soft pill and the label
- * switches to the primary text colour. Colours come from the theme tokens so
- * it follows light/dark and tenant themes without any hard-coded purple.
- */
 function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -74,22 +40,12 @@ function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const focusedRoute = state.routes[state.index];
   if (shouldHideTabBar(focusedRoute)) return null;
 
-  const bottomPad = Math.max(insets.bottom, Platform.OS === 'ios' ? 20 : spacing.sm);
-  const pillBg = theme.dark ? 'rgba(255,255,255,0.10)' : 'rgba(17,24,39,0.06)';
+  const bottomPad = Math.max(insets.bottom, spacing.md);
+  const barBg = theme.dark ? theme.colors.card : theme.colors.text;
 
   return (
-    <View style={{ backgroundColor: theme.colors.background }}>
-      <View
-        style={[
-          styles.bar,
-          {
-            backgroundColor: theme.colors.card,
-            height: TAB_BAR_HEIGHT + bottomPad,
-            paddingBottom: bottomPad,
-            shadowOpacity: theme.dark ? 0.35 : 0.08,
-          },
-        ]}
-      >
+    <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: bottomPad }]}>
+      <View style={[styles.bar, { backgroundColor: barBg, shadowOpacity: theme.dark ? 0.4 : 0.18 }]}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const label =
@@ -118,28 +74,13 @@ function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               style={({ pressed }) => [styles.item, pressed && { opacity: 0.7 }]}
               hitSlop={6}
             >
-              {/* key remounts the pill on focus change: Android (Fabric) keeps
-                  square corners when a background is added to a mounted view. */}
-              <View
-                key={focused ? 'pill-on' : 'pill-off'}
-                style={[styles.iconPill, focused && { backgroundColor: pillBg }]}
-              >
+              <View key={focused ? 'on' : 'off'} style={[styles.iconCircle, focused && styles.iconCircleActive]}>
                 <Ionicons
                   name={(focused ? activeIcon : inactiveIcon) as any}
-                  size={isTablet ? 24 : 22}
-                  color={focused ? theme.colors.text : theme.colors.textMuted}
+                  size={isTablet ? 26 : 24}
+                  color={focused ? '#18181B' : 'rgba(255,255,255,0.7)'}
                 />
               </View>
-              <Text
-                numberOfLines={1}
-                style={[
-                  styles.label,
-                  { color: focused ? theme.colors.text : theme.colors.textMuted },
-                  focused && styles.labelActive,
-                ]}
-              >
-                {label}
-              </Text>
             </Pressable>
           );
         })}
@@ -182,41 +123,40 @@ export default function MainTabNavigator() {
   );
 }
 
-export { TAB_BAR_HEIGHT };
 
 const styles = StyleSheet.create({
+  wrap: {
+    position: 'absolute',
+    start: 0,
+    end: 0,
+    bottom: 0,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+  },
   bar: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingTop: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    borderTopLeftRadius: borderRadius['2xl'],
-    borderTopRightRadius: borderRadius['2xl'],
+    alignItems: 'center',
+    height: TAB_BAR_HEIGHT,
+    borderRadius: TAB_BAR_HEIGHT / 2,
+    paddingHorizontal: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowRadius: 12,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 16,
+    elevation: 10,
   },
   item: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
-    paddingVertical: spacing.xs,
   },
-  iconPill: {
-    width: isTablet ? 60 : 52,
-    height: isTablet ? 36 : 32,
+  iconCircle: {
+    width: TAB_BAR_HEIGHT - 16,
+    height: TAB_BAR_HEIGHT - 16,
+    borderRadius: (TAB_BAR_HEIGHT - 16) / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: isTablet ? 18 : 16,
   },
-  label: {
-    fontSize: isTablet ? 12 : 11,
-    fontFamily: 'Cairo_600SemiBold',
-    lineHeight: isTablet ? 17 : 16,
-  },
-  labelActive: {
-    fontFamily: 'Cairo_700Bold',
+  iconCircleActive: {
+    backgroundColor: '#FFFFFF',
   },
 });

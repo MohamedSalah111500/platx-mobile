@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTabBarSpace } from '../../navigation/tabBar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -35,6 +36,7 @@ export default function ExamsListScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { t, isRTL } = useRTL();
   const { isStudent, user, can } = useAuth();
+  const tabBarSpace = useTabBarSpace();
   const canCreateExam = can('EXAMS_CREATE');
   const [exams, setExams] = useState<OnlineExamListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -254,7 +256,7 @@ export default function ExamsListScreen({ navigation }: Props) {
           maxToRenderPerBatch={8}
           windowSize={9}
           renderItem={renderExamCard}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: tabBarSpace }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.colors.primary} />
@@ -281,6 +283,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   header: {
     flexDirection: 'row',
@@ -305,6 +308,7 @@ const styles = StyleSheet.create({
   myExamsHint: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
   listContent: {
     paddingHorizontal: spacing.lg,
@@ -333,6 +337,7 @@ const styles = StyleSheet.create({
   examName: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   metaRow: {
     flexDirection: 'row',
@@ -340,11 +345,13 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   metaText: {
-    fontSize: 10,
+    fontSize: 14,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
   metaDot: {
-    fontSize: 10,
+    fontSize: 14,
+    textAlign: 'left',
   },
   actionsRow: {
     flexDirection: 'row',

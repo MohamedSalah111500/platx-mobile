@@ -79,13 +79,16 @@ const styles = StyleSheet.create({
   },
   amount: {
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   symbol: {
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   old: {
     fontFamily: 'Cairo_500Medium',
     textDecorationLine: 'line-through',
+    textAlign: 'left',
   },
   chip: {
     paddingHorizontal: spacing.sm + 2,
@@ -95,6 +98,7 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
 });
 

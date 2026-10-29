@@ -35,6 +35,8 @@ import type { Group, GroupMember, GroupFile, SubGroup } from '../../types/group.
 import type { ChatMessage } from '../../types/chat.types';
 import { isOwnMessage } from '../chat/isOwnMessage';
 
+import { BackButton } from '../../components/ui/BackButton';
+import { appDateLocale } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'GroupDetail'>;
 
 type Tab = 'students' | 'subgroups' | 'chat' | 'info';
@@ -287,7 +289,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
   const formatTime = (dateStr?: string) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString(appDateLocale(), { hour: '2-digit', minute: '2-digit' });
   };
 
   const getFileIcon = (file: GroupFile): string => {
@@ -458,7 +460,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
               <Text style={[s.studentName, { color: theme.colors.text }]}>{sg.name}</Text>
               {sg.studentsCount != null && (
                 <Text style={[s.studentMeta, { color: theme.colors.textMuted }]}>
-                  {sg.studentsCount} {t('groups.students')}
+                  {t('home.studentsCount', { count: sg.studentsCount })}
                 </Text>
               )}
             </View>
@@ -734,11 +736,9 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
   if (loading) {
     return (
       <View style={[s.container, { backgroundColor: theme.colors.background }]}>
-        <View style={[s.headerBg, { paddingTop: insets.top + spacing.sm, backgroundColor: theme.colors.primary }]}>
+        <View style={[s.headerBg, { paddingTop: insets.top + spacing.sm, backgroundColor: theme.colors.heroBackground }]}>
           <View style={s.headerRow}>
-            <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
-              <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color="#fff" />
-            </TouchableOpacity>
+            <BackButton onPress={() => navigation.goBack()} tone="onColor" />
             <Text style={s.headerTitle}>{t('groups.groupDetails')}</Text>
             <View style={{ width: 40 }} />
           </View>
@@ -751,11 +751,9 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
   return (
     <View style={[s.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
-      <View style={[s.headerBg, { paddingTop: insets.top + spacing.sm, backgroundColor: theme.colors.primary }]}>
+      <View style={[s.headerBg, { paddingTop: insets.top + spacing.sm, backgroundColor: theme.colors.heroBackground }]}>
         <View style={s.headerRow}>
-          <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color="#fff" />
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} tone="onColor" />
           <Text style={s.headerTitle} numberOfLines={1}>{group?.name || t('groups.groupDetails')}</Text>
           <View style={{ width: 40 }} />
         </View>
@@ -916,10 +914,9 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    ...typography.headerTitle,
+    ...typography.screenTitle,
     flex: 1,
-    textAlign: 'center',
-    marginHorizontal: spacing.sm,
+    marginHorizontal: spacing.md,
     color: '#fff',
   },
 
@@ -943,7 +940,7 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   tabLabel: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
     color: 'rgba(255,255,255,0.5)',
     textAlign: 'center',
@@ -972,6 +969,7 @@ const s = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     paddingVertical: 0,
+    textAlign: 'left',
   },
   inviteBtn: {
     width: 44,
@@ -983,11 +981,12 @@ const s = StyleSheet.create({
 
   // Section label
   sectionLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: 'Cairo_700Bold',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: spacing.sm,
+    textAlign: 'left',
   },
 
   // Student card
@@ -1016,14 +1015,17 @@ const s = StyleSheet.create({
   avatarText: {
     fontSize: 15,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   studentName: {
     fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   studentMeta: {
-    fontSize: 12,
+    fontSize: 14,
     marginTop: 2,
+    textAlign: 'left',
   },
   actionBtn: {
     width: 36,
@@ -1060,8 +1062,9 @@ const s = StyleSheet.create({
     gap: spacing.xs,
   },
   mySubGroupText: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
 
   // Chat
@@ -1078,18 +1081,21 @@ const s = StyleSheet.create({
     borderRadius: 18,
   },
   msgSender: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_700Bold',
     marginBottom: 2,
+    textAlign: 'left',
   },
   msgText: {
     fontSize: 14,
     lineHeight: 20,
+    textAlign: 'left',
   },
   msgTime: {
-    fontSize: 10,
+    fontSize: 14,
     marginTop: 4,
     alignSelf: 'flex-end',
+    textAlign: 'left',
   },
   msgDeleteBtn: {
     padding: 4,
@@ -1140,14 +1146,16 @@ const s = StyleSheet.create({
   infoGroupName: {
     fontSize: fontSize.lg,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   infoGrade: {
     fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
     marginTop: spacing.xs,
+    textAlign: 'left',
   },
   infoDesc: {
-    fontSize: 13,
+    fontSize: 14,
     textAlign: 'center',
     marginTop: spacing.sm,
     lineHeight: 20,
@@ -1168,9 +1176,11 @@ const s = StyleSheet.create({
   statValue: {
     fontSize: 16,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: 14,
+    textAlign: 'left',
   },
   infoRow: {
     flexDirection: 'row',
@@ -1181,12 +1191,14 @@ const s = StyleSheet.create({
     gap: spacing.md,
   },
   infoRowLabel: {
-    fontSize: 12,
+    fontSize: 14,
+    textAlign: 'left',
   },
   infoRowValue: {
     fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
     marginTop: 2,
+    textAlign: 'left',
   },
 
   // File card
@@ -1209,10 +1221,12 @@ const s = StyleSheet.create({
   fileName: {
     fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   fileMeta: {
-    fontSize: 12,
+    fontSize: 14,
     marginTop: 2,
+    textAlign: 'left',
   },
 });
 
@@ -1253,6 +1267,7 @@ const ms = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     paddingVertical: 0,
+    textAlign: 'left',
   },
   studentRow: {
     flexDirection: 'row',
@@ -1273,6 +1288,7 @@ const ms = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   addBtn: {
     borderRadius: 16,
@@ -1285,5 +1301,6 @@ const ms = StyleSheet.create({
     color: '#fff',
     fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
 });

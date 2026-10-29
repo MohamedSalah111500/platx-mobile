@@ -137,7 +137,7 @@ export default function SendNotificationScreen({ navigation }: Props) {
           )}
         </View>
 
-        <Button title={t('sendNotification.send')} onPress={send} loading={sending} fullWidth size="large" icon={<Ionicons name="paper-plane-outline" size={20} color="#fff" />} />
+        <Button title={t('sendNotification.send')} onPress={send} loading={sending} fullWidth size="large" icon={<Ionicons name="paper-plane-outline" size={20} color={theme.colors.onPrimary} />} />
       </ScrollView>
     </View>
   );
@@ -149,13 +149,13 @@ function createStyles(theme: any) {
     content: { paddingHorizontal: spacing.lg, gap: spacing.lg, paddingTop: spacing.sm },
     card: { backgroundColor: theme.colors.card, borderRadius: borderRadius.xl, borderWidth: 1, borderColor: theme.colors.border, padding: spacing.lg, gap: spacing.md },
     rowBetween: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-    rowTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', color: theme.colors.text },
-    rowHint: { fontSize: fontSize.sm, lineHeight: 20, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted },
+    rowTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', color: theme.colors.text, textAlign: 'left' },
+    rowHint: { fontSize: fontSize.sm, lineHeight: 20, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'left' },
     groupsBlock: { gap: spacing.sm },
-    groupsLabel: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.textSecondary },
+    groupsLabel: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.textSecondary, textAlign: 'left' },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     chip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.md, paddingVertical: spacing.xs + 2, borderRadius: borderRadius.full, borderWidth: 1 },
-    chipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
-    errorText: { fontSize: fontSize.xs, fontFamily: 'Cairo_500Medium', color: theme.colors.danger },
+    chipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+    errorText: { fontSize: fontSize.xs, fontFamily: 'Cairo_500Medium', color: theme.colors.danger, textAlign: 'left' },
   });
 }

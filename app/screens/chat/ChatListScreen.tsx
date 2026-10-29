@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTabBarSpace } from '../../navigation/tabBar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SearchBar } from '../../components/ui/SearchBar';
@@ -17,7 +18,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useRTL } from '../../i18n/RTLProvider';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Spinner } from '../../components/ui/Spinner';
-import { spacing, borderRadius } from '../../theme/spacing';
+import { spacing } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import { groupsApi } from '../../services/api/groups.api';
 import { subGroupsApi } from '../../services/api/subgroups.api';
@@ -32,19 +33,12 @@ type ChatEntry =
 
 type Props = NativeStackScreenProps<ChatStackParamList, 'ChatList'>;
 
-const AVATAR_COLORS = [
-  { bg: '#F0EDFF', color: '#7c63fd' },
-  { bg: '#E8F8F0', color: '#34C38F' },
-  { bg: '#E8F4FD', color: '#3B82F6' },
-  { bg: '#FFF4E5', color: '#F5A623' },
-  { bg: '#FFE8E8', color: '#F46A6A' },
-];
-
 export default function ChatListScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { user, isStudent } = useAuth();
   const { t, isRTL } = useRTL();
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useTabBarSpace();
   const [groups, setGroups] = useState<Group[]>([]);
   const [subGroups, setSubGroups] = useState<SubGroupLookup[]>([]);
   const [staffContacts, setStaffContacts] = useState<StaffChatContact[]>([]);
@@ -110,7 +104,6 @@ export default function ChatListScreen({ navigation }: Props) {
   const totalCount = isStudent ? staffContacts.length : groups.length + subGroups.length;
 
   const renderStaffItem = ({ item, index }: { item: StaffChatContact; index: number }) => {
-    const palette = AVATAR_COLORS[index % AVATAR_COLORS.length];
     const name = `${item.firstName || ''} ${item.lastName || ''}`.trim();
     const initial = (item.firstName?.[0] || 'S').toUpperCase();
 
@@ -129,8 +122,8 @@ export default function ChatListScreen({ navigation }: Props) {
         activeOpacity={0.7}
       >
         <View style={styles.avatarWrap}>
-          <View style={[styles.avatarCircle, { backgroundColor: theme.dark ? palette.color + '26' : palette.bg }]}>
-            <Text style={[styles.avatarLetter, { color: palette.color }]}>{initial}</Text>
+          <View style={[styles.avatarCircle, { backgroundColor: theme.colors.primaryLight }]}>
+            <Text style={[styles.avatarLetter, { color: theme.colors.primary }]}>{initial}</Text>
           </View>
           <View style={[styles.onlineDot, { borderColor: theme.colors.card, backgroundColor: theme.colors.success }]} />
         </View>
@@ -142,15 +135,12 @@ export default function ChatListScreen({ navigation }: Props) {
             {t('chat.staff')}
           </Text>
         </View>
-        <View style={[styles.arrowCircle, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
-          <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={16} color={theme.colors.primary} />
-        </View>
+        <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color={theme.colors.textMuted} />
       </TouchableOpacity>
     );
   };
 
   const renderGroupItem = ({ item, index }: { item: Group; index: number }) => {
-    const palette = AVATAR_COLORS[index % AVATAR_COLORS.length];
     const initial = item.name?.[0]?.toUpperCase() || 'G';
 
     return (
@@ -167,8 +157,8 @@ export default function ChatListScreen({ navigation }: Props) {
         activeOpacity={0.7}
       >
         <View style={styles.avatarWrap}>
-          <View style={[styles.avatarCircle, { backgroundColor: theme.dark ? palette.color + '26' : palette.bg }]}>
-            <Ionicons name="people" size={22} color={palette.color} />
+          <View style={[styles.avatarCircle, { backgroundColor: theme.colors.primaryLight }]}>
+            <Ionicons name="people" size={22} color={theme.colors.primary} />
           </View>
         </View>
         <View style={styles.cardInfo}>
@@ -176,12 +166,10 @@ export default function ChatListScreen({ navigation }: Props) {
             {item.name}
           </Text>
           <Text style={[styles.cardSub, { color: theme.colors.textMuted }]} numberOfLines={1}>
-            {item.studentsCount || 0} {t('chat.members')}
+            {t('home.membersCount', { count: item.studentsCount || 0 })}
           </Text>
         </View>
-        <View style={[styles.arrowCircle, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
-          <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={16} color={theme.colors.primary} />
-        </View>
+        <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color={theme.colors.textMuted} />
       </TouchableOpacity>
     );
   };
@@ -191,7 +179,7 @@ export default function ChatListScreen({ navigation }: Props) {
       style={[
         styles.card,
         styles.subGroupCard,
-        { backgroundColor: theme.colors.surface, borderColor: theme.colors.divider },
+        { backgroundColor: theme.colors.card },
       ]}
       onPress={() => {
         navigation.navigate('ChatRoom', {
@@ -222,9 +210,7 @@ export default function ChatListScreen({ navigation }: Props) {
           {t('groups.subGroups')} · {item.groupName}
         </Text>
       </View>
-      <View style={[styles.arrowCircle, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
-        <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={16} color={theme.colors.primary} />
-      </View>
+      <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color={theme.colors.textMuted} />
     </TouchableOpacity>
   );
 
@@ -274,7 +260,7 @@ export default function ChatListScreen({ navigation }: Props) {
             />
           )
         }
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: tabBarSpace }]}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: spacing.xs }} />}
       />
@@ -309,21 +295,21 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   listContent: {
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xs,
-    paddingBottom: 120,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md + 2,
-    borderRadius: borderRadius.xl,
+    padding: spacing.sm,
+    paddingEnd: spacing.md,
+    borderRadius: 22,
   },
   subGroupCard: {
     marginStart: spacing.xl,
-    borderWidth: 1,
   },
   subGroupAvatar: {
     width: 44,
@@ -335,15 +321,16 @@ const styles = StyleSheet.create({
     marginEnd: spacing.md,
   },
   avatarCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 17,
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarLetter: {
     fontSize: 21,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   onlineDot: {
     position: 'absolute',
@@ -361,15 +348,10 @@ const styles = StyleSheet.create({
   cardName: {
     fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   cardSub: {
     fontSize: fontSize.xs,
-  },
-  arrowCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 11,
-    justifyContent: 'center',
-    alignItems: 'center',
+    textAlign: 'left',
   },
 });

@@ -17,7 +17,7 @@ import MainTabNavigator from './MainTabNavigator';
 import ParentNavigator from './ParentNavigator';
 import LiveClassroomScreen from '../screens/live/LiveClassroomScreen';
 import WelcomeSplash from '../components/WelcomeSplash';
-import UpdateRequiredScreen from '../screens/UpdateRequiredScreen';
+import UpdateRequiredAlert from '../components/UpdateRequiredAlert';
 import UpdateAvailableBanner from '../components/UpdateAvailableBanner';
 import { useUIStore } from '../store/ui.store';
 import { checkAppVersion } from '../services/appVersionGate';
@@ -136,10 +136,6 @@ export default function RootNavigator() {
   }, []);
 
   useEffect(() => {
-    if (updateRequired) setNavReady(false);
-  }, [updateRequired]);
-
-  useEffect(() => {
     if (!pendingGuardianCode || !bootstrapped || !sessionReady || !navReady || updateRequired) return;
     setPendingGuardianCode(null);
     openGuardianLink(pendingGuardianCode);
@@ -173,8 +169,6 @@ export default function RootNavigator() {
     },
   };
 
-  if (updateRequired) return <UpdateRequiredScreen />;
-
   return (
     <View style={{ flex: 1 }}>
       <NavigationContainer ref={navigationRef} theme={navigationTheme} onReady={() => setNavReady(true)}>
@@ -195,6 +189,7 @@ export default function RootNavigator() {
       {isAuthenticated && showWelcome && <WelcomeSplash />}
       {!bootstrapped && <BrandedLoading />}
       {(isAuthenticated || isParent) && <UpdateAvailableBanner />}
+      <UpdateRequiredAlert />
     </View>
   );
 }

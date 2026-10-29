@@ -20,6 +20,7 @@ import { typography, fontSize } from '../../theme/typography';
 import { authApi } from '../../services/api/auth.api';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 
+import { BackButton } from '../../components/ui/BackButton';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'ChangePassword'>;
 
 
@@ -71,12 +72,7 @@ export default function ChangePasswordScreen({ navigation }: Props) {
     <View style={[styles.container, { backgroundColor: bgColor }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-        <TouchableOpacity
-          style={[styles.backBtn, { backgroundColor: theme.colors.card }]}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color={theme.colors.text} />
-        </TouchableOpacity>
+        <BackButton onPress={() => navigation.goBack()} />
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
           {t('auth.changePassword')}
         </Text>
@@ -195,10 +191,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    ...typography.headerTitle,
+    ...typography.screenTitle,
     flex: 1,
-    textAlign: 'center',
-    marginHorizontal: spacing.sm,
+    marginHorizontal: spacing.md,
   },
   iconWrap: {
     alignItems: 'center',
@@ -221,6 +216,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
     marginBottom: spacing.xs,
+    textAlign: 'left',
   },
   inputRow: {
     flexDirection: 'row',
@@ -236,6 +232,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: 'Cairo_400Regular',
     paddingVertical: 0,
+    textAlign: 'left',
   },
   submitBtn: {
     borderRadius: 16,

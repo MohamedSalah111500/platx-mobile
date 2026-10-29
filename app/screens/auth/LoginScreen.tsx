@@ -422,6 +422,7 @@ function createStyles(theme: any) {
       fontFamily: 'Cairo_400Regular',
       fontSize: 14,
       marginBottom: spacing.lg,
+      textAlign: 'left',
     },
     domainInput: {
       borderWidth: 1.5,
@@ -431,6 +432,7 @@ function createStyles(theme: any) {
       fontSize: 15,
       fontFamily: 'Cairo_400Regular',
       marginBottom: spacing.lg,
+      textAlign: 'left',
     },
     modalActions: {
       flexDirection: 'row',
@@ -450,6 +452,7 @@ function createStyles(theme: any) {
     modalBtnText: {
       fontFamily: 'Cairo_600SemiBold',
       fontSize: 15,
+      textAlign: 'left',
     },
   });
 }

@@ -141,16 +141,18 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   errorLabel: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#7c63fd',
     fontWeight: '700',
     marginBottom: 4,
+    textAlign: 'left',
   },
   errorText: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#ffffff',
     fontFamily: 'monospace',
-    lineHeight: 17,
+    lineHeight: 20,
+    textAlign: 'left',
   },
   button: {
     backgroundColor: '#7c63fd',
@@ -163,13 +165,15 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+    textAlign: 'left',
   },
   linkButton: {
     paddingVertical: 12,
   },
   linkText: {
     color: 'rgba(255,255,255,0.6)',
-    fontSize: 13,
+    fontSize: 14,
     textDecorationLine: 'underline',
+    textAlign: 'left',
   },
 });

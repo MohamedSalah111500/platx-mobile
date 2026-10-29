@@ -199,6 +199,7 @@ function createStyles(theme: Theme) {
     titleUnread: {
       fontFamily: 'Cairo_700Bold',
       color: theme.colors.text,
+      textAlign: 'left',
     },
     body: {
       ...typography.bodySmall,

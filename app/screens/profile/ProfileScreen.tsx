@@ -11,6 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTabBarSpace } from '../../navigation/tabBar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -38,6 +39,7 @@ export default function ProfileScreen({ navigation }: Props) {
   const { user, role: authRole, can, isStudent, logout } = useAuth();
   const { t, isRTL } = useRTL();
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useTabBarSpace();
 
   const role = authRole || 'Student';
   const canManageGroups = can('GROUPS');
@@ -117,9 +119,6 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const firstName = user?.firstName || '';
   const lastName = user?.lastName || '';
-  // Light pastel icon fills glare in dark mode — use a translucent tint of the icon colour there.
-  const tint = (lightBg: string, color: string) => (theme.dark ? color + '26' : lightBg);
-
   const generalMenuItems: { iconName: string; iconBg: string; iconColor: string; label: string; onPress: () => void }[] = [];
   generalMenuItems.push({
     iconName: 'document-text',
@@ -131,8 +130,8 @@ export default function ProfileScreen({ navigation }: Props) {
   if (canManageGroups || canMyGroup) {
     generalMenuItems.push({
       iconName: 'people',
-      iconBg: tint('#E8F4FD', '#3B82F6'),
-      iconColor: '#3B82F6',
+      iconBg: theme.colors.primaryLight,
+      iconColor: theme.colors.primary,
       label: isStudent ? t('groups.myGroups') : t('groups.title'),
       onPress: () => navigation.navigate('Groups'),
     });
@@ -140,8 +139,8 @@ export default function ProfileScreen({ navigation }: Props) {
   if (canLive) {
     generalMenuItems.push({
       iconName: 'videocam',
-      iconBg: tint('#E8F8F0', '#34C38F'),
-      iconColor: '#34C38F',
+      iconBg: theme.colors.primaryLight,
+      iconColor: theme.colors.primary,
       label: t('live.title'),
       onPress: () => navigation.navigate('LiveSessions'),
     });
@@ -158,24 +157,24 @@ export default function ProfileScreen({ navigation }: Props) {
   if (isStudent && !REQUEST_ONLY) {
     generalMenuItems.push({
       iconName: 'wallet',
-      iconBg: tint('#E8F8F0', '#34C38F'),
-      iconColor: '#34C38F',
+      iconBg: theme.colors.primaryLight,
+      iconColor: theme.colors.primary,
       label: t('wallet.title'),
       onPress: () => navigation.navigate('Wallet'),
     });
   }
   generalMenuItems.push({
     iconName: 'trophy',
-    iconBg: tint('#FFF4E5', '#F5A623'),
-    iconColor: '#F5A623',
+    iconBg: theme.colors.primaryLight,
+    iconColor: theme.colors.primary,
     label: t('honorBoard.title'),
     onPress: () => navigation.navigate('HonorBoard'),
   });
   if (canReports) {
     generalMenuItems.push({
       iconName: 'bar-chart',
-      iconBg: tint('#E8F4FD', '#3B82F6'),
-      iconColor: '#3B82F6',
+      iconBg: theme.colors.primaryLight,
+      iconColor: theme.colors.primary,
       label: t('reports.title'),
       onPress: () => navigation.navigate('Reports'),
     });
@@ -185,10 +184,10 @@ export default function ProfileScreen({ navigation }: Props) {
     <GradientBackground style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: spacing['3xl'] }}
+        contentContainerStyle={{ paddingBottom: tabBarSpace }}
       >
         {/* Purple header */}
-        <View style={[styles.headerBg, { paddingTop: insets.top + spacing.lg, backgroundColor: theme.colors.primary }]}>
+        <View style={[styles.headerBg, { paddingTop: insets.top + spacing.lg, backgroundColor: theme.colors.heroBackground }]}>
           <View style={styles.avatarWrap}>
             <Avatar
               self
@@ -236,8 +235,8 @@ export default function ProfileScreen({ navigation }: Props) {
                 {
                   key: 'completed',
                   icon: 'trophy',
-                  iconBg: tint('#FFF4E5', '#F5A623'),
-                  iconColor: '#F5A623',
+                  iconBg: theme.colors.primaryLight,
+                  iconColor: theme.colors.primary,
                   value: statsLoading ? '-' : String(totalCompletedLessons),
                   label: t('profile.completed'),
                   onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'CoursesList', initial: false }),
@@ -245,8 +244,8 @@ export default function ProfileScreen({ navigation }: Props) {
                 {
                   key: 'messages',
                   icon: 'chatbubbles',
-                  iconBg: tint('#E8F8F0', '#34C38F'),
-                  iconColor: '#34C38F',
+                  iconBg: theme.colors.primaryLight,
+                  iconColor: theme.colors.primary,
                   value: statsLoading ? '-' : String(messageThreadsCount),
                   label: t('profile.messages'),
                   onPress: () => navigation.getParent()?.navigate('ChatTab'),
@@ -265,16 +264,16 @@ export default function ProfileScreen({ navigation }: Props) {
                 {
                   key: 'students',
                   icon: 'people',
-                  iconBg: tint('#E8F4FD', '#3B82F6'),
-                  iconColor: '#3B82F6',
+                  iconBg: theme.colors.primaryLight,
+                  iconColor: theme.colors.primary,
                   value: statsLoading ? '-' : String(dashStats?.totalStudents ?? '-'),
                   label: t('home.students'),
                 },
                 {
                   key: 'lecturers',
                   icon: 'school',
-                  iconBg: tint('#FFF4E5', '#F5A623'),
-                  iconColor: '#F5A623',
+                  iconBg: theme.colors.primaryLight,
+                  iconColor: theme.colors.primary,
                   value: statsLoading ? '-' : String(dashStats?.totalLecturers ?? '-'),
                   label: t('home.lecturers'),
                 },
@@ -428,8 +427,8 @@ export default function ProfileScreen({ navigation }: Props) {
               onPress={() => navigation.navigate('ChangePassword')}
               activeOpacity={0.6}
             >
-              <View style={[styles.menuIcon, { backgroundColor: tint('#FFF4E5', '#F5A623') }]}>
-                <Ionicons name="lock-closed" size={20} color="#F5A623" />
+              <View style={[styles.menuIcon, { backgroundColor: theme.colors.primaryLight }]}>
+                <Ionicons name="lock-closed" size={20} color={theme.colors.primary} />
               </View>
               <Text style={[styles.menuLabel, { color: theme.colors.text }]}>{t('auth.changePassword')}</Text>
               <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
@@ -451,6 +450,7 @@ export default function ProfileScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <View style={{ position: 'absolute', top: 0, start: 0, end: 0, height: insets.top, backgroundColor: theme.colors.heroBackground }} />
     </GradientBackground>
   );
 }
@@ -500,6 +500,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Cairo_700Bold',
     color: '#FFFFFF',
+    textAlign: 'left',
   },
   roleText: {
     fontSize: fontSize.xs,
@@ -507,6 +508,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     textTransform: 'uppercase',
     letterSpacing: 1,
+    textAlign: 'left',
   },
   statsRow: {
     flexDirection: 'row',
@@ -519,11 +521,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     borderRadius: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2,
   },
   statIcon: {
     width: 36,
@@ -536,11 +533,13 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: fontSize.lg,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_400Regular',
     marginTop: 2,
+    textAlign: 'left',
   },
   progressCard: {
     borderRadius: 20,
@@ -555,10 +554,12 @@ const styles = StyleSheet.create({
   progressLabel: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   progressPercent: {
     fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   progressTrack: {
     height: 8,
@@ -577,6 +578,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_600SemiBold',
     marginBottom: spacing.xs,
+    textAlign: 'left',
   },
   continueCard: {
     flexDirection: 'row',
@@ -597,6 +599,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
     marginBottom: 6,
+    textAlign: 'left',
   },
   progressTrackSmall: {
     height: 5,
@@ -608,8 +611,9 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   continueMeta: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   section: {
     marginTop: spacing.xl,
@@ -622,6 +626,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: spacing.sm,
     marginStart: spacing.xs,
+    textAlign: 'left',
   },
   menuCard: {
     borderRadius: 20,
@@ -645,6 +650,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.base,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   logoutBtn: {
     borderRadius: 20,

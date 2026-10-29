@@ -65,6 +65,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: 1,
     writingDirection: 'ltr',
+    textAlign: 'left',
   },
   backdrop: {
     flex: 1,
@@ -90,6 +91,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_700Bold',
     letterSpacing: 2,
     writingDirection: 'ltr',
+    textAlign: 'left',
   },
   closeButton: {
     alignSelf: 'stretch',

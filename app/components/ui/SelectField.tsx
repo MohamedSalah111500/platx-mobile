@@ -96,6 +96,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
     marginBottom: spacing.sm,
+    textAlign: 'left',
   },
   field: {
     flexDirection: 'row',
@@ -110,6 +111,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.base,
     fontFamily: 'Cairo_400Regular',
+    textAlign: 'left',
   },
   error: {
     ...typography.caption,

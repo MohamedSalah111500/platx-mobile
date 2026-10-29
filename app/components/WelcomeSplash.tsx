@@ -155,6 +155,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_700Bold',
     fontSize: 96,
     lineHeight: 120,
+    textAlign: 'left',
   },
   textBlock: {
     alignItems: 'center',
@@ -189,7 +190,8 @@ const styles = StyleSheet.create({
   },
   powered: {
     fontFamily: 'Cairo_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     color: '#9AA0AC',
+    textAlign: 'left',
   },
 });

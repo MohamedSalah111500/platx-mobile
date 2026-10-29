@@ -89,13 +89,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   texts: { flex: 1 },
-  title: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold' },
-  body: { fontSize: fontSize.xs, fontFamily: 'Cairo_400Regular' },
+  title: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  body: { fontSize: fontSize.xs, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
   action: {
     paddingHorizontal: spacing.md,
     paddingVertical: 8,
     borderRadius: borderRadius.full,
   },
-  actionText: { color: '#fff', fontSize: fontSize.xs, fontFamily: 'Cairo_700Bold' },
+  actionText: { color: '#fff', fontSize: fontSize.xs, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   close: { padding: 2 },
 });

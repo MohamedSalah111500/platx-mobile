@@ -179,6 +179,7 @@ export function Avatar({
       fontSize: dimensionOverride ? dimensionOverride / 3 : fontSizeMap[size],
       fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.primary,
+      textAlign: 'left',
     },
     wrapper: {
       alignSelf: 'center',

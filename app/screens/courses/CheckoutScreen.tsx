@@ -36,6 +36,7 @@ import {
   type ReservationProofImage,
 } from '../../types/reservation.types';
 
+import { BackButton } from '../../components/ui/BackButton';
 type Props = {
   navigation: NativeStackScreenProps<any, any>['navigation'];
   route: { params: CheckoutParams };
@@ -140,12 +141,12 @@ export default function CheckoutScreen({ navigation, route }: Props) {
         key={methodValue}
         style={[
           styles.methodTab,
-          { borderColor: active ? theme.colors.primary : theme.colors.border, backgroundColor: active ? theme.colors.primary + '15' : theme.colors.card },
+          { backgroundColor: active ? theme.colors.text : theme.colors.card },
         ]}
         onPress={() => { setSelectedMethod(methodValue); }}
         activeOpacity={0.75}
       >
-        <Text style={[styles.methodTabText, { color: active ? theme.colors.primary : theme.colors.textSecondary }]}>
+        <Text style={[styles.methodTabText, { color: active ? theme.colors.background : theme.colors.text }]}>
           {label}
         </Text>
       </TouchableOpacity>
@@ -175,9 +176,7 @@ export default function CheckoutScreen({ navigation, route }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm, borderBottomColor: theme.colors.divider }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={22} color={theme.colors.text} />
-        </TouchableOpacity>
+        <BackButton onPress={() => navigation.goBack()} />
         <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>
           {t(REQUEST_ONLY ? 'checkout.requestTitle' : 'checkout.title')}
         </Text>
@@ -304,7 +303,7 @@ export default function CheckoutScreen({ navigation, route }: Props) {
             loading={submitting}
             fullWidth
             size="large"
-            icon={<Ionicons name="checkmark-circle" size={20} color="#fff" />}
+            icon={<Ionicons name="checkmark-circle" size={20} color={theme.colors.onPrimary} />}
             style={{ borderRadius: 16 }}
           />
         </View>
@@ -324,7 +323,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backBtn: { width: 22, height: 32, justifyContent: 'center', alignItems: 'flex-start' },
-  headerTitle: { ...typography.headerTitle, flex: 1, textAlign: 'center', marginHorizontal: spacing.sm },
+  headerTitle: { ...typography.screenTitle, flex: 1, marginHorizontal: spacing.md },
 
   summaryCard: {
     flexDirection: 'row',
@@ -335,7 +334,7 @@ const styles = StyleSheet.create({
   },
   summaryCover: { width: 84, height: 84, borderRadius: borderRadius.lg },
   summaryInfo: { flex: 1, justifyContent: 'center' },
-  summaryTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', lineHeight: 23 },
+  summaryTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', lineHeight: 23, textAlign: 'left' },
   priceRow: { marginTop: spacing.xs },
 
   sectionLabel: { ...typography.sectionTitle, marginBottom: spacing.md, marginTop: spacing.sm },
@@ -344,18 +343,17 @@ const styles = StyleSheet.create({
   methodTab: {
     flex: 1,
     paddingVertical: spacing.md,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
+    borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  methodTabText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
+  methodTabText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
 
   payToCard: { borderRadius: borderRadius.lg, padding: spacing.lg, marginBottom: spacing.lg },
   payToRow: { marginBottom: spacing.sm },
-  payToLabel: { fontSize: 12, fontFamily: 'Cairo_500Medium', marginBottom: 2 },
-  payToValue: { fontSize: fontSize.xl, fontFamily: 'Cairo_700Bold', letterSpacing: 1 },
-  payHint: { fontSize: 12, fontFamily: 'Cairo_400Regular', marginTop: spacing.xs },
+  payToLabel: { fontSize: 14, fontFamily: 'Cairo_500Medium', marginBottom: 2, textAlign: 'left' },
+  payToValue: { fontSize: fontSize.xl, fontFamily: 'Cairo_700Bold', letterSpacing: 1, textAlign: 'left' },
+  payHint: { fontSize: 14, fontFamily: 'Cairo_400Regular', marginTop: spacing.xs, textAlign: 'left' },
 
   noticeCard: {
     flexDirection: 'row',
@@ -365,7 +363,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     marginBottom: spacing.lg,
   },
-  noticeText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular' },
+  noticeText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
 
   proofPicker: {
     height: 180,
@@ -379,9 +377,9 @@ const styles = StyleSheet.create({
   },
   proofPreview: { width: '100%', height: '100%' },
   proofEmpty: { alignItems: 'center', gap: spacing.sm },
-  proofEmptyText: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium' },
+  proofEmptyText: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
   changeProof: { alignSelf: 'center', paddingVertical: spacing.sm, marginBottom: spacing.sm },
-  changeProofText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
+  changeProofText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
 
   messageInput: {
     borderRadius: borderRadius.lg,

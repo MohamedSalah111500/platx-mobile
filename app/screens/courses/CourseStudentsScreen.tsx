@@ -17,6 +17,7 @@ import { coursesApi } from '../../services/api/courses.api';
 import { ENROLLMENT_STATUS, type EnrollmentHistoryItem } from '../../types/course.types';
 import type { HomeStackParamList } from '../../types/navigation.types';
 
+import { appDateLocale } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<HomeStackParamList, 'CourseStudents'>;
 
 const PAGE_SIZE = 20;
@@ -120,7 +121,7 @@ export default function CourseStudentsScreen({ navigation, route }: Props) {
           <View style={styles.metaRow}>
             <Ionicons name="calendar-outline" size={13} color={theme.colors.textMuted} />
             <Text style={styles.metaText}>
-              {t('courseStudents.enrolledOn')} {new Date(item.enrollmentDate).toLocaleDateString()}
+              {t('courseStudents.enrolledOn')} {new Date(item.enrollmentDate).toLocaleDateString(appDateLocale())}
             </Text>
           </View>
           <View style={styles.progressRow}>
@@ -175,30 +176,28 @@ function createStyles(theme: any) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     headerBlock: { paddingHorizontal: spacing.lg, gap: spacing.sm, paddingBottom: spacing.md },
-    courseName: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', color: theme.colors.textSecondary },
+    courseName: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', color: theme.colors.textSecondary, textAlign: 'left' },
     summaryRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    summary: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', color: theme.colors.textMuted },
+    summary: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', color: theme.colors.textMuted, textAlign: 'left' },
     list: { paddingHorizontal: spacing.lg, paddingTop: spacing.xs },
     card: {
       flexDirection: 'row',
       gap: spacing.md,
       backgroundColor: theme.colors.card,
       borderRadius: borderRadius.xl,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
       padding: spacing.md,
     },
     avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
-    avatarText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', color: theme.colors.primary },
+    avatarText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', color: theme.colors.primary, textAlign: 'left' },
     cardBody: { flex: 1, gap: 4 },
     cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-    name: { flex: 1, fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', color: theme.colors.text },
-    email: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted },
+    name: { flex: 1, fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', color: theme.colors.text, textAlign: 'left' },
+    email: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'left' },
     statusPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: borderRadius.full },
     statusDot: { width: 6, height: 6, borderRadius: 3 },
-    statusText: { fontSize: fontSize.xs, fontFamily: 'Cairo_600SemiBold' },
+    statusText: { fontSize: fontSize.xs, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    metaText: { fontSize: fontSize.xs, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted },
+    metaText: { fontSize: fontSize.xs, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'left' },
     progressRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 2 },
     progressTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: theme.colors.border, overflow: 'hidden' },
     progressFill: { height: '100%', borderRadius: 3 },

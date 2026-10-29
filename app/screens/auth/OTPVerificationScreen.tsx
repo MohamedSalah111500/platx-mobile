@@ -152,6 +152,7 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
     emailHighlight: {
       color: theme.colors.primary,
       fontFamily: 'Cairo_600SemiBold',
+      textAlign: 'left',
     },
     otpContainer: {
       flexDirection: 'row',

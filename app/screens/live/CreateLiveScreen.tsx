@@ -167,8 +167,7 @@ export default function CreateLiveScreen({ navigation }: Props) {
       justifyContent: 'center',
       gap: spacing.sm,
       paddingVertical: spacing.md,
-      borderRadius: borderRadius.lg,
-      borderWidth: 1.5,
+      borderRadius: borderRadius.full,
     },
     typeText: { ...typography.body, fontFamily: 'Cairo_600SemiBold' },
     presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
@@ -176,7 +175,6 @@ export default function CreateLiveScreen({ navigation }: Props) {
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
       borderRadius: borderRadius.full,
-      borderWidth: 1,
     },
     presetText: { ...typography.caption, fontFamily: 'Cairo_600SemiBold' },
     groupsSection: { marginTop: spacing.md },
@@ -242,15 +240,14 @@ export default function CreateLiveScreen({ navigation }: Props) {
                   style={[
                     styles.typeCard,
                     {
-                      backgroundColor: active ? theme.colors.primary + '12' : theme.colors.card,
-                      borderColor: active ? theme.colors.primary : theme.colors.border,
+                      backgroundColor: active ? theme.colors.text : theme.colors.card,
                     },
                   ]}
                   onPress={() => setLiveType(opt.type)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name={opt.icon as any} size={20} color={active ? theme.colors.primary : theme.colors.textMuted} />
-                  <Text style={[styles.typeText, { color: active ? theme.colors.primary : theme.colors.text }]}>
+                  <Ionicons name={opt.icon as any} size={20} color={active ? theme.colors.background : theme.colors.textMuted} />
+                  <Text style={[styles.typeText, { color: active ? theme.colors.background : theme.colors.text }]}>
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
@@ -308,15 +305,14 @@ export default function CreateLiveScreen({ navigation }: Props) {
                   style={[
                     styles.typeCard,
                     {
-                      backgroundColor: active ? theme.colors.primary + '12' : theme.colors.card,
-                      borderColor: active ? theme.colors.primary : theme.colors.border,
+                      backgroundColor: active ? theme.colors.text : theme.colors.card,
                     },
                   ]}
                   onPress={() => setIsPaid(opt.paid)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name={opt.icon as any} size={20} color={active ? theme.colors.primary : theme.colors.textMuted} />
-                  <Text style={[styles.typeText, { color: active ? theme.colors.primary : theme.colors.text }]}>
+                  <Ionicons name={opt.icon as any} size={20} color={active ? theme.colors.background : theme.colors.textMuted} />
+                  <Text style={[styles.typeText, { color: active ? theme.colors.background : theme.colors.text }]}>
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
@@ -350,15 +346,14 @@ export default function CreateLiveScreen({ navigation }: Props) {
                     style={[
                       styles.typeCard,
                       {
-                        backgroundColor: active ? theme.colors.primary + '12' : theme.colors.card,
-                        borderColor: active ? theme.colors.primary : theme.colors.border,
+                        backgroundColor: active ? theme.colors.text : theme.colors.card,
                       },
                     ]}
                     onPress={() => setSendToAll(opt.value)}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name={opt.icon as any} size={20} color={active ? theme.colors.primary : theme.colors.textMuted} />
-                    <Text style={[styles.typeText, { color: active ? theme.colors.primary : theme.colors.text }]}>
+                    <Ionicons name={opt.icon as any} size={20} color={active ? theme.colors.background : theme.colors.textMuted} />
+                    <Text style={[styles.typeText, { color: active ? theme.colors.background : theme.colors.text }]}>
                       {opt.label}
                     </Text>
                   </TouchableOpacity>

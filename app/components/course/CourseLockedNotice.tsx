@@ -48,5 +48,5 @@ const styles = StyleSheet.create({
   title: { ...typography.sectionTitle, textAlign: 'center' },
   body: { fontSize: 14, lineHeight: 22, fontFamily: 'Cairo_400Regular', textAlign: 'center' },
   contact: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: borderRadius.full, marginTop: spacing.xs },
-  contactText: { fontSize: 13, fontFamily: 'Cairo_600SemiBold' },
+  contactText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
 });

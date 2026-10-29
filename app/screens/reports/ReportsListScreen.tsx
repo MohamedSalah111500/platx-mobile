@@ -201,6 +201,7 @@ const styles = StyleSheet.create({
   tabButtonText: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   listContent: {
     paddingHorizontal: spacing.lg,
@@ -228,10 +229,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   cardMeta: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
   percentWrap: {
     flexDirection: 'row',
@@ -241,5 +244,6 @@ const styles = StyleSheet.create({
   percentText: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
 });

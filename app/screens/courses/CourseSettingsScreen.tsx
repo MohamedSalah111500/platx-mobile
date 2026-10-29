@@ -211,17 +211,15 @@ function createStyles(theme: any) {
     card: {
       backgroundColor: theme.colors.card,
       borderRadius: borderRadius.xl,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
       padding: spacing.lg,
     },
     rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
     rowText: { flex: 1, gap: 2 },
-    rowTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', color: theme.colors.text },
-    rowHint: { fontSize: fontSize.sm, lineHeight: 20, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted },
+    rowTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', color: theme.colors.text, textAlign: 'left' },
+    rowHint: { fontSize: fontSize.sm, lineHeight: 20, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'left' },
     scheduleFields: { marginTop: spacing.lg, gap: spacing.md },
     previewRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
-    previewLabel: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', color: theme.colors.textMuted },
-    previewOpen: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.success },
+    previewLabel: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', color: theme.colors.textMuted, textAlign: 'left' },
+    previewOpen: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.success, textAlign: 'left' },
   });
 }

@@ -189,6 +189,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
     marginBottom: spacing.xs,
+    textAlign: 'left',
   },
   bulletRow: {
     flexDirection: 'row',
@@ -199,10 +200,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_400Regular',
+    textAlign: 'left',
   },
   confirmLabel: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   input: {
     borderWidth: 1.5,
@@ -211,6 +214,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 15,
     fontFamily: 'Cairo_400Regular',
+    textAlign: 'left',
   },
   cancelButton: {
     marginTop: -spacing.sm,

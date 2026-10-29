@@ -28,6 +28,7 @@ import { studentsApi, type TopStudent } from '../../services/api/students.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 
+import { BackButton } from '../../components/ui/BackButton';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'HonorBoard'>;
 
 const MEDAL_COLORS = [
@@ -304,14 +305,9 @@ export default function HonorBoardScreen({ navigation }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
-      <View style={[styles.headerBg, { paddingTop: insets.top + spacing.sm, backgroundColor: theme.colors.primary }]}>
+      <View style={[styles.headerBg, { paddingTop: insets.top + spacing.sm, backgroundColor: theme.colors.heroBackground }]}>
         <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color="#fff" />
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} tone="onColor" />
           <Text style={styles.headerTitle}>{t('honorBoard.title')}</Text>
           {isTeacher ? (
             <TouchableOpacity style={styles.backBtn} onPress={openAddModal}>
@@ -543,12 +539,14 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
     color: '#fff',
+    textAlign: 'left',
   },
   monthYear: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_500Medium',
     color: 'rgba(255,255,255,0.7)',
     marginTop: 2,
+    textAlign: 'left',
   },
 
   // Pyramid
@@ -601,6 +599,7 @@ const styles = StyleSheet.create({
   topInitial: {
     fontSize: 22,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   topRankBadge: {
     position: 'absolute',
@@ -613,12 +612,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   topRankBadgeText: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_700Bold',
     color: '#fff',
+    textAlign: 'left',
   },
   topName: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
     maxWidth: 90,
     textAlign: 'center',
@@ -634,13 +634,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyRankText: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   emptyLabel: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Cairo_400Regular',
     marginTop: 4,
+    textAlign: 'left',
   },
 
   // Lower ranks (4-10)
@@ -653,8 +655,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   lowerRankText: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   lowerAvatar: {
     width: 40,
@@ -677,9 +680,10 @@ const styles = StyleSheet.create({
   lowerInitialText: {
     fontSize: 16,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   lowerName: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
     textAlign: 'center',
     maxWidth: 80,
@@ -711,6 +715,7 @@ const modalStyles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
     marginBottom: spacing.sm,
+    textAlign: 'left',
   },
   rankChip: {
     width: 36,
@@ -735,6 +740,7 @@ const modalStyles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_400Regular',
     paddingVertical: 0,
+    textAlign: 'left',
   },
   studentRow: {
     flexDirection: 'row',
@@ -755,6 +761,7 @@ const modalStyles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   addBtn: {
     borderRadius: 16,
@@ -767,5 +774,6 @@ const modalStyles = StyleSheet.create({
     color: '#fff',
     fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
 });

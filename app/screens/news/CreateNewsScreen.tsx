@@ -230,18 +230,21 @@ function createStyles(theme: any) {
       fontSize: fontSize.sm,
       fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.textSecondary,
+      textAlign: 'left',
     },
     removeImage: { alignSelf: 'center', paddingVertical: spacing.xs },
     removeImageText: {
       fontSize: fontSize.sm,
       fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.danger,
+      textAlign: 'left',
     },
     sectionLabel: {
       fontSize: fontSize.sm,
       fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.text,
       marginTop: spacing.sm,
+      textAlign: 'left',
     },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     chip: {
@@ -250,7 +253,7 @@ function createStyles(theme: any) {
       borderRadius: borderRadius.full,
       borderWidth: 1,
     },
-    chipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
+    chipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
     bodyInput: { minHeight: 130 },
     counter: {
       alignSelf: 'flex-end',
@@ -258,6 +261,7 @@ function createStyles(theme: any) {
       fontFamily: 'Cairo_400Regular',
       color: theme.colors.textMuted,
       marginBottom: spacing.sm,
+      textAlign: 'left',
     },
   });
 }

@@ -41,6 +41,7 @@ const styles = StyleSheet.create({
   title: {
     ...typography.sectionTitle,
     flex: 1,
+    textAlign: 'left',
   },
   seeAll: {
     ...typography.bodySmall,

@@ -59,6 +59,7 @@ export function Badge({
       color: '#ffffff',
       fontSize: size === 'small' ? fontSize.xs - 2 : fontSize.xs,
       fontFamily: 'Cairo_600SemiBold',
+      textAlign: 'left',
     },
   });
 

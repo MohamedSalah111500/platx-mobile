@@ -77,12 +77,13 @@ export default function ExamResultScreen({ navigation, route }: Props) {
     const start = new Date(result.startTime).getTime();
     const end = new Date(result.endTime).getTime();
     const diffMin = Math.floor((end - start) / 60000);
-    if (diffMin >= 60) {
-      const h = Math.floor(diffMin / 60);
-      const m = diffMin % 60;
-      return `${h} ${t('exams.hours')} ${m} ${t('exams.min')}`;
-    }
-    return `${diffMin} ${t('exams.min')}`;
+    const h = Math.floor(diffMin / 60);
+    const m = diffMin % 60;
+    const parts = [
+      h > 0 ? t('home.hoursCount', { count: h }) : null,
+      m > 0 || h === 0 ? t('home.minutesCount', { count: m }) : null,
+    ].filter(Boolean);
+    return parts.join(t('common.and'));
   };
 
   if (loading) {
@@ -329,7 +330,7 @@ function QuestionResultCard({
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  hiddenNote: { fontSize: 14, fontFamily: 'Cairo_500Medium', marginTop: spacing.sm },
+  hiddenNote: { fontSize: 14, fontFamily: 'Cairo_500Medium', marginTop: spacing.sm, textAlign: 'left' },
   scrollContent: {
     padding: spacing.lg,
     paddingBottom: 40,
@@ -348,10 +349,12 @@ const styles = StyleSheet.create({
   percentageValue: {
     fontSize: 48,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   percentageLabel: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   statsRow: {
     flexDirection: 'row',
@@ -371,9 +374,10 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   statLabel: {
-    fontSize: 10,
+    fontSize: 14,
     fontFamily: 'Cairo_500Medium',
     textAlign: 'center',
   },
@@ -407,6 +411,7 @@ const styles = StyleSheet.create({
   qrNumText: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   qrHeaderInfo: {
     flex: 1,
@@ -425,8 +430,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   qrScore: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   // Expanded body
   qrBody: {
@@ -439,6 +445,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_500Medium',
     lineHeight: 22,
     marginBottom: spacing.xs,
+    textAlign: 'left',
   },
   qrAnswer: {
     flexDirection: 'row',
@@ -456,9 +463,10 @@ const styles = StyleSheet.create({
   },
   qrAnswerText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: 'Cairo_500Medium',
     lineHeight: 20,
+    textAlign: 'left',
   },
   yourAnswerBadge: {
     paddingHorizontal: 8,
@@ -466,8 +474,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   yourAnswerText: {
-    fontSize: 10,
+    fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
     color: '#fff',
+    textAlign: 'left',
   },
 });

@@ -32,6 +32,8 @@ import type { GroupMember, SubGroup } from '../../types/group.types';
 import type { ChatMessage } from '../../types/chat.types';
 import { isOwnMessage } from '../chat/isOwnMessage';
 
+import { BackButton } from '../../components/ui/BackButton';
+import { appDateLocale } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'SubGroupDetail'>;
 
 type Tab = 'students' | 'chat';
@@ -188,7 +190,7 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
   const formatTime = (dateStr?: string) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString(appDateLocale(), { hour: '2-digit', minute: '2-digit' });
   };
 
   const handleSendMessage = async () => {
@@ -394,11 +396,9 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
 
   return (
     <View style={[s.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[s.headerBg, { paddingTop: insets.top + spacing.sm, backgroundColor: theme.colors.primary }]}>
+      <View style={[s.headerBg, { paddingTop: insets.top + spacing.sm, backgroundColor: theme.colors.heroBackground }]}>
         <View style={s.headerRow}>
-          <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color="#fff" />
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} tone="onColor" />
           <Text style={s.headerTitle} numberOfLines={1}>{title}</Text>
           <View style={{ width: 40 }} />
         </View>
@@ -521,10 +521,9 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    ...typography.headerTitle,
+    ...typography.screenTitle,
     flex: 1,
-    textAlign: 'center',
-    marginHorizontal: spacing.sm,
+    marginHorizontal: spacing.md,
     color: '#fff',
   },
 
@@ -548,7 +547,7 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   tabLabel: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
     color: 'rgba(255,255,255,0.5)',
     textAlign: 'center',
@@ -572,9 +571,11 @@ const s = StyleSheet.create({
   statValue: {
     fontSize: 16,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: 14,
+    textAlign: 'left',
   },
 
   // Search
@@ -597,6 +598,7 @@ const s = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     paddingVertical: 0,
+    textAlign: 'left',
   },
   addBtn: {
     width: 44,
@@ -631,14 +633,17 @@ const s = StyleSheet.create({
   avatarText: {
     fontSize: 15,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   studentName: {
     fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   studentMeta: {
-    fontSize: 12,
+    fontSize: 14,
     marginTop: 2,
+    textAlign: 'left',
   },
   actionBtn: {
     width: 36,
@@ -662,18 +667,21 @@ const s = StyleSheet.create({
     borderRadius: 18,
   },
   msgSender: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_700Bold',
     marginBottom: 2,
+    textAlign: 'left',
   },
   msgText: {
     fontSize: 14,
     lineHeight: 20,
+    textAlign: 'left',
   },
   msgTime: {
-    fontSize: 10,
+    fontSize: 14,
     marginTop: 4,
     alignSelf: 'flex-end',
+    textAlign: 'left',
   },
   chatInputRow: {
     flexDirection: 'row',
@@ -739,6 +747,7 @@ const ms = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     paddingVertical: 0,
+    textAlign: 'left',
   },
   studentRow: {
     flexDirection: 'row',
@@ -759,5 +768,6 @@ const ms = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
 });

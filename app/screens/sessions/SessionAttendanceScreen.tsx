@@ -313,6 +313,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: 'Cairo_400Regular',
     marginBottom: spacing.md,
+    textAlign: 'left',
   },
   sectionTitle: {
     ...typography.bodySmall,

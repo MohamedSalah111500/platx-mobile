@@ -76,6 +76,17 @@ export type HomeStackParamList = {
   EnrollmentRequests: { courseId?: number; courseName?: string } | undefined;
   SendNotification: undefined;
   CreateNews: undefined;
+  Groups: undefined;
+  GroupDetail: { groupId: number };
+  SubGroupDetail: { subGroupId: number; subGroupName?: string; groupId: number };
+  LiveSessions: undefined;
+  CreateLive: undefined;
+  HonorBoard: undefined;
+  Reports: undefined;
+  AttendanceDetail: { groupId: number; groupName: string };
+  ExamReportDetail: { examId: number; examName: string };
+  MyExams: undefined;
+  ExamResult: { examId: number };
 };
 
 export type CoursesStackParamList = {

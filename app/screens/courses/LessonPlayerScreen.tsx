@@ -36,6 +36,7 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { useSound } from '../../hooks/useSound';
 import LessonQuiz from './LessonQuiz';
 
+import { BackButton } from '../../components/ui/BackButton';
 type Props = NativeStackScreenProps<CoursesStackParamList, 'LessonPlayer'>;
 
 // Origin used for the WebView wrapper page. Must be a domain that is in the Bunny
@@ -318,13 +319,13 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
     if (!lesson) return { icon: 'play-circle', label: t('lessons.video'), color: theme.colors.primary };
     switch (lesson.type) {
       case 2:
-        return { icon: 'document-text', label: t('courses.document'), color: '#3B82F6' };
+        return { icon: 'document-text', label: t('courses.document'), color: theme.colors.primary };
       case 3:
         return { icon: 'clipboard', label: t('courses.exam'), color: '#F59E0B' };
       case 4:
-        return { icon: 'document-attach', label: t('courses.file'), color: '#8B5CF6' };
+        return { icon: 'document-attach', label: t('courses.file'), color: theme.colors.primary };
       case 5:
-        return { icon: 'link', label: t('courses.link'), color: '#0EA5E9' };
+        return { icon: 'link', label: t('courses.link'), color: theme.colors.primary };
       default:
         return { icon: 'play-circle', label: t('lessons.video'), color: theme.colors.primary };
     }
@@ -342,9 +343,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
-          <TouchableOpacity style={[styles.backButton, { backgroundColor: theme.colors.card }]} onPress={() => navigation.goBack()}>
-            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={20} color={theme.colors.text} />
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} />
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{t('lessons.loadingLesson')}</Text>
           <View style={{ width: 40 }} />
         </View>
@@ -360,9 +359,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
-          <TouchableOpacity style={[styles.backButton, { backgroundColor: theme.colors.card }]} onPress={() => navigation.goBack()}>
-            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={20} color={theme.colors.text} />
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} />
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{t('lessons.title')}</Text>
           <View style={{ width: 40 }} />
         </View>
@@ -385,9 +382,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
-          <TouchableOpacity style={[styles.backButton, { backgroundColor: theme.colors.card }]} onPress={() => navigation.goBack()}>
-            <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={20} color={theme.colors.text} />
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} />
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{t('lessons.title')}</Text>
           <View style={{ width: 40 }} />
         </View>
@@ -408,12 +403,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
     <SafeAreaView style={[styles.container, { backgroundColor: isQuiz ? theme.colors.background : '#000' }]} edges={['top']}>
       {/* Header — dark over the media area; quizzes have no media, so follow the theme */}
       <View style={[styles.header, { backgroundColor: isQuiz ? theme.colors.background : '#000' }]}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: isQuiz ? theme.colors.card : 'rgba(255,255,255,0.12)' }]}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={20} color={isQuiz ? theme.colors.text : '#fff'} />
-        </TouchableOpacity>
+        <BackButton onPress={() => navigation.goBack()} />
         <Text style={[styles.headerTitle, { color: isQuiz ? theme.colors.text : '#fff' }]} numberOfLines={1}>
           {lesson.title}
         </Text>
@@ -452,12 +442,12 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
           {isLink ? (
             lesson.openInNewTab || !(lesson.embedUrl || lesson.linkUrl) ? (
               <View style={styles.docPanel}>
-                <View style={[styles.docIconBig, { backgroundColor: '#0EA5E9' }]}>
+                <View style={[styles.docIconBig, { backgroundColor: theme.colors.primary }]}>
                   <Ionicons name="link" size={38} color="#fff" />
                 </View>
                 <Text style={styles.docPanelTitle} numberOfLines={2}>{lesson.title}</Text>
                 <TouchableOpacity
-                  style={[styles.docOpenBtn, { backgroundColor: '#0EA5E9' }]}
+                  style={[styles.docOpenBtn, { backgroundColor: theme.colors.primary }]}
                   onPress={openLink}
                   activeOpacity={0.85}
                 >
@@ -570,7 +560,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
                 </View>
                 {completed && (
                   <View style={styles.completedTag}>
-                    <Ionicons name="checkmark-circle" size={14} color="#34C38F" />
+                    <Ionicons name="checkmark-circle" size={14} color={theme.colors.success} />
                     <Text style={styles.completedTagText}>{t('courses.completed')}</Text>
                   </View>
                 )}
@@ -615,8 +605,8 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
                 onPress={handleComplete}
                 activeOpacity={0.7}
               >
-                <View style={[styles.completeCardIcon, { backgroundColor: '#34C38F' + tintAlpha }]}>
-                  <Ionicons name="checkmark-done" size={20} color="#34C38F" />
+                <View style={[styles.completeCardIcon, { backgroundColor: theme.colors.success + tintAlpha }]}>
+                  <Ionicons name="checkmark-done" size={20} color={theme.colors.success} />
                 </View>
                 <View style={styles.completeCardInfo}>
                   <Text style={[styles.completeCardTitle, { color: theme.colors.text }]}>{t('lessons.markComplete')}</Text>
@@ -670,6 +660,7 @@ const styles = StyleSheet.create({
   viewsText: {
     fontSize: 14,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
   viewsNoticeTitle: {
     fontSize: 17,
@@ -746,6 +737,7 @@ const styles = StyleSheet.create({
   noVideoText: {
     fontSize: fontSize.sm,
     color: '#666',
+    textAlign: 'left',
   },
   // Document / file panel
   docPanel: {
@@ -794,6 +786,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   // Info section
   infoScroll: {
@@ -826,8 +819,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   typeBadgeText: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   completedTag: {
     flexDirection: 'row',
@@ -835,15 +829,17 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   completedTagText: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
     color: '#34C38F',
+    textAlign: 'left',
   },
   lessonTitle: {
     fontSize: fontSize.lg,
     fontFamily: 'Cairo_700Bold',
     marginBottom: spacing.sm,
     lineHeight: 26,
+    textAlign: 'left',
   },
   metaRow: {
     flexDirection: 'row',
@@ -858,6 +854,7 @@ const styles = StyleSheet.create({
   metaText: {
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
   descriptionWrap: {
     borderTopWidth: 1,
@@ -892,9 +889,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
     marginBottom: 2,
+    textAlign: 'left',
   },
   completeCardSub: {
-    fontSize: 11,
+    fontSize: 14,
+    textAlign: 'left',
   },
   // Error
   errorContainer: {

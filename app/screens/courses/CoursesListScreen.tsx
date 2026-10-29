@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,8 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
-  Image,
   Share,
-  Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -19,8 +18,8 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { Spinner } from '../../components/ui/Spinner';
 import { SearchBar } from '../../components/ui/SearchBar';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
-import { spacing, borderRadius } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
+import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 import { coursesApi } from '../../services/api/courses.api';
 import type { CoursesStackParamList } from '../../types/navigation.types';
 import { ACCESS_SCOPE, type Course, type Enrollment } from '../../types/course.types';
@@ -28,6 +27,12 @@ import { resolveCourseAvailability } from '../../utils/courseAvailability';
 import { CourseAvailabilityBadge } from '../../components/course/CourseAvailabilityBadge';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { formatPrice } from '../../utils/price';
+import { useDisplayFormat } from '../../hooks/useDisplayFormat';
+import { MediaCard } from '../../components/ui/MediaCard';
+import { RowCard } from '../../components/ui/RowCard';
+import { Chip } from '../../components/ui/Chip';
+import { PlayCircle } from '../../components/ui/PlayCircle';
+import { ProgressBar } from '../../components/ui/ProgressBar';
 
 // A single character is too short to search; treat it as "no filter" so the
 // rendered list, the debounced search and loadMore always use the same query.
@@ -37,8 +42,6 @@ function effectiveQuery(q: string): string {
 }
 import { useRTL } from '../../i18n/RTLProvider';
 
-const CARD_ACCENT = ['#7c63fd', '#F5A623', '#34C38F', '#F46A6A', '#9B59B6', '#1ABC9C'];
-
 type Props = NativeStackScreenProps<CoursesStackParamList, 'CoursesList'>;
 
 export default function CoursesListScreen({ navigation, route }: Props) {
@@ -46,13 +49,9 @@ export default function CoursesListScreen({ navigation, route }: Props) {
   const { user, domain, isStudent } = useAuth();
   const { t, isRTL, locale } = useRTL();
 
-  // if the logged‑in account is a student but we don't have an ID, things
-  // like enrollments/notifications will not work. log a warning and show an
-  // inline message so developers can diagnose the server response.
-  if (isStudent && !user?.studentId) {
-    console.warn('[CoursesList] student user without studentId, API calls may fail');
-  }
   const insets = useSafeAreaInsets();
+  const format = useDisplayFormat();
+  const { width: windowWidth } = useWindowDimensions();
   // A search handed over from Home must land on the tab that actually searches,
   // otherwise the query is silently dropped on the enrolled tab.
   const openedWithSearch = !!route.params?.search;
@@ -202,179 +201,144 @@ export default function CoursesListScreen({ navigation, route }: Props) {
     } catch {}
   };
 
-  const bgColor = theme.colors.background;
+  const isWide = windowWidth >= 600;
+  const columns = isWide && activeTab === 'browse' ? 2 : 1;
 
-  const renderCourse = ({ item, index }: { item: Course; index: number }) => {
-    const accent = CARD_ACCENT[index % CARD_ACCENT.length];
-    const imageUrl = getFullImageUrl(item.previewImageUrl);
-    const isFree = item.isFree || item.price === 0;
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: theme.colors.background },
+        header: { paddingHorizontal: spacing.xl, paddingTop: insets.top + spacing.md, paddingBottom: spacing.md, gap: spacing.md },
+        titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+        backBtn: {
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          backgroundColor: theme.colors.card,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        title: { ...typography.screenTitle, color: theme.colors.text, flex: 1 },
+        tabRow: { flexDirection: 'row', gap: spacing.sm },
+        listContent: { paddingHorizontal: spacing.xl, paddingTop: spacing.xs, paddingBottom: spacing.xl, gap: spacing.sm },
+        column: { gap: spacing.sm },
+        cell: { flex: 1 / columns },
+        iconBtn: {
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: 'rgba(255,255,255,0.95)',
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        availability: { backgroundColor: 'rgba(255,255,255,0.95)' },
+        footerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm, alignSelf: 'stretch' },
+        progressText: { ...typography.bodySmall, color: theme.colors.textMuted },
+      }),
+    [theme, insets.top, columns],
+  );
+
+  const coursePrice = (item: Course) => {
+    if (item.isFree || item.price === 0) return t('courses.free');
     const hasDiscount = item.discountPrice != null && item.discountPrice < (item.price || 0);
+    return formatPrice(hasDiscount ? item.discountPrice : item.price, item.currencyCode, locale);
+  };
 
-    return (
-      <TouchableOpacity
-        style={[styles.card, { backgroundColor: theme.colors.card }]}
+  const renderCourse = ({ item }: { item: Course }) => (
+    <View style={styles.cell}>
+      <MediaCard
+        title={item.title || item.name || t('courses.untitled')}
+        meta={format.courseMeta(item)}
+        badge={coursePrice(item)}
+        imageUrl={getFullImageUrl(item.previewImageUrl)}
         onPress={() => navigation.navigate('CourseDetail', { courseId: item.id })}
-        activeOpacity={0.7}
-      >
-        {/* Image with accent overlay */}
-        <View style={styles.cardImageWrap}>
-          {imageUrl ? (
-            <Image source={{ uri: imageUrl }} style={styles.cardImage} />
-          ) : (
-            <View style={[styles.cardImage, styles.cardImagePlaceholder, { backgroundColor: accent + '15' }]}>
-              <Ionicons name="book-outline" size={32} color={accent} />
-            </View>
-          )}
-          {/* Price badge on image */}
-          <View style={[styles.priceBadge, { backgroundColor: isFree ? '#34C38F' : theme.colors.primary }]}>
-            <Text style={styles.priceBadgeText}>
-              {isFree ? t('courses.free') : formatPrice(hasDiscount ? item.discountPrice : item.price, item.currencyCode, locale)}
-            </Text>
-          </View>
-          <CourseAvailabilityBadge
-            availability={resolveCourseAvailability(item)}
-            style={{ ...styles.availabilityBadge, backgroundColor: theme.colors.card + 'EB' }}
-          />
-        </View>
-
-        {/* Info */}
-        <View style={styles.cardInfo}>
-          <Text style={[styles.cardTitle, { color: theme.colors.text }]} numberOfLines={2}>
-            {item.title || item.name || t('courses.untitled')}
-          </Text>
-
-          {item.instructorName ? (
-            <View style={styles.instructorRow}>
-              <View style={[styles.instructorDot, { backgroundColor: accent }]} />
-              <Text style={[styles.instructorText, { color: theme.colors.textMuted }]} numberOfLines={1}>
-                {item.instructorName}
-              </Text>
-            </View>
-          ) : null}
-
-          <View style={styles.metaRow}>
-            {item.totalLessons != null && (
-              <View style={[styles.metaChip, { backgroundColor: theme.colors.primary + '1A' }]}>
-                <Ionicons name="play-circle" size={12} color={theme.colors.primary} />
-                <Text style={[styles.metaChipText, { color: theme.colors.primary }]}>{item.totalLessons} {t('courses.lessons')}</Text>
-              </View>
-            )}
-            {item.totalHours != null && (
-              <View style={[styles.metaChip, { backgroundColor: '#F5A623' + (theme.dark ? '26' : '1A') }]}>
-                <Ionicons name="time" size={12} color="#F5A623" />
-                <Text style={[styles.metaChipText, { color: '#F5A623' }]}>{item.totalHours}h</Text>
-              </View>
-            )}
-            <View style={{ flex: 1 }} />
+        topEnd={
+          <>
+            <CourseAvailabilityBadge availability={resolveCourseAvailability(item)} style={styles.availability} />
             <TouchableOpacity
               onPress={() => handleShare(item)}
-              style={styles.shareBtn}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.iconBtn}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.share')}
             >
-              <Ionicons name="share-social-outline" size={18} color={theme.colors.textMuted} />
+              <Ionicons name="share-social-outline" size={18} color="#18181B" />
             </TouchableOpacity>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+          </>
+        }
+      />
+    </View>
+  );
 
-  const renderEnrolled = ({ item, index }: { item: Enrollment; index: number }) => {
+  const renderEnrolled = ({ item }: { item: Enrollment }) => {
     const course = item.course;
-    const accent = CARD_ACCENT[index % CARD_ACCENT.length];
-    const imageUrl = course ? getFullImageUrl(course.previewImageUrl) : null;
-    const progress = item.totalLessons > 0
-      ? Math.round((item.completedLessons / item.totalLessons) * 100)
-      : 0;
+    const progress = item.totalLessons > 0 ? Math.round((item.completedLessons / item.totalLessons) * 100) : 0;
+    const partial = item.accessScope === ACCESS_SCOPE.Partial ? t('courses.parts.partial') : null;
 
     return (
-      <TouchableOpacity
-        style={[styles.card, { backgroundColor: theme.colors.card }]}
+      <RowCard
+        title={course?.title || course?.name || t('courses.untitled')}
+        subtitle={[course?.instructorName, partial].filter(Boolean).join('  ·  ') || null}
+        imageUrl={course ? getFullImageUrl(course.previewImageUrl) : null}
+        icon="book-outline"
+        trailing={<PlayCircle size={36} />}
         onPress={() => navigation.navigate('CourseDetail', { courseId: item.courseId })}
-        activeOpacity={0.7}
-      >
-        <View style={styles.enrolledRow}>
-          {imageUrl ? (
-            <Image source={{ uri: imageUrl }} style={styles.enrolledImage} />
-          ) : (
-            <View style={[styles.enrolledImage, styles.cardImagePlaceholder, { backgroundColor: accent + '15' }]}>
-              <Ionicons name="book-outline" size={24} color={accent} />
-            </View>
-          )}
-          <View style={styles.enrolledInfo}>
-            <Text style={[styles.cardTitle, { color: theme.colors.text }]} numberOfLines={2}>
-              {course?.title || course?.name || t('courses.untitled')}
-            </Text>
-            {course?.instructorName ? (
-              <Text style={[styles.instructorText, { color: theme.colors.textMuted, marginTop: 2, marginBottom: 6 }]} numberOfLines={1}>
-                {course.instructorName}
-              </Text>
-            ) : null}
-            {item.accessScope === ACCESS_SCOPE.Partial && (
-              <View style={[styles.partialPill, { backgroundColor: theme.colors.info + '1A' }]}>
-                <Text style={[styles.partialPillText, { color: theme.colors.info }]}>{t('courses.parts.partial')}</Text>
-              </View>
-            )}
-            <View style={styles.progressWrap}>
-              <View style={[styles.progressBar, { backgroundColor: theme.colors.border }]}>
-                <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: accent }]} />
-              </View>
-              <Text style={[styles.progressText, { color: theme.colors.textMuted }]}>
-                {item.completedLessons}/{item.totalLessons} ({progress}%)
-              </Text>
-            </View>
+        footer={
+          <View style={styles.footerRow}>
+            <ProgressBar value={progress} style={{ flex: 1 }} />
+            <Text style={styles.progressText}>{format.percent(progress)}</Text>
           </View>
-        </View>
-      </TouchableOpacity>
+        }
+      />
     );
   };
 
+  const refreshControl = (
+    <RefreshControl
+      refreshing={refreshing}
+      onRefresh={onRefresh}
+      tintColor={theme.colors.primary}
+      colors={[theme.colors.primary]}
+      progressBackgroundColor={theme.colors.card}
+    />
+  );
+
   return (
-    <View style={[styles.container, { backgroundColor: bgColor }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
+    <View style={styles.container}>
+      <View style={styles.header}>
         <View style={styles.titleRow}>
           {navigation.canGoBack() && (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={8} activeOpacity={0.7}>
-              <Ionicons name={isRTL ? 'chevron-forward' : 'chevron-back'} size={22} color={theme.colors.text} />
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backBtn}
+              hitSlop={8}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.back')}
+            >
+              <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={22} color={theme.colors.text} />
             </TouchableOpacity>
           )}
-          <Text style={[styles.title, { color: theme.colors.text }]}>{t('courses.title')}</Text>
+          <Text style={styles.title}>{t('courses.title')}</Text>
         </View>
 
-        {/* Tab toggle */}
         {isStudent && (
           <View style={styles.tabRow}>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'enrolled' && styles.tabActive, activeTab === 'enrolled' && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }]}
+            <Chip
+              label={t('courses.myCourses')}
+              active={activeTab === 'enrolled'}
               onPress={() => { userPickedTabRef.current = true; setActiveTab('enrolled'); }}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.tabText, { color: theme.colors.textSecondary }, activeTab === 'enrolled' && styles.tabTextActive]}>
-                {t('courses.myCourses')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'browse' && styles.tabActive, activeTab === 'browse' && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }]}
+            />
+            <Chip
+              label={t('courses.browseCourses')}
+              active={activeTab === 'browse'}
               onPress={() => { userPickedTabRef.current = true; setActiveTab('browse'); }}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.tabText, { color: theme.colors.textSecondary }, activeTab === 'browse' && styles.tabTextActive]}>
-                {t('courses.browseCourses')}
-              </Text>
-            </TouchableOpacity>
+            />
           </View>
         )}
 
-        {/* Search */}
         {activeTab === 'browse' && (
-          <SearchBar
-            value={searchQuery}
-            onChangeText={onSearch}
-            placeholder={t('courses.searchCourses')}
-            radius={16}
-            style={{ marginTop: spacing.md }}
-          />
+          <SearchBar value={searchQuery} onChangeText={onSearch} placeholder={t('courses.searchCourses')} />
         )}
       </View>
 
@@ -382,12 +346,11 @@ export default function CoursesListScreen({ navigation, route }: Props) {
         <FlatList
           data={enrollments}
           renderItem={renderEnrolled}
-          keyExtractor={(item, idx) => item?.id != null ? item.id.toString() : `enroll-${idx}`}
+          keyExtractor={(item, idx) => (item?.id != null ? item.id.toString() : `enroll-${idx}`)}
           initialNumToRender={6}
           maxToRenderPerBatch={8}
           windowSize={9}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} colors={[theme.colors.primary]} progressBackgroundColor={theme.colors.card} />}
-          ListHeaderComponent={<View style={{ height: spacing.sm }} />}
+          refreshControl={refreshControl}
           ListEmptyComponent={
             loading ? (
               <Spinner />
@@ -402,16 +365,18 @@ export default function CoursesListScreen({ navigation, route }: Props) {
         />
       ) : (
         <FlatList
+          key={`browse-${columns}`}
           data={courses}
+          numColumns={columns}
+          columnWrapperStyle={columns > 1 ? styles.column : undefined}
           renderItem={renderCourse}
-          keyExtractor={(item, idx) => item?.id != null ? item.id.toString() : `course-${idx}`}
+          keyExtractor={(item, idx) => (item?.id != null ? item.id.toString() : `course-${idx}`)}
           initialNumToRender={6}
           maxToRenderPerBatch={8}
           windowSize={9}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} colors={[theme.colors.primary]} progressBackgroundColor={theme.colors.card} />}
+          refreshControl={refreshControl}
           onEndReached={onLoadMore}
           onEndReachedThreshold={0.3}
-          ListHeaderComponent={<View style={{ height: spacing.sm }} />}
           ListEmptyComponent={
             loading ? (
               <Spinner />
@@ -429,176 +394,3 @@ export default function CoursesListScreen({ navigation, route }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  // Price badge sits at the end edge, availability badge at the start edge, so
-  // they never overlap in either LTR or RTL.
-  availabilityBadge: { position: 'absolute', top: spacing.sm, start: spacing.sm },
-  container: { flex: 1 },
-  header: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.md,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginBottom: spacing.xs,
-  },
-  backBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginStart: -6,
-  },
-  title: {
-    ...typography.screenTitle,
-  },
-  listContent: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: 120,
-  },
-  card: {
-    borderRadius: 18,
-    marginBottom: spacing.md,
-    overflow: 'hidden',
-    
-  },
-  cardImageWrap: {
-    position: 'relative',
-  },
-  cardImage: {
-    width: '100%',
-    height: 160,
-  },
-  cardImagePlaceholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  priceBadge: {
-    position: 'absolute',
-    top: spacing.sm,
-    end: spacing.sm,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  priceBadgeText: {
-    color: '#fff',
-    fontSize: fontSize.xs,
-    fontFamily: 'Cairo_700Bold',
-  },
-  cardInfo: {
-    padding: spacing.lg,
-  },
-  cardTitle: {
-    fontSize: fontSize.base,
-    fontFamily: 'Cairo_700Bold',
-    lineHeight: Math.round(fontSize.base * 1.4),
-    marginBottom: 4,
-  },
-  instructorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: spacing.sm,
-  },
-  instructorDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  instructorText: {
-    fontSize: fontSize.xs,
-    flex: 1,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  metaChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  shareBtn: {
-    width: 28,
-    height: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  metaChipText: {
-    fontSize: 11,
-    fontFamily: 'Cairo_600SemiBold',
-  },
-  tabRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  tabActive: {},
-  tabText: {
-    fontSize: fontSize.sm,
-    fontFamily: 'Cairo_600SemiBold',
-  },
-  tabTextActive: {
-    color: '#fff',
-  },
-  // Enrolled card
-  enrolledRow: {
-    flexDirection: 'row',
-  },
-  enrolledImage: {
-    width: 100,
-    height: '100%',
-    minHeight: 120,
-  },
-  enrolledInfo: {
-    flex: 1,
-    padding: spacing.md,
-    justifyContent: 'space-between',
-  },
-  progressWrap: {
-    marginTop: spacing.xs,
-  },
-  progressBar: {
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  progressText: {
-    fontSize: 11,
-    marginTop: 4,
-  },
-  partialPill: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    marginBottom: 6,
-  },
-  partialPillText: {
-    fontSize: 12,
-    fontFamily: 'Cairo_600SemiBold',
-  },
-});

@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
   cardInfo: {
     flex: 1,
@@ -140,13 +141,16 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
+    textAlign: 'left',
   },
   cardMeta: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Cairo_500Medium',
+    textAlign: 'left',
   },
   percentText: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_700Bold',
+    textAlign: 'left',
   },
 });

@@ -17,6 +17,7 @@ import { examApi } from '../../services/api/exam.api';
 import type { ExamsStackParamList } from '../../types/navigation.types';
 import type { ExamHistoryItem } from '../../types/exam.types';
 
+import { appDateLocale } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<ExamsStackParamList, 'MyExams'>;
 
 const PAGE_SIZE = 20;
@@ -74,7 +75,7 @@ export default function MyExamsScreen({ navigation }: Props) {
   const renderItem = ({ item }: { item: ExamHistoryItem }) => {
     const status = statusOf(item);
     const graded = item.isAutoCorrect;
-    const date = item.examDate ? new Date(item.examDate).toLocaleDateString() : '';
+    const date = item.examDate ? new Date(item.examDate).toLocaleDateString(appDateLocale()) : '';
     return (
       <TouchableOpacity
         style={[styles.card, { backgroundColor: theme.colors.card }]}
@@ -156,20 +157,20 @@ export default function MyExamsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   list: { padding: spacing.lg, paddingBottom: 60, gap: spacing.md },
-  subtitle: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium' },
+  subtitle: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
   card: { borderRadius: 14, padding: spacing.md, gap: spacing.sm },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   cardTitleWrap: { flex: 1, gap: 2 },
-  title: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold' },
-  meta: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium' },
+  title: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  meta: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
   chip: { paddingHorizontal: 10, paddingVertical: 2, borderRadius: 10 },
-  chipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold' },
+  chipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   scoreRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  score: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold' },
+  score: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   track: { height: 6, borderRadius: 3, overflow: 'hidden' },
   fill: { height: 6, borderRadius: 3 },
   footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   counts: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  count: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', marginEnd: spacing.sm },
-  link: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
+  count: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', marginEnd: spacing.sm, textAlign: 'left' },
+  link: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
 });

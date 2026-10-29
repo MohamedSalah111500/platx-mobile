@@ -12,6 +12,7 @@
     "noResults": "No results found",
     "retry": "Retry",
     "back": "Back",
+    "share": "Share",
     "next": "Next",
     "done": "Done",
     "close": "Close",
@@ -29,7 +30,8 @@
     "justNow": "Just now",
     "minutesAgo": "{{count}}m ago",
     "hoursAgo": "{{count}}h ago",
-    "daysAgo": "{{count}}d ago"
+    "daysAgo": "{{count}}d ago",
+    "and": " "
   },
   "tabs": {
     "home": "Home",
@@ -291,7 +293,22 @@
     "live": "Live",
     "alerts": "Alerts",
     "startLearning": "Start learning",
-    "enrolledCourses": "Enrolled courses"
+    "enrolledCourses": "Enrolled courses",
+    "viewCourse": "View course",
+    "headline": "Let's learn something new today!",
+    "continueLearning": "Continue learning",
+    "progressDone": "{{pct}}% complete",
+    "clearSearch": "Clear search",
+    "lessonsCount": "{{count}} lesson",
+    "lessonsCount_plural": "{{count}} lessons",
+    "hoursCount": "{{count}} hour",
+    "hoursCount_plural": "{{count}} hours",
+    "studentsCount": "{{count}} student",
+    "studentsCount_plural": "{{count}} students",
+    "membersCount": "{{count}} member",
+    "membersCount_plural": "{{count}} members",
+    "minutesCount": "{{count}} minute",
+    "minutesCount_plural": "{{count}} minutes"
   },
   "courses": {
     "title": "Courses",
@@ -911,10 +928,7 @@
   "updateRequired": {
     "title": "Update required",
     "body": "This version is no longer supported. Update the app from the store to continue and get the latest features.",
-    "current": "Your version",
-    "latest": "Latest version",
     "update": "Update now",
-    "hint": "Open the app again after updating.",
     "storeFailed": "Couldn't open the store."
   },
   "profilePhoto": {
@@ -1149,5 +1163,14 @@
     "pending": "Waiting for grading",
     "pendingHint": "The result appears once the teacher grades the exam.",
     "viewDetails": "View details"
+  },
+  "languages": {
+    "arabic": "Arabic",
+    "english": "English",
+    "french": "French",
+    "german": "German",
+    "spanish": "Spanish",
+    "italian": "Italian",
+    "turkish": "Turkish"
   }
 }
