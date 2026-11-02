@@ -12,10 +12,12 @@ import {
   RefreshControl,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Spinner } from '../../components/ui/Spinner';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -31,20 +33,28 @@ import type { ProfileStackParamList } from '../../types/navigation.types';
 import type { GroupMember, SubGroup } from '../../types/group.types';
 import type { ChatMessage } from '../../types/chat.types';
 import { isOwnMessage } from '../chat/isOwnMessage';
+import { ActionSheet, type SheetAction } from '../../components/ui/ActionSheet';
+import { StudentActions } from '../../components/groups/StudentActions';
+import { GroupProgressPanel } from '../../components/groups/GroupProgressPanel';
 
 import { BackButton } from '../../components/ui/BackButton';
 import { appDateLocale } from '../../utils/dateLocale';
+import { sheetFrame } from '../../utils/responsive';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'SubGroupDetail'>;
 
-type Tab = 'students' | 'chat';
+type Tab = 'students' | 'chat' | 'progress';
 
 export default function SubGroupDetailScreen({ navigation, route }: Props) {
   const { subGroupId, subGroupName, groupId } = route.params;
   const { theme } = useTheme();
   const { t, isRTL } = useRTL();
-  const { isStaff, isAdmin, isStudent, user } = useAuth();
+  const { isStaff, isAdmin, isStudent, user, canModule } = useAuth();
   const insets = useSafeAreaInsets();
   const isTeacher = isStaff || isAdmin;
+  const canEdit = canModule('Groups', 'edit');
+  const canDelete = canModule('Groups', 'delete');
+  const [manageOpen, setManageOpen] = useState(false);
+  const [activeStudent, setActiveStudent] = useState<GroupMember | null>(null);
   const chatListRef = useRef<FlatList>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>('students');
@@ -81,9 +91,38 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
     }
   }, [subGroupId]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
+
+  const confirmDelete = () =>
+    Alert.alert(t('groupManage.deleteSubGroupTitle'), t('groupManage.deleteGroupConfirm', { name: subGroup?.name ?? subGroupName ?? '' }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await subGroupsApi.remove(subGroupId);
+            Alert.alert(t('common.success'), t('groupManage.deleted'));
+            navigation.goBack();
+          } catch (err: any) {
+            Alert.alert(t('common.error'), err?.userMessage || t('groupManage.deleteFailed'));
+          }
+        },
+      },
+    ]);
+
+  const manageActions: SheetAction[] = [
+    ...(canEdit
+      ? [{ key: 'edit', label: t('groupManage.editSubGroup'), icon: 'create-outline' as const, onPress: () => navigation.navigate('GroupForm', { parentGroupId: groupId, subGroupId }) }]
+      : []),
+    ...(canDelete
+      ? [{ key: 'delete', label: t('groupManage.deleteSubGroupTitle'), icon: 'trash-outline' as const, onPress: confirmDelete, danger: true }]
+      : []),
+  ];
 
   const loadMessages = useCallback(async () => {
     setChatLoading(true);
@@ -123,27 +162,6 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
   const getInitials = (first?: string, last?: string) =>
     `${(first?.[0] || '').toUpperCase()}${(last?.[0] || '').toUpperCase()}` || '?';
 
-  const handleRemoveStudent = (student: GroupMember) => {
-    Alert.alert(
-      t('groups.removeStudent'),
-      `${t('groups.confirmRemove')} ${student.firstName} ${student.lastName}?`,
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('groups.remove'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await subGroupsApi.removeStudent(subGroupId, student.id);
-              setStudents((prev) => prev.filter((s) => s.id !== student.id));
-            } catch {
-              Alert.alert(t('common.error'), t('groups.removeError'));
-            }
-          },
-        },
-      ]
-    );
-  };
 
   const openAddModal = async () => {
     setShowAddModal(true);
@@ -238,8 +256,13 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
           ) : null}
         </View>
         {isTeacher && (
-          <TouchableOpacity style={s.actionBtn} onPress={() => handleRemoveStudent(item)}>
-            <Ionicons name="person-remove-outline" size={18} color={theme.colors.danger} />
+          <TouchableOpacity
+            style={s.actionBtn}
+            onPress={() => setActiveStudent(item)}
+            accessibilityRole="button"
+            accessibilityLabel={t('groupManage.studentActions')}
+          >
+            <Ionicons name="ellipsis-vertical" size={18} color={theme.colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -392,6 +415,7 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
   const TABS: { key: Tab; label: string; icon: string }[] = [
     { key: 'students', label: t('groups.students'), icon: 'people-outline' },
     { key: 'chat', label: t('groups.chats'), icon: 'chatbubbles-outline' },
+    ...(isTeacher ? [{ key: 'progress' as Tab, label: t('groupManage.progress.tab'), icon: 'book-outline' }] : []),
   ];
 
   return (
@@ -400,7 +424,18 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
         <View style={s.headerRow}>
           <BackButton onPress={() => navigation.goBack()} tone="onColor" />
           <Text style={s.headerTitle} numberOfLines={1}>{title}</Text>
-          <View style={{ width: 40 }} />
+          {isTeacher && manageActions.length ? (
+            <TouchableOpacity
+              style={s.manageBtn}
+              onPress={() => setManageOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('groupManage.manage')}
+            >
+              <Ionicons name="ellipsis-horizontal" size={20} color="#fff" />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 40 }} />
+          )}
         </View>
 
         <View style={s.tabBar}>
@@ -433,8 +468,22 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
         <>
           {activeTab === 'students' && renderStudentsTab()}
           {activeTab === 'chat' && renderChatTab()}
+          {activeTab === 'progress' && (
+            <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing['3xl'] }} showsVerticalScrollIndicator={false}>
+              <GroupProgressPanel groupId={groupId} subGroupId={subGroupId} canToggle={isTeacher} canAssign={isAdmin} />
+            </ScrollView>
+          )}
         </>
       )}
+
+      <ActionSheet visible={manageOpen} title={title} actions={manageActions} onClose={() => setManageOpen(false)} />
+      <StudentActions
+        scope={{ kind: 'subgroup', groupId, subGroupId, groupName: title }}
+        student={activeStudent}
+        canManage={isTeacher}
+        onClose={() => setActiveStudent(null)}
+        onChanged={loadData}
+      />
 
       {isTeacher && (
         <Modal visible={showAddModal} animationType="slide" transparent>
@@ -511,6 +560,14 @@ const s = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
+  },
+  manageBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   backBtn: {
     width: 40,
@@ -718,6 +775,7 @@ const ms = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
+    ...sheetFrame,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: spacing.xl,

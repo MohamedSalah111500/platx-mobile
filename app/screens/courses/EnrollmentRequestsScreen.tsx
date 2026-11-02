@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, Image, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, Image, Alert, TouchableOpacity, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -10,6 +10,8 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
+import { Chip } from '../../components/ui/Chip';
+import { ProcessedRequestsList } from '../../components/courses/ProcessedRequestsList';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { fontSize } from '../../theme/typography';
 import { reservationsApi } from '../../services/api/reservations.api';
@@ -34,6 +36,7 @@ export default function EnrollmentRequestsScreen({ navigation, route }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [tab, setTab] = useState<'pending' | 'processed'>('pending');
 
   const load = useCallback(async (refresh = false) => {
     try {
@@ -163,9 +166,15 @@ export default function EnrollmentRequestsScreen({ navigation, route }: Props) {
   return (
     <View style={styles.container}>
       <ScreenHeader title={t('enrollmentRequests.title')} onBack={() => navigation.goBack()} />
-      {courseName ? <Text style={styles.courseName} numberOfLines={1}>{courseName}</Text> : null}
+      {courseName && tab === 'pending' ? <Text style={styles.courseName} numberOfLines={1}>{courseName}</Text> : null}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs} style={styles.tabsWrap}>
+        <Chip label={t('courseManage.processed.pendingTab')} active={tab === 'pending'} onPress={() => setTab('pending')} />
+        <Chip label={t('courseManage.processed.tab')} active={tab === 'processed'} onPress={() => setTab('processed')} />
+      </ScrollView>
 
-      {loading ? (
+      {tab === 'processed' ? (
+        <ProcessedRequestsList />
+      ) : loading ? (
         <Spinner />
       ) : error ? (
         <ErrorRetry message={error} onRetry={() => load()} />
@@ -195,6 +204,8 @@ function createStyles(theme: any) {
     container: { flex: 1, backgroundColor: theme.colors.background },
     courseName: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', color: theme.colors.textSecondary, textAlign: 'left' },
     list: { paddingHorizontal: spacing.lg, paddingTop: spacing.xs },
+    tabsWrap: { flexGrow: 0 },
+    tabs: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
     card: {
       backgroundColor: theme.colors.card,
       borderRadius: borderRadius.xl,
@@ -210,7 +221,7 @@ function createStyles(theme: any) {
     metaText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', color: theme.colors.textSecondary, textAlign: 'left' },
     messageBox: { backgroundColor: theme.colors.surface, borderRadius: borderRadius.md, padding: spacing.sm },
     messageText: { fontSize: fontSize.sm, lineHeight: 20, fontFamily: 'Cairo_400Regular', color: theme.colors.textSecondary, textAlign: 'left' },
-    proof: { width: '100%', height: 160, borderRadius: borderRadius.lg, backgroundColor: theme.colors.surface },
+    proof: { width: '100%', aspectRatio: 16 / 9, maxHeight: 320, borderRadius: borderRadius.lg, backgroundColor: theme.colors.surface },
     actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
     actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: spacing.sm + 2, borderRadius: borderRadius.full },
     actionText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },

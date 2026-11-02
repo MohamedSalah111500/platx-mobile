@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   RefreshControl,
   Image,
-  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useContentWidth } from '../../utils/responsive';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { useRTL } from '../../i18n/RTLProvider';
@@ -66,7 +66,7 @@ export default function HomeScreen({ navigation }: Props) {
   const format = useDisplayFormat();
   const insets = useSafeAreaInsets();
   const tabBarSpace = useTabBarSpace();
-  const { width: windowWidth } = useWindowDimensions();
+  const windowWidth = useContentWidth();
 
   const [news, setNews] = useState<NewsItem[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -87,6 +87,7 @@ export default function HomeScreen({ navigation }: Props) {
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
   const fetchUnreadCount = useNotificationsStore((s) => s.fetchUnreadCount);
   const isWide = windowWidth >= 600;
+  const courseCount = windowWidth >= 900 ? 3 : 2;
 
   useEffect(() => {
     if (isStudent) fetchUnreadCount();
@@ -244,6 +245,18 @@ export default function HomeScreen({ navigation }: Props) {
     { key: 'chat', icon: 'chatbubbles-outline', label: t('chat.title'), onPress: () => navigation.getParent()?.navigate('ChatTab') },
     ...(isTeacherOrAdmin
       ? [
+          {
+            key: 'students',
+            icon: 'school-outline' as const,
+            label: t('people.students.title'),
+            onPress: () => navigation.getParent()?.navigate('ProfileTab', { screen: 'Students', initial: false }),
+          },
+          {
+            key: 'staff',
+            icon: 'id-card-outline' as const,
+            label: t('people.staff.title'),
+            onPress: () => navigation.getParent()?.navigate('ProfileTab', { screen: 'StaffList', initial: false }),
+          },
           { key: 'requests', icon: 'mail-unread-outline' as const, label: t('enrollmentRequests.title'), onPress: () => navigation.navigate('EnrollmentRequests') },
           ...(canManageNews
             ? [{ key: 'news', icon: 'newspaper-outline' as const, label: t('createNews.new'), onPress: () => navigation.navigate('CreateNews') }]
@@ -569,7 +582,7 @@ export default function HomeScreen({ navigation }: Props) {
               onSeeAll={() => navigation.navigate('CoursesList')}
             />
             <View style={styles.courseRow}>
-              {courses.slice(0, 2).map((course) => (
+              {courses.slice(0, courseCount).map((course) => (
                 <MediaCard
                   key={course.id}
                   style={styles.courseCell}

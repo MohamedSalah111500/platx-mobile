@@ -8,6 +8,7 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { QrCode } from '../ui/QrCode';
 
+import { dialogFrame } from '../../utils/responsive';
 export function StudentCodeButton({ code }: { code: string }) {
   const { theme } = useTheme();
   const { t } = useRTL();
@@ -74,6 +75,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   sheet: {
+    ...dialogFrame,
     borderRadius: 24,
     padding: spacing.xl,
     alignItems: 'center',

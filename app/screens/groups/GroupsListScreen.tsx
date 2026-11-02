@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -26,7 +27,7 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'Groups'>;
 
 export default function GroupsListScreen({ navigation }: Props) {
   const { theme } = useTheme();
-  const { user, isStudent } = useAuth();
+  const { user, isStudent, isAdmin } = useAuth();
   const { t, isRTL } = useRTL();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,9 +77,11 @@ export default function GroupsListScreen({ navigation }: Props) {
     }
   };
 
-  useEffect(() => {
-    loadGroups();
-  }, [isStudent, user?.studentId]);
+  useFocusEffect(
+    useCallback(() => {
+      loadGroups();
+    }, [isStudent, user?.studentId])
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -167,11 +170,27 @@ export default function GroupsListScreen({ navigation }: Props) {
       ...typography.caption,
       color: theme.colors.textMuted,
     },
+    addButton: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   });
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title={isStudent ? t('groups.myGroups') : t('groups.title')} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={isStudent ? t('groups.myGroups') : t('groups.title')}
+        onBack={() => navigation.goBack()}
+        rightElement={
+          isAdmin ? (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('GroupForm')}
+              style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
+              accessibilityRole="button"
+              accessibilityLabel={t('groupManage.addGroup')}
+            >
+              <Ionicons name="add" size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+          ) : undefined
+        }
+      />
 
       <FlatList
         data={groups}

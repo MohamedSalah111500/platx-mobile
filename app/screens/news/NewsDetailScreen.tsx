@@ -55,7 +55,8 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
     },
     image: {
       width: '100%',
-      height: 220,
+      aspectRatio: 16 / 9,
+      maxHeight: 420,
       backgroundColor: theme.colors.surface,
     },
     imagePlaceholder: {

@@ -9,6 +9,7 @@ import { typography } from '../../theme/typography';
 import { formatAmount } from '../../utils/price';
 import { WalletPayCard } from '../wallet/WalletPayCard';
 
+import { sheetFrame } from '../../utils/responsive';
 export interface PartPurchase {
   kind: 'section' | 'lesson';
   id: number;
@@ -80,6 +81,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   sheet: {
+    ...sheetFrame,
     maxHeight: '90%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,

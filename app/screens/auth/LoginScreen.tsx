@@ -24,6 +24,7 @@ import type { AuthStackParamList } from '../../types/navigation.types';
 import { useRTL } from '../../i18n/RTLProvider';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { GradientBackground } from '../../components/ui/GradientBackground';
+import { dialogFrame, formFrame } from '../../utils/responsive';
 import { isAppleSignInAvailable } from '../../services/auth/appleAuth';
 import { academyStorage } from '../../services/storage/academy.storage';
 
@@ -316,6 +317,7 @@ function createStyles(theme: any) {
       justifyContent: 'center',
     },
     formSection: {
+      ...formFrame,
       padding: spacing['2xl'],
     },
     title: {
@@ -345,7 +347,7 @@ function createStyles(theme: any) {
       marginTop: spacing['2xl'],
     },
     parentLink: {
-      alignSelf: 'center',
+      alignSelf: 'stretch',
       marginTop: spacing.lg,
       paddingBottom: spacing['2xl'],
     },
@@ -353,6 +355,7 @@ function createStyles(theme: any) {
       ...typography.bodySmall,
       color: theme.colors.textSecondary,
       textDecorationLine: 'underline',
+      textAlign: 'center',
     },
     footerText: {
       ...typography.body,
@@ -376,6 +379,8 @@ function createStyles(theme: any) {
       ...typography.caption,
       color: theme.colors.textMuted,
       marginHorizontal: spacing.md,
+      minWidth: '30%',
+      textAlign: 'center',
     },
     appleButtonWrap: {
       marginBottom: spacing.md,
@@ -410,7 +415,7 @@ function createStyles(theme: any) {
       padding: spacing['2xl'],
     },
     modalCard: {
-      width: '100%',
+      ...dialogFrame,
       borderRadius: 20,
       padding: spacing['2xl'],
     },

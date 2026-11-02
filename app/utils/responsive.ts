@@ -1,47 +1,56 @@
-import { Dimensions, PixelRatio } from 'react-native';
+import { createContext, useContext } from 'react';
+import { useWindowDimensions, type ViewStyle } from 'react-native';
 
-const { width, height } = Dimensions.get('window');
+export const TABLET_MIN_WIDTH = 768;
+export const CONTENT_MAX_WIDTH = 960;
+export const FORM_MAX_WIDTH = 600;
+export const SHEET_MAX_WIDTH = 600;
+export const DIALOG_MAX_WIDTH = 480;
+export const TAB_BAR_MAX_WIDTH = 520;
 
-// Design base width (iPhone 14 = 390px)
-const BASE_WIDTH = 390;
-const BASE_HEIGHT = 844;
+export type FrameKind = 'content' | 'form' | 'full';
 
-export const SCREEN_WIDTH = width;
-export const SCREEN_HEIGHT = height;
+export const FRAME_MAX_WIDTH: Record<FrameKind, number> = {
+  content: CONTENT_MAX_WIDTH,
+  form: FORM_MAX_WIDTH,
+  full: Number.POSITIVE_INFINITY,
+};
 
-// Tablet: width >= 768
-export const isTablet = width >= 768;
+const ContentWidthContext = createContext<number | null>(null);
 
-// Scale size relative to design width
-export function scale(size: number): number {
-  return (width / BASE_WIDTH) * size;
+export const ContentWidthProvider = ContentWidthContext.Provider;
+
+export function useContentWidth(): number {
+  const { width } = useWindowDimensions();
+  const frameWidth = useContext(ContentWidthContext);
+  return frameWidth == null ? width : Math.min(width, frameWidth);
 }
 
-// Scale height relative to design height
-export function verticalScale(size: number): number {
-  return (height / BASE_HEIGHT) * size;
+export function useIsTablet(): boolean {
+  const { width } = useWindowDimensions();
+  return width >= TABLET_MIN_WIDTH;
 }
 
-// Moderate scale: grows slower than screen to avoid oversized UI on tablets
-// factor: 0 = no scaling, 1 = full scaling. Default 0.5
-export function moderateScale(size: number, factor = 0.5): number {
-  return size + (scale(size) - size) * factor;
-}
+export const sheetFrame: ViewStyle = {
+  width: '100%',
+  maxWidth: SHEET_MAX_WIDTH,
+  alignSelf: 'center',
+};
 
-// Font size that scales moderately — tablets get bigger text but not double
-export function rf(size: number): number {
-  const scaled = moderateScale(size, isTablet ? 0.3 : 0.25);
-  return Math.round(PixelRatio.roundToNearestPixel(scaled));
-}
+export const dialogFrame: ViewStyle = {
+  width: '100%',
+  maxWidth: DIALOG_MAX_WIDTH,
+  alignSelf: 'center',
+};
 
-// Horizontal padding that gives more breathing room on tablets
-export function hp(size: number): number {
-  return isTablet ? size * 1.5 : size;
-}
+export const contentFrame: ViewStyle = {
+  width: '100%',
+  maxWidth: CONTENT_MAX_WIDTH,
+  alignSelf: 'center',
+};
 
-// Number of columns for grid layouts
-export function gridColumns(base = 2): number {
-  if (width >= 1024) return base + 2; // Large tablet / landscape
-  if (width >= 768) return base + 1;  // Tablet
-  return base;
-}
+export const formFrame: ViewStyle = {
+  width: '100%',
+  maxWidth: FORM_MAX_WIDTH,
+  alignSelf: 'center',
+};

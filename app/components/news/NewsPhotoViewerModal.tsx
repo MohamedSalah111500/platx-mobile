@@ -11,7 +11,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -25,7 +24,6 @@ import { newsApi } from '../../services/api/news.api';
 import type { NewsComment } from '../../types/news.types';
 import { parseServerDate } from '../../utils/date';
 
-const { height: SCREEN_H } = Dimensions.get('window');
 
 type Props = {
   visible: boolean;
@@ -227,7 +225,7 @@ const styles = StyleSheet.create({
 
   imageWrap: {
     width: '100%',
-    height: SCREEN_H * 0.36,
+    height: '36%',
     backgroundColor: '#000',
   },
   image: { width: '100%', height: '100%' },

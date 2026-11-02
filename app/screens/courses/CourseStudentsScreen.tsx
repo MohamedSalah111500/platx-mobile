@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -10,6 +10,7 @@ import { Input } from '../../components/ui/Input';
 import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
+import { Chip } from '../../components/ui/Chip';
 import { CourseAvailabilityBadge } from '../../components/course/CourseAvailabilityBadge';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { fontSize } from '../../theme/typography';
@@ -23,9 +24,17 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'CourseStudents'>;
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 600;
 const SEARCH_MIN_CHARS = 2;
+const STATUS_FILTERS: { value: number | null; label: string }[] = [
+  { value: null, label: 'courseManage.history.all' },
+  { value: ENROLLMENT_STATUS.Active, label: 'courseStudents.status.active' },
+  { value: ENROLLMENT_STATUS.Completed, label: 'courseStudents.status.completed' },
+  { value: ENROLLMENT_STATUS.Suspended, label: 'courseStudents.status.suspended' },
+  { value: ENROLLMENT_STATUS.Cancelled, label: 'courseStudents.status.cancelled' },
+];
 
 export default function CourseStudentsScreen({ navigation, route }: Props) {
-  const { courseId, courseName } = route.params;
+  const courseId = route.params?.courseId;
+  const courseName = route.params?.courseName;
   const { theme } = useTheme();
   const { t } = useRTL();
   const insets = useSafeAreaInsets();
@@ -38,6 +47,7 @@ export default function CourseStudentsScreen({ navigation, route }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<number | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async (pageNum: number, term: string, mode: 'initial' | 'more' | 'refresh' = 'initial') => {
@@ -46,7 +56,7 @@ export default function CourseStudentsScreen({ navigation, route }: Props) {
       if (mode === 'initial') setLoading(true);
       if (mode === 'more') setLoadingMore(true);
       if (mode === 'refresh') setRefreshing(true);
-      const res = await coursesApi.getEnrollmentHistory({ courseId, page: pageNum, size: PAGE_SIZE, search: term });
+      const res = await coursesApi.getEnrollmentHistory({ courseId, page: pageNum, size: PAGE_SIZE, search: term, status });
       setItems((prev) => (pageNum === 1 ? res.items : [...prev, ...res.items]));
       setTotalCount(res.totalCount);
       setPage(pageNum);
@@ -57,10 +67,10 @@ export default function CourseStudentsScreen({ navigation, route }: Props) {
       setLoadingMore(false);
       setRefreshing(false);
     }
-  }, [courseId, t]);
+  }, [courseId, status, t]);
 
   useEffect(() => {
-    load(1, '');
+    load(1, search.trim());
   }, [load]);
 
   const onSearch = (text: string) => {
@@ -118,6 +128,7 @@ export default function CourseStudentsScreen({ navigation, route }: Props) {
             </View>
           </View>
           {item.studentEmail ? <Text style={styles.email} numberOfLines={1}>{item.studentEmail}</Text> : null}
+          {!courseId ? <Text style={styles.email} numberOfLines={1}>{item.courseName}</Text> : null}
           <View style={styles.metaRow}>
             <Ionicons name="calendar-outline" size={13} color={theme.colors.textMuted} />
             <Text style={styles.metaText}>
@@ -137,7 +148,7 @@ export default function CourseStudentsScreen({ navigation, route }: Props) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title={t('courseStudents.title')} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={courseId ? t('courseStudents.title') : t('courseManage.history.title')} onBack={() => navigation.goBack()} />
       <View style={styles.headerBlock}>
         {courseName ? <Text style={styles.courseName} numberOfLines={1}>{courseName}</Text> : null}
         <View style={styles.summaryRow}>
@@ -147,6 +158,16 @@ export default function CourseStudentsScreen({ navigation, route }: Props) {
           ) : null}
         </View>
         <Input value={search} onChangeText={onSearch} placeholder={t('courseStudents.search')} autoCapitalize="none" />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+          {STATUS_FILTERS.map((option) => (
+            <Chip
+              key={String(option.value)}
+              label={t(option.label)}
+              active={status === option.value}
+              onPress={() => setStatus(option.value)}
+            />
+          ))}
+        </ScrollView>
       </View>
 
       {loading ? (
@@ -180,6 +201,7 @@ function createStyles(theme: any) {
     summaryRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     summary: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', color: theme.colors.textMuted, textAlign: 'left' },
     list: { paddingHorizontal: spacing.lg, paddingTop: spacing.xs },
+    chips: { gap: spacing.sm },
     card: {
       flexDirection: 'row',
       gap: spacing.md,

@@ -1,5 +1,6 @@
 import apiClient from './client';
 import { PAYMENT_METHODS_URLS, RESERVATIONS_URLS } from './endpoints';
+import type { ProcessedReservation } from '../../types/course.types';
 import type {
   PaymentMethod,
   CreateReservationInput,
@@ -32,6 +33,33 @@ export const reservationsApi = {
     if (Array.isArray(data)) return data;
     if (Array.isArray(data?.items)) return data.items;
     return [];
+  },
+
+  getProcessed: async (filter: {
+    page: number;
+    size: number;
+    search?: string;
+    status?: number | null;
+  }): Promise<{ items: ProcessedReservation[]; totalCount: number; retentionDays: number }> => {
+    const params: Record<string, string | number> = { page: filter.page, size: filter.size };
+    if (filter.search) params.search = filter.search;
+    if (filter.status != null) params.status = filter.status;
+    const { data } = await apiClient.get<any>(RESERVATIONS_URLS.PROCESSED, { params });
+    return {
+      items: (data?.items ?? []).map((r: any) => ({
+        id: Number(r.id),
+        studentName: r.studentName ?? '',
+        studentEmail: r.studentEmail ?? null,
+        courseName: r.courseName ?? '',
+        status: Number(r.status),
+        processedDate: r.processedDate ?? '',
+        adminNotes: r.adminNotes ?? null,
+        receiptUrl: r.receiptUrl ?? null,
+        daysUntilDeletion: Number(r.daysUntilDeletion) || 0,
+      })),
+      totalCount: Number(data?.totalCount) || 0,
+      retentionDays: Number(data?.retentionDays) || 0,
+    };
   },
 
   // Student's own purchase requests (all statuses), used to show "under review".

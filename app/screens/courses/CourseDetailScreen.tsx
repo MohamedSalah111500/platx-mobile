@@ -10,7 +10,6 @@ import {
   Alert,
   Share,
   Platform,
-  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +22,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import * as WebBrowser from 'expo-web-browser';
+import { courseManageApi } from '../../services/api/courseManage.api';
 import { coursesApi } from '../../services/api/courses.api';
 import { reservationsApi } from '../../services/api/reservations.api';
 import { CERTIFICATE_URLS } from '../../services/api/endpoints';
@@ -40,6 +40,7 @@ import { useSound } from '../../hooks/useSound';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { PartPurchaseSheet, type PartPurchase } from '../../components/course/PartPurchaseSheet';
 import { formatAmount } from '../../utils/price';
+import { useContentWidth } from '../../utils/responsive';
 
 import { appDateLocale } from '../../utils/dateLocale';
 type Props = {
@@ -47,8 +48,8 @@ type Props = {
   route: { params: { courseId: number } };
 };
 
-const { width: SCREEN_W } = Dimensions.get('window');
-const HERO_HEIGHT = SCREEN_W * 0.56;
+const HERO_RATIO = 0.56;
+const HERO_MAX_HEIGHT = 420;
 
 type RequestStatus = 'none' | 'pending' | 'rejected';
 
@@ -63,13 +64,32 @@ function reservationStatusOf(r: StudentReservation | undefined): RequestStatus {
 export default function CourseDetailScreen({ navigation, route }: Props) {
   const { courseId } = route.params;
   const { theme } = useTheme();
-  const { user, isStudent, isAdmin, isStaff, domain } = useAuth();
+  const heroHeight = Math.min(useContentWidth() * HERO_RATIO, HERO_MAX_HEIGHT);
+  const { user, isStudent, isAdmin, isStaff, domain, canModule } = useAuth();
   const { t, isRTL } = useRTL();
   const format = useDisplayFormat();
   const { play } = useSound();
   const insets = useSafeAreaInsets();
 
   const isOwner = isAdmin || isStaff;
+
+  const confirmDeleteCourse = () =>
+    Alert.alert(t('courseManage.deleteCourse'), t('courseManage.deleteCourseConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await courseManageApi.remove(courseId);
+            Alert.alert(t('common.success'), t('courseManage.deleted'));
+            navigation.goBack();
+          } catch (err: any) {
+            Alert.alert(t('common.error'), err?.userMessage || t('courseManage.deleteFailed'));
+          }
+        },
+      },
+    ]);
   // In dark mode `divider` equals the card colour, so lines drawn on cards vanish.
   const lineColor = theme.dark ? theme.colors.border : theme.colors.divider;
 
@@ -388,7 +408,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
 
         {/* ── Hero ── */}
-        <View style={{ height: HERO_HEIGHT }}>
+        <View style={{ height: heroHeight }}>
           {getFullImageUrl(course.previewImageUrl) ? (
             <Image source={{ uri: getFullImageUrl(course.previewImageUrl)! }} style={StyleSheet.absoluteFill} resizeMode="cover" />
           ) : (
@@ -521,6 +541,11 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
           <View style={[styles.manageCard, { backgroundColor: theme.colors.card, borderColor: lineColor }]}>
             <Text style={[styles.manageHeading, { color: theme.colors.textMuted }]}>{t('courses.manage.title')}</Text>
             {[
+              ...(canModule('OnlineCourses', 'edit')
+                ? [{ key: 'edit', icon: 'create-outline', label: t('courseManage.editCourse'), sub: t('courseManage.editCourseSub'), screen: 'CourseForm' as const }]
+                : []),
+              { key: 'content', icon: 'layers-outline', label: t('courseManage.content.title'), sub: t('courseManage.content.sub'), screen: 'CourseContent' as const },
+              { key: 'codes', icon: 'qr-code-outline', label: t('courseManage.codes.title'), sub: t('courseManage.codes.sub'), screen: 'EnrollmentCodes' as const },
               { key: 'settings', icon: 'options-outline', label: t('courses.manage.settings'), sub: t('courses.manage.settingsSub'), screen: 'CourseSettings' as const },
               { key: 'students', icon: 'people-outline', label: t('courses.manage.students'), sub: t('courses.manage.studentsSub'), screen: 'CourseStudents' as const },
               { key: 'requests', icon: 'mail-unread-outline', label: t('courses.manage.requests'), sub: t(REQUEST_ONLY ? 'courses.manage.joinRequestsSub' : 'courses.manage.requestsSub'), screen: 'EnrollmentRequests' as const },
@@ -543,6 +568,16 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                 <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
               </TouchableOpacity>
             ))}
+            {canModule('OnlineCourses', 'delete') ? (
+              <TouchableOpacity style={styles.manageRow} activeOpacity={0.7} onPress={confirmDeleteCourse} accessibilityRole="button">
+                <View style={[styles.manageIcon, { backgroundColor: theme.colors.danger + '18' }]}>
+                  <Ionicons name="trash-outline" size={18} color={theme.colors.danger} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.manageTitle, { color: theme.colors.danger }]}>{t('courseManage.deleteCourse')}</Text>
+                </View>
+              </TouchableOpacity>
+            ) : null}
           </View>
         )}
 
@@ -1177,6 +1212,7 @@ const styles = StyleSheet.create({
   },
   stickyActions: {
     flexDirection: 'row',
+    justifyContent: 'center',
     gap: spacing.sm,
   },
   upgradeNote: {

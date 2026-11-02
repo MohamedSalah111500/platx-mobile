@@ -147,14 +147,17 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
       ...typography.body,
       color: theme.colors.textSecondary,
       textAlign: 'center',
-      marginBottom: spacing['3xl'],
     },
     emailHighlight: {
+      ...typography.body,
       color: theme.colors.primary,
       fontFamily: 'Cairo_600SemiBold',
-      textAlign: 'left',
+      textAlign: 'center',
+      writingDirection: 'ltr',
+      marginBottom: spacing['3xl'],
     },
     otpContainer: {
+      direction: 'ltr',
       flexDirection: 'row',
       justifyContent: 'center',
       gap: spacing.sm,
@@ -228,10 +231,8 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
         <Text style={styles.title}>
           {type === 'email_confirm' ? t('auth.verifyEmail') : t('auth.enterResetCode')}
         </Text>
-        <Text style={styles.subtitle}>
-          {t('auth.verificationSentTo')}{'\n'}
-          <Text style={styles.emailHighlight}>{email}</Text>
-        </Text>
+        <Text style={styles.subtitle}>{t('auth.verificationSentTo')}</Text>
+        <Text style={styles.emailHighlight}>{email}</Text>
 
         {error && (
           <View style={styles.errorBanner}>

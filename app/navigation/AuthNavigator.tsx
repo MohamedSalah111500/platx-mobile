@@ -1,5 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { frameScreenLayout } from './screenFrame';
 import type { AuthStackParamList } from '../types/navigation.types';
 
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -14,7 +15,7 @@ const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AuthNavigator() {
   return (
-    <Stack.Navigator
+    <Stack.Navigator screenLayout={frameScreenLayout}
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',

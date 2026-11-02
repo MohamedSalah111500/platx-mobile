@@ -31,6 +31,9 @@ export const WALLET_URLS = {
   PAY_LIVE: (liveClassroomId: number) => `${BASE}api/wallet/pay/live/${liveClassroomId}`,
   PAY_SECTION: (sectionId: number) => `${BASE}api/wallet/pay/section/${sectionId}`,
   PAY_LESSON: (lessonId: number) => `${BASE}api/wallet/pay/lesson/${lessonId}`,
+  STUDENT: (studentId: number) => `${BASE}api/wallet/students/${studentId}`,
+  STUDENT_TRANSACTIONS: (studentId: number) => `${BASE}api/wallet/students/${studentId}/transactions`,
+  ADJUST: (studentId: number) => `${BASE}api/wallet/students/${studentId}/adjust`,
 };
 
 export const ENROLLMENT_CODE_URLS = {
@@ -54,6 +57,40 @@ export const GROUPS_URLS = {
     `${BASE}api/Groups/add-student/${groupId}/${studentId}`,
   GET_STUDENT_GROUPS: (studentId: number | string) =>
     `${BASE}api/Groups/student/${studentId}/groups`,
+  ALL: `${BASE}api/Groups/all`,
+  MOVE_STUDENT: (groupId: number, studentId: number, targetGroupId: number) =>
+    `${BASE}api/Groups/move-student/${groupId}/${studentId}/${targetGroupId}`,
+  MOVE_STUDENT_TO_SUBGROUP: (groupId: number, studentId: number, targetSubGroupId: number) =>
+    `${BASE}api/Groups/move-student-to-subgroup/${groupId}/${studentId}/${targetSubGroupId}`,
+  ADD_STAFF: (groupId: number, staffId: number) => `${BASE}api/Groups/add-staff/${groupId}/${staffId}`,
+  REMOVE_STAFF: (groupId: number, staffId: number) => `${BASE}api/Groups/remove-staff/${groupId}/${staffId}`,
+  ASSIGN_FILES: (groupId: number) => `${BASE}api/Groups/assign-file/${groupId}`,
+  UNASSIGN_FILE: (groupId: number, fileId: number) => `${BASE}api/Groups/delete-file/${groupId}/${fileId}`,
+};
+
+export const GROUP_ASSIGNMENT_URLS = {
+  GRADES_WITH_PROGRESS: (groupId: number, subGroupId?: number) =>
+    `${BASE}api/GroupAssignment/AllGradesWithAssignment/${groupId}${subGroupId ? `?subGroupId=${subGroupId}` : ''}`,
+  PROGRESS: `${BASE}api/GroupAssignment/GradeProgress`,
+  ASSIGN_GRADE: `${BASE}api/GroupAssignment/AssignGradeToGroup`,
+  REMOVE: (groupId: number, subGroupId?: number) =>
+    `${BASE}api/GroupAssignment/${groupId}${subGroupId ? `?subGroupId=${subGroupId}` : ''}`,
+};
+
+export const GRADES_URLS = {
+  GET: `${BASE}api/Grades`,
+};
+
+export const LIBRARY_URLS = {
+  ATTACHMENTS: `${BASE}api/Attachements`,
+  ATTACHMENT_LOOKUP: (search: string, size: number, includeIds: number[] = []) =>
+    `${BASE}api/Attachements/lookup?search=${encodeURIComponent(search)}&size=${size}` +
+    includeIds.map((id) => `&includeIds=${id}`).join(''),
+  GENERAL_FILE: `${BASE}api/Files`,
+  VIDEO_UPLOAD: (title: string) => `${BASE}api/Media/upload?title=${encodeURIComponent(title)}`,
+  MY_USAGE: `${BASE}api/SubscriptionLimits/my-usage`,
+  EXAM_LOOKUP: (search: string, size: number, includeId?: number | null) =>
+    `${BASE}api/ExamTemplate/lookup?search=${encodeURIComponent(search)}&size=${size}${includeId ? `&includeId=${includeId}` : ''}`,
 };
 
 // News endpoints
@@ -125,6 +162,7 @@ export const COURSES_URLS = {
     `${BASE}api/Course/ActiveCourse/${id}?IsActive=${isActive}`,
   UPDATE_SCHEDULE: (id: number) => `${BASE}api/Course/${id}/schedule`,
   ENROLLMENT_HISTORY: `${BASE}api/Learning/enrollment-history`,
+  GET_STUDENT_COURSES: (studentId: number) => `${BASE}api/Learning/students/${studentId}/courses`,
   GET_STUDENT_ENROLLMENTS: (studentId: number) =>
     `${BASE}api/Learning/student/${studentId}/enrollments`,
   GET_ENROLLMENT: (studentId: number, courseId: number) =>
@@ -169,11 +207,28 @@ export const ONLINE_COURSE_URLS = {
 // Course section endpoints (sections with lessons)
 export const COURSE_SECTION_URLS = {
   GET_BY_COURSE: (courseId: number) => `${BASE}api/CourseSection/course/${courseId}`,
+  CREATE: `${BASE}api/CourseSection`,
+  SINGLE: (id: number) => `${BASE}api/CourseSection/${id}`,
+  REORDER: (id: number, newOrderIndex: number) => `${BASE}api/CourseSection/reorder/${id}?newOrderIndex=${newOrderIndex}`,
 };
 
 // Course lesson endpoints
 export const COURSE_LESSON_URLS = {
   GET_LESSON_VIDEO: (lessonId: number) => `${BASE}api/CourseLesson/CheckForStudent/${lessonId}`,
+  ADMIN_SINGLE: (id: number) => `${BASE}api/CourseLesson/Admin/Lesson/${id}`,
+  CREATE: `${BASE}api/CourseLesson`,
+  SINGLE: (id: number) => `${BASE}api/CourseLesson/${id}`,
+  REORDER: (id: number, newOrderIndex: number) => `${BASE}api/CourseLesson/reorder/${id}?newOrderIndex=${newOrderIndex}`,
+};
+
+export const HOME_SETTING_URL = `${BASE}api/HomeEditor/GetHomeSetting`;
+
+export const ENROLLMENT_TOKEN_URLS = {
+  GENERATE: (courseId: number) => `${BASE}api/CourseEnrollmentToken/course/${courseId}/generate`,
+  BY_COURSE: (courseId: number) => `${BASE}api/CourseEnrollmentToken/course/${courseId}`,
+  STATS: (courseId: number) => `${BASE}api/CourseEnrollmentToken/course/${courseId}/stats`,
+  DEACTIVATE: (id: number) => `${BASE}api/CourseEnrollmentToken/${id}/deactivate`,
+  SINGLE: (id: number) => `${BASE}api/CourseEnrollmentToken/${id}`,
 };
 
 // Bunny video streaming endpoints
@@ -240,8 +295,35 @@ export const STUDENTS_URLS = {
   // (the JWT carries the Identity user GUID, not the student id).
   ME: `${BASE}api/Students/me`,
   GET_BY_ID: (id: number) => `${BASE}api/Students/${id}`,
+  CREATE: `${BASE}api/Students`,
   UPDATE: `${BASE}api/Students`,
   DELETE: (id: number) => `${BASE}api/Students/${id}`,
+};
+
+export const BULK_STUDENT_IMPORT_URLS = {
+  TEMPLATE: `${BASE}api/BulkStudentImport/template`,
+  UPLOAD: `${BASE}api/BulkStudentImport/upload`,
+  JOBS: `${BASE}api/BulkStudentImport/jobs`,
+  JOB_DETAILS: (id: number) => `${BASE}api/BulkStudentImport/jobs/${id}`,
+};
+
+export const JOB_TITLES_URLS = {
+  GET_ALL: `${BASE}api/JobTitles`,
+};
+
+export const DEVICE_PROTECTION_URLS = {
+  STUDENT_DEVICES: (studentId: number) => `${BASE}api/device-protection/students/${studentId}/devices`,
+  REMOVE_DEVICE: (studentId: number, deviceId: number) =>
+    `${BASE}api/device-protection/students/${studentId}/devices/${deviceId}`,
+  REVOKE_SESSIONS: (studentId: number) => `${BASE}api/device-protection/students/${studentId}/sessions/revoke`,
+  BLOCK: (studentId: number) => `${BASE}api/device-protection/students/${studentId}/block`,
+  UNBLOCK: (studentId: number) => `${BASE}api/device-protection/students/${studentId}/unblock`,
+  ACTIVITY: (studentId: number) => `${BASE}api/device-protection/students/${studentId}/activity`,
+};
+
+export const WHATSAPP_URLS = {
+  STUDENT: (studentId: number) => `${BASE}api/whatsapp/students/${studentId}`,
+  STUDENT_REPORT: (studentId: number) => `${BASE}api/whatsapp/students/${studentId}/report`,
 };
 
 // Honor Board endpoints
@@ -280,6 +362,7 @@ export const STAFF_URLS = {
   CREATE: `${BASE}api/Staffs`,
   UPDATE: `${BASE}api/Staffs`,
   DELETE: (id: number) => `${BASE}api/Staffs/${id}`,
+  PERMISSIONS: (id: number) => `${BASE}api/Staffs/${id}/permissions`,
 };
 
 // Dashboard endpoints
@@ -292,6 +375,7 @@ export const RESERVATIONS_URLS = {
   CREATE: `${BASE}api/Reservations`,
   MY: (studentId: number) => `${BASE}api/Reservations/student/${studentId}`,
   PENDING: `${BASE}api/admin/AdminReservations/pending`,
+  PROCESSED: `${BASE}api/admin/AdminReservations/processed`,
   APPROVE: (id: number | string) => `${BASE}api/admin/AdminReservations/${id}/approve`,
   REJECT: (id: number | string) => `${BASE}api/admin/AdminReservations/${id}/reject`,
   ENROLL_STUDENT: `${BASE}api/admin/AdminReservations/enroll-student`,
@@ -321,6 +405,11 @@ export const SUBGROUPS_URLS = {
   GET_STUDENT_SUBGROUPS: (studentId: number) =>
     `${BASE}api/SubGroups/student/${studentId}/sub-groups`,
   GET_ALL: `${BASE}api/SubGroups/all`,
+  BASE: `${BASE}api/SubGroups`,
+  MOVE_TO_GROUP: (subGroupId: number, studentId: number, targetGroupId: number) =>
+    `${BASE}api/SubGroups/move-student-to-group/${subGroupId}/${studentId}/${targetGroupId}`,
+  MOVE_TO_SUBGROUP: (subGroupId: number, studentId: number, targetSubGroupId: number) =>
+    `${BASE}api/SubGroups/move-student-to-sub-group/${subGroupId}/${studentId}/${targetSubGroupId}`,
 };
 
 export const DEVICE_TOKEN_URLS = {
@@ -329,6 +418,9 @@ export const DEVICE_TOKEN_URLS = {
 };
 
 export const GUARDIAN_URLS = {
+  STUDENT_CODE: (studentId: number) => `${BASE}api/guardian/students/${studentId}/code`,
+  STUDENT_LINKS: (studentId: number) => `${BASE}api/guardian/students/${studentId}/links`,
+  STUDENT_LINK: (studentId: number, linkId: number) => `${BASE}api/guardian/students/${studentId}/links/${linkId}`,
   REDEEM: `${BASE}api/guardian/redeem`,
   CHILDREN: `${BASE}api/guardian/children`,
   ATTENDANCE: (studentId: number) => `${BASE}api/guardian/children/${studentId}/attendance`,

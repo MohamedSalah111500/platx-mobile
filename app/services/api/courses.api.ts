@@ -61,6 +61,7 @@ export const coursesApi = {
     page?: number;
     size?: number;
     search?: string;
+    status?: number | null;
   }): Promise<PaginatedResponse<EnrollmentHistoryItem>> => {
     const params: Record<string, string | number> = {
       page: filter.page ?? 1,
@@ -69,11 +70,17 @@ export const coursesApi = {
     if (filter.courseId) params.courseId = filter.courseId;
     if (filter.studentId) params.studentId = filter.studentId;
     if (filter.search) params.search = filter.search;
+    if (filter.status != null) params.status = filter.status;
     const { data } = await apiClient.get<PaginatedResponse<EnrollmentHistoryItem>>(
       COURSES_URLS.ENROLLMENT_HISTORY,
       { params }
     );
     return data;
+  },
+
+  getStudentCourses: async (studentId: number): Promise<EnrollmentHistoryItem[]> => {
+    const { data } = await apiClient.get<EnrollmentHistoryItem[]>(COURSES_URLS.GET_STUDENT_COURSES(studentId));
+    return Array.isArray(data) ? data : [];
   },
 
   getStudentEnrollments: async (studentId: number): Promise<Enrollment[]> => {

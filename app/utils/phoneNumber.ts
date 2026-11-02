@@ -24,6 +24,14 @@ export function toE164Phone(input: string | null | undefined, country: CountryCo
   return phone.number;
 }
 
+export function splitPhone(value: string | null | undefined): { country: CountryCode; national: string } {
+  const raw = toAsciiDigits((value ?? '').trim());
+  if (!raw) return { country: DEFAULT_PHONE_COUNTRY, national: '' };
+  const phone = parsePhoneNumberFromString(raw, DEFAULT_PHONE_COUNTRY);
+  if (phone?.country) return { country: phone.country, national: phone.nationalNumber };
+  return { country: DEFAULT_PHONE_COUNTRY, national: raw };
+}
+
 export function flagEmoji(country: string): string {
   return country
     .toUpperCase()

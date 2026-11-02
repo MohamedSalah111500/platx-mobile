@@ -1,3 +1,5 @@
+import type { ModulePermission } from './people.types';
+
 export type TRole = 'SuperAdmin' | 'Admin' | 'Staff' | 'Student';
 
 export interface LoginPayload {
@@ -39,6 +41,7 @@ export interface User {
   studentId?: number;
   studentCode?: string;
   staffId?: number;
+  modulePermissions?: ModulePermission[];
 }
 
 export interface RegisterPayload {

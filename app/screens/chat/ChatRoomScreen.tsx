@@ -40,7 +40,7 @@ const AVATAR_COLORS = [
 type ListItem = { type: 'date'; label: string; key: string } | { type: 'msg'; data: ChatMessage; key: string };
 
 export default function ChatRoomScreen({ navigation, route }: Props) {
-  const { groupId, groupName, staffId, staffName, subGroupId, chatType, membersCount } =
+  const { groupId, groupName, staffId, staffName, subGroupId, chatType, membersCount, studentId } =
     route.params;
   const { theme } = useTheme();
   const { user, isStudent } = useAuth();
@@ -53,18 +53,21 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
 
   const isStaffChat = chatType === 'staff' && !!staffId;
   const isSubGroupChat = chatType === 'subgroup' && !!subGroupId;
+  const isStudentChat = chatType === 'student' && !!studentId && !isStudent;
 
   useEffect(() => {
     loadMessages();
     const interval = setInterval(loadMessages, 10000);
     return () => clearInterval(interval);
-  }, [groupId, staffId, subGroupId]);
+  }, [groupId, staffId, subGroupId, studentId]);
 
   const loadMessages = async () => {
     try {
       let data: ChatMessage[];
       if (isStaffChat && staffId) {
         data = await chatApi.getMessagesWithStaff(groupId, staffId);
+      } else if (isStudentChat && studentId) {
+        data = await chatApi.getMessagesWithStudent(studentId, groupId);
       } else if (isSubGroupChat && subGroupId) {
         data = isStudent
           ? await chatApi.getMessagesForStudentSubGroup(subGroupId)
@@ -91,6 +94,8 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
     try {
       if (isStaffChat && staffId) {
         await chatApi.sendToStaffFromStudent({ content: messageText, groupId, staffId });
+      } else if (isStudentChat && studentId) {
+        await chatApi.sendToStudent({ content: messageText, studentId, groupId });
       } else if (isSubGroupChat && subGroupId) {
         if (isStudent) {
           await chatApi.sendToSubGroupFromStudent({ content: messageText, subGroupId });
@@ -113,6 +118,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
 
   const isOwnMessage = (message: ChatMessage) => {
     if (isStaffChat) return !!message.senderStudentId && !message.senderStaffId;
+    if (isStudentChat) return !!(message.senderStaffId || message.senderStaff) && !message.senderStudentId && !message.senderStudent;
     return checkIsOwnMessage(message, user, isStudent);
   };
 

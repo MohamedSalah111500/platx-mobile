@@ -1,5 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { frameScreenLayout } from '../screenFrame';
 import type { HomeworkStackParamList } from '../../types/navigation.types';
 
 import HomeworkListScreen from '../../screens/homework/HomeworkListScreen';
@@ -11,7 +12,7 @@ const Stack = createNativeStackNavigator<HomeworkStackParamList>();
 
 export default function HomeworkStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenLayout={frameScreenLayout} screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeworkList" component={HomeworkListScreen} />
       <Stack.Screen name="HomeworkDetail" component={HomeworkDetailScreen} />
       <Stack.Screen name="HomeworkSubmissions" component={HomeworkSubmissionsScreen} />

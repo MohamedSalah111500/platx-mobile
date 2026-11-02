@@ -8,6 +8,8 @@ import { setInMemoryToken, setOnUnauthorized } from '../services/api/client';
 import { signalRService } from '../services/realtime/signalr.service';
 import { unregisterPushNotifications } from '../services/realtime/pushNotifications';
 import { extractNumericId, extractTenantDomain } from '../utils/jwt';
+import { toModulePermissions } from '../utils/modulePermissions';
+import type { ModulePermission } from '../types/people.types';
 import { logger } from '../services/logger';
 import { signInWithGoogle } from '../services/auth/googleAuth';
 import { signInWithApple } from '../services/auth/appleAuth';
@@ -66,6 +68,7 @@ interface AuthActions {
   setLoading: (loading: boolean) => void;
   dismissWelcome: () => void;
   setProfilePhoto: (url: string | null) => Promise<void>;
+  setModulePermissions: (permissions: ModulePermission[]) => Promise<void>;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -113,6 +116,7 @@ function processAuthResponse(
       // GetStaffNotificationListAsync. There is no api/Staffs/me to resolve it later.
       staffId: Number.isFinite(staffId) && staffId > 0 ? staffId : undefined,
       profileImage: _resp.profileImage ?? _resp.student?.profileImage ?? _resp.staff?.profileImage ?? undefined,
+      modulePermissions: _resp.staff ? toModulePermissions(_resp.staff.permissions) : undefined,
     },
     domain,
   };
@@ -624,6 +628,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (!current) return;
 
     const user: User = { ...current, profileImage: url ?? undefined };
+    set({ user });
+    await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+  },
+
+  setModulePermissions: async (permissions: ModulePermission[]) => {
+    const current = get().user;
+    if (!current) return;
+
+    const user: User = { ...current, modulePermissions: permissions };
     set({ user });
     await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
   },

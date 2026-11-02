@@ -55,6 +55,8 @@ export type CheckoutParams = {
   upgrade?: boolean;
 };
 
+export type GroupFormParams = { groupId?: number; subGroupId?: number; parentGroupId?: number } | undefined;
+
 export type HomeStackParamList = {
   Home: undefined;
   NewsDetail: { newsId: number; newsItem?: import('./news.types').NewsItem };
@@ -72,8 +74,14 @@ export type HomeStackParamList = {
   NotificationsList: undefined;
   EnrollStudent: { courseId: number; courseName?: string };
   CourseSettings: { courseId: number; courseName?: string };
-  CourseStudents: { courseId: number; courseName?: string };
+  CourseStudents: { courseId?: number; courseName?: string } | undefined;
   EnrollmentRequests: { courseId?: number; courseName?: string } | undefined;
+  CourseForm: { courseId?: number; courseName?: string } | undefined;
+  CourseContent: { courseId: number; courseName?: string };
+  SectionForm: { courseId: number; sectionId?: number };
+  LessonForm: { courseId: number; sectionId: number; lessonId?: number };
+  EnrollmentCodes: { courseId: number; courseName?: string };
+  GroupForm: GroupFormParams;
   SendNotification: undefined;
   CreateNews: undefined;
   Groups: undefined;
@@ -112,7 +120,7 @@ export type ChatStackParamList = {
     staffId?: number;
     staffName?: string;
     subGroupId?: number;
-    chatType?: 'group' | 'staff' | 'subgroup';
+    chatType?: 'group' | 'staff' | 'subgroup' | 'student';
   };
 };
 
@@ -125,7 +133,7 @@ export type ExamsStackParamList = {
   ExamsList: undefined;
   CreateExam: undefined;
   ExamTaking: { examId: number };
-  ExamResult: { examId: number };
+  ExamResult: { examId: number; studentId?: number };
   MyExams: undefined;
 };
 
@@ -145,6 +153,7 @@ export type ProfileStackParamList = {
   Groups: undefined;
   GroupDetail: { groupId: number };
   SubGroupDetail: { subGroupId: number; subGroupName?: string; groupId: number };
+  GroupForm: GroupFormParams;
   LiveSessions: undefined;
   CreateLive: undefined;
   HonorBoard: undefined;
@@ -156,4 +165,14 @@ export type ProfileStackParamList = {
   SessionAttendance: { sessionId: number; title: string };
   AttendanceDetail: { groupId: number; groupName: string };
   ExamReportDetail: { examId: number; examName: string };
+  Students: undefined;
+  StudentForm: { studentId?: number } | undefined;
+  StudentDetail: { studentId: number };
+  StudentDevices: { studentId: number };
+  StudentsBulkImport: undefined;
+  StaffList: undefined;
+  StaffForm: { staffId?: number } | undefined;
+  StaffDetail: { staffId: number };
+  StaffPermissions: { staffId: number; staffName?: string };
+  ExamResult: { examId: number; studentId?: number };
 };

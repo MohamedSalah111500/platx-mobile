@@ -7,6 +7,7 @@ import { useRTL } from '../i18n/RTLProvider';
 import { useUIStore } from '../store/ui.store';
 import { spacing, borderRadius } from '../theme/spacing';
 import { fontSize } from '../theme/typography';
+import { sheetFrame } from '../utils/responsive';
 
 /**
  * Optional-update prompt: a new store version exists but the installed one still
@@ -69,6 +70,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   banner: {
+    ...sheetFrame,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,

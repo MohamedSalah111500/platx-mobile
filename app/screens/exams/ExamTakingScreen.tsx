@@ -603,7 +603,8 @@ const styles = StyleSheet.create({
   },
   questionImage: {
     width: '100%',
-    height: 200,
+    aspectRatio: 16 / 9,
+    maxHeight: 360,
     borderRadius: 12,
     marginBottom: spacing.md,
   },

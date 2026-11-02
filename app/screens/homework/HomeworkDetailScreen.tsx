@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
   qNumText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   qScore: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
   qBody: { fontSize: fontSize.base, fontFamily: 'Cairo_500Medium', lineHeight: 24, textAlign: 'left' },
-  qImage: { width: '100%', height: 180, borderRadius: 12 },
+  qImage: { width: '100%', aspectRatio: 16 / 9, maxHeight: 360, borderRadius: 12 },
   essayInput: {
     minHeight: 100,
     borderWidth: 1.5,

@@ -6,6 +6,7 @@ import { useTheme } from '@theme/ThemeProvider';
 import { spacing } from '@theme/spacing';
 import { typography, fontSize } from '@theme/typography';
 
+import { sheetFrame } from '../../utils/responsive';
 export interface SelectOption<T extends string> {
   value: T;
   label: string;
@@ -123,6 +124,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   sheet: {
+    ...sheetFrame,
     maxHeight: '75%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,

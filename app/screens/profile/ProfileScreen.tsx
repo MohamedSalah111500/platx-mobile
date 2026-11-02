@@ -48,6 +48,8 @@ export default function ProfileScreen({ navigation }: Props) {
   const canReports = can('REPORTS');
   const canSessions = can('SESSIONS');
   const canMySessions = can('MY_SESSIONS');
+  const canStudents = can('STUDENTS_MANAGE');
+  const canStaff = can('STAFF_MANAGE');
   const isStaffOrAdmin = !isStudent;
 
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
@@ -120,6 +122,24 @@ export default function ProfileScreen({ navigation }: Props) {
   const firstName = user?.firstName || '';
   const lastName = user?.lastName || '';
   const generalMenuItems: { iconName: string; iconBg: string; iconColor: string; label: string; onPress: () => void }[] = [];
+  if (canStudents) {
+    generalMenuItems.push({
+      iconName: 'school',
+      iconBg: theme.colors.primaryLight,
+      iconColor: theme.colors.primary,
+      label: t('people.students.title'),
+      onPress: () => navigation.navigate('Students'),
+    });
+  }
+  if (canStaff) {
+    generalMenuItems.push({
+      iconName: 'id-card',
+      iconBg: theme.colors.primaryLight,
+      iconColor: theme.colors.primary,
+      label: t('people.staff.title'),
+      onPress: () => navigation.navigate('StaffList'),
+    });
+  }
   generalMenuItems.push({
     iconName: 'document-text',
     iconBg: theme.colors.primaryLight,
@@ -268,6 +288,7 @@ export default function ProfileScreen({ navigation }: Props) {
                   iconColor: theme.colors.primary,
                   value: statsLoading ? '-' : String(dashStats?.totalStudents ?? '-'),
                   label: t('home.students'),
+                  onPress: canStudents ? () => navigation.navigate('Students') : undefined,
                 },
                 {
                   key: 'lecturers',
@@ -276,6 +297,7 @@ export default function ProfileScreen({ navigation }: Props) {
                   iconColor: theme.colors.primary,
                   value: statsLoading ? '-' : String(dashStats?.totalLecturers ?? '-'),
                   label: t('home.lecturers'),
+                  onPress: canStaff ? () => navigation.navigate('StaffList') : undefined,
                 },
                 {
                   key: 'courses',

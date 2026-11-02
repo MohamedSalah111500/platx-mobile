@@ -13,11 +13,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
-  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { useAuth } from '../../hooks/useAuth';
@@ -34,20 +34,32 @@ import type { ProfileStackParamList } from '../../types/navigation.types';
 import type { Group, GroupMember, GroupFile, SubGroup } from '../../types/group.types';
 import type { ChatMessage } from '../../types/chat.types';
 import { isOwnMessage } from '../chat/isOwnMessage';
+import { ActionSheet, type SheetAction } from '../../components/ui/ActionSheet';
+import { StudentActions } from '../../components/groups/StudentActions';
+import { GroupProgressPanel } from '../../components/groups/GroupProgressPanel';
+import { GroupFilesSection, GroupStaffSection } from '../../components/groups/GroupMembersSections';
+import { GROUP_STATUS } from '../../types/group.types';
 
 import { BackButton } from '../../components/ui/BackButton';
 import { appDateLocale } from '../../utils/dateLocale';
+import { sheetFrame } from '../../utils/responsive';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'GroupDetail'>;
 
-type Tab = 'students' | 'subgroups' | 'chat' | 'info';
+type Tab = 'students' | 'subgroups' | 'chat' | 'progress' | 'info';
 
 export default function GroupDetailScreen({ navigation, route }: Props) {
   const { groupId } = route.params;
   const { theme } = useTheme();
   const { t, isRTL } = useRTL();
-  const { isStaff, isAdmin, isStudent, user } = useAuth();
+  const { isStaff, isAdmin, isStudent, user, canModule } = useAuth();
   const insets = useSafeAreaInsets();
   const isTeacher = isStaff || isAdmin;
+  const canEditGroup = canModule('Groups', 'edit');
+  const canDeleteGroup = canModule('Groups', 'delete');
+  const [manageOpen, setManageOpen] = useState(false);
+  const [activeStudent, setActiveStudent] = useState<GroupMember | null>(null);
+  const [activeSubGroup, setActiveSubGroup] = useState<SubGroup | null>(null);
+  const focusedOnce = useRef(false);
   const chatListRef = useRef<FlatList>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>('students');
@@ -146,9 +158,86 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
     }
   }, [groupId, isStudent]);
 
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
+      if (!focusedOnce.current) {
+        focusedOnce.current = true;
+        loadGroupData();
+        return;
+      }
+      loadGroupData();
+      loadSubGroups();
+    }, [loadGroupData, loadSubGroups])
+  );
+
+  const reloadAll = () => {
     loadGroupData();
-  }, [loadGroupData]);
+    loadSubGroups();
+  };
+
+  const confirmDeleteGroup = () =>
+    Alert.alert(t('groupManage.deleteGroupTitle'), t('groupManage.deleteGroupConfirm', { name: group?.name ?? '' }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await groupsApi.delete(groupId);
+            Alert.alert(t('common.success'), t('groupManage.deleted'));
+            navigation.goBack();
+          } catch (err: any) {
+            Alert.alert(t('common.error'), err?.userMessage || t('groupManage.deleteFailed'));
+          }
+        },
+      },
+    ]);
+
+  const confirmDeleteSubGroup = (sg: SubGroup) =>
+    Alert.alert(t('groupManage.deleteSubGroupTitle'), t('groupManage.deleteGroupConfirm', { name: sg.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await subGroupsApi.remove(sg.id);
+            loadSubGroups();
+          } catch (err: any) {
+            Alert.alert(t('common.error'), err?.userMessage || t('groupManage.deleteFailed'));
+          }
+        },
+      },
+    ]);
+
+  const manageActions: SheetAction[] = [
+    ...(canEditGroup
+      ? [{ key: 'edit', label: t('groupManage.editGroup'), icon: 'create-outline' as const, onPress: () => navigation.navigate('GroupForm', { groupId }) }]
+      : []),
+    ...(isAdmin
+      ? [{ key: 'addSub', label: t('groupManage.addSubGroup'), icon: 'git-branch-outline' as const, onPress: () => navigation.navigate('GroupForm', { parentGroupId: groupId }) }]
+      : []),
+    ...(canDeleteGroup
+      ? [{ key: 'delete', label: t('groupManage.deleteGroup'), icon: 'trash-outline' as const, onPress: confirmDeleteGroup, danger: true }]
+      : []),
+  ];
+
+  const subGroupActions: SheetAction[] = activeSubGroup
+    ? [
+        {
+          key: 'open',
+          label: t('groupManage.openSubGroup'),
+          icon: 'open-outline',
+          onPress: () => navigation.navigate('SubGroupDetail', { subGroupId: activeSubGroup.id, subGroupName: activeSubGroup.name, groupId }),
+        },
+        ...(canEditGroup
+          ? [{ key: 'edit', label: t('groupManage.editSubGroup'), icon: 'create-outline' as const, onPress: () => navigation.navigate('GroupForm', { parentGroupId: groupId, subGroupId: activeSubGroup.id }) }]
+          : []),
+        ...(canDeleteGroup
+          ? [{ key: 'delete', label: t('groupManage.deleteSubGroupTitle'), icon: 'trash-outline' as const, onPress: () => confirmDeleteSubGroup(activeSubGroup), danger: true }]
+          : []),
+      ]
+    : [];
 
   useEffect(() => {
     if (activeTab === 'chat') {
@@ -174,27 +263,6 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
     return name.includes(searchTerm.toLowerCase());
   });
 
-  const handleRemoveStudent = (student: GroupMember) => {
-    Alert.alert(
-      t('groups.removeStudent'),
-      `${t('groups.confirmRemove')} ${student.firstName} ${student.lastName}?`,
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('groups.remove'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await groupsApi.removeStudent(String(groupId), student.id);
-              setStudents((prev) => prev.filter((s) => s.id !== student.id));
-            } catch {
-              Alert.alert(t('common.error'), t('groups.removeError'));
-            }
-          },
-        },
-      ],
-    );
-  };
 
   const openInviteModal = async () => {
     setShowInviteModal(true);
@@ -292,51 +360,8 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
     return d.toLocaleTimeString(appDateLocale(), { hour: '2-digit', minute: '2-digit' });
   };
 
-  const getFileIcon = (file: GroupFile): string => {
-    const ext = (file.name || '').split('.').pop()?.toLowerCase() || '';
-    const type = file.attachmentType?.toLowerCase() || '';
-    if (['pdf'].includes(ext) || type.includes('pdf')) return 'document-text-outline';
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext) || type.includes('image')) return 'image-outline';
-    if (['mp4', 'mov', 'avi', 'webm'].includes(ext) || type.includes('video')) return 'videocam-outline';
-    if (['mp3', 'wav', 'aac'].includes(ext) || type.includes('audio')) return 'musical-note-outline';
-    if (['doc', 'docx'].includes(ext)) return 'document-outline';
-    if (['xls', 'xlsx'].includes(ext)) return 'grid-outline';
-    if (['ppt', 'pptx'].includes(ext)) return 'easel-outline';
-    if (['zip', 'rar', '7z'].includes(ext)) return 'archive-outline';
-    return 'document-outline';
-  };
 
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return '';
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
 
-  const handleOpenFile = async (file: GroupFile) => {
-    const url = file.url ? getFullImageUrl(file.url) : undefined;
-    if (!url) {
-      Alert.alert(t('common.error'), t('groups.fileUrlMissing') || 'File URL is missing');
-      return;
-    }
-    try {
-      // Try in-app browser first (better UX for previewing)
-      const WebBrowser = await import('expo-web-browser');
-      await WebBrowser.openBrowserAsync(url);
-    } catch {
-      // Fallback to system browser
-      try {
-        const supported = await Linking.canOpenURL(url);
-        if (supported) {
-          await Linking.openURL(url);
-        } else {
-          Alert.alert(t('common.error'), t('groups.cannotOpenFile') || 'Cannot open this file type');
-        }
-      } catch (err: any) {
-        Alert.alert(t('common.error'), err?.userMessage || t('groups.cannotOpenFile'));
-      }
-    }
-  };
 
   // ─── Tab rendering ───
 
@@ -346,6 +371,9 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
       ? [{ key: 'subgroups' as Tab, label: t('groups.subGroups'), icon: 'git-branch-outline' }]
       : []),
     { key: 'chat', label: t('groups.chats'), icon: 'chatbubbles-outline' },
+    ...(isTeacher
+      ? [{ key: 'progress' as Tab, label: t('groupManage.progress.tab'), icon: 'book-outline' }]
+      : []),
     { key: 'info', label: t('groups.info'), icon: 'information-circle-outline' },
   ];
 
@@ -380,9 +408,11 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
         {isTeacher && (
           <TouchableOpacity
             style={s.actionBtn}
-            onPress={() => handleRemoveStudent(item)}
+            onPress={() => setActiveStudent(item)}
+            accessibilityRole="button"
+            accessibilityLabel={t('groupManage.studentActions')}
           >
-            <Ionicons name="person-remove-outline" size={18} color={theme.colors.danger} />
+            <Ionicons name="ellipsis-vertical" size={18} color={theme.colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -434,9 +464,21 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
 
   const renderSubGroupsTab = () => (
     <View style={{ flex: 1 }}>
-      <Text style={[s.sectionLabel, { color: theme.colors.textMuted }]}>
-        {t('groups.subGroups')} ({subGroups.length})
-      </Text>
+      <View style={s.labelRow}>
+        <Text style={[s.sectionLabel, { color: theme.colors.textMuted, marginBottom: 0 }]}>
+          {t('groups.subGroups')} ({subGroups.length})
+        </Text>
+        {isAdmin ? (
+          <TouchableOpacity
+            style={[s.inviteBtn, { backgroundColor: theme.colors.primary }]}
+            onPress={() => navigation.navigate('GroupForm', { parentGroupId: groupId })}
+            accessibilityRole="button"
+            accessibilityLabel={t('groupManage.addSubGroup')}
+          >
+            <Ionicons name="add" size={20} color="#fff" />
+          </TouchableOpacity>
+        ) : null}
+      </View>
       {subGroups.length === 0 ? (
         <EmptyState
           icon={<Ionicons name="git-branch-outline" size={40} color={theme.colors.textMuted} />}
@@ -464,7 +506,18 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
                 </Text>
               )}
             </View>
-            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
+            {canEditGroup || canDeleteGroup ? (
+              <TouchableOpacity
+                style={s.actionBtn}
+                onPress={() => setActiveSubGroup(sg)}
+                accessibilityRole="button"
+                accessibilityLabel={t('groupManage.subGroupActions')}
+              >
+                <Ionicons name="ellipsis-vertical" size={18} color={theme.colors.textMuted} />
+              </TouchableOpacity>
+            ) : (
+              <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
+            )}
           </TouchableOpacity>
         ))
       )}
@@ -627,7 +680,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
         <View style={[s.statCard, { backgroundColor: theme.colors.card }]}>
           <Ionicons name="checkmark-circle" size={22} color={theme.colors.warning} />
           <Text style={[s.statValue, { color: theme.colors.text }]}>
-            {group?.isActive ? t('groups.active') : t('groups.inactive')}
+            {group?.status === GROUP_STATUS.Inactive ? t('groups.inactive') : t('groups.active')}
           </Text>
           <Text style={[s.statLabel, { color: theme.colors.textMuted }]}>{t('groups.status')}</Text>
         </View>
@@ -656,78 +709,8 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
         </View>
       ) : null}
 
-      {/* Staff list */}
-      {staff.length > 0 && (
-        <>
-          <Text style={[s.sectionLabel, { color: theme.colors.textMuted, marginTop: spacing.lg }]}>
-            {t('groups.staff')}
-          </Text>
-          {staff.map((member) => {
-            const initials = getInitials(member.firstName, member.lastName);
-            const imageUrl = getFullImageUrl(member.profileImage);
-            return (
-              <View key={`info-staff-${member.id}`} style={[s.studentCard, { backgroundColor: theme.colors.card }]}>
-                <View style={[s.avatar, { backgroundColor: theme.colors.success + '26' }]}>
-                  {imageUrl ? (
-                    <Image source={{ uri: imageUrl }} style={s.avatarImg} />
-                  ) : (
-                    <Text style={[s.avatarText, { color: theme.colors.success }]}>{initials}</Text>
-                  )}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[s.studentName, { color: theme.colors.text }]}>
-                    {member.firstName} {member.lastName}
-                  </Text>
-                  {member.email ? (
-                    <Text style={[s.studentMeta, { color: theme.colors.textMuted }]}>{member.email}</Text>
-                  ) : null}
-                  {member.phoneNumber ? (
-                    <Text style={[s.studentMeta, { color: theme.colors.textMuted }]}>{member.phoneNumber}</Text>
-                  ) : null}
-                </View>
-              </View>
-            );
-          })}
-        </>
-      )}
-
-      {/* Files section */}
-      <Text style={[s.sectionLabel, { color: theme.colors.textMuted, marginTop: spacing.lg }]}>
-        {t('groups.files')} ({files.length})
-      </Text>
-      {files.length === 0 ? (
-        <EmptyState
-          icon={<Ionicons name="folder-open-outline" size={40} color={theme.colors.textMuted} />}
-          title={t('groups.noFiles')}
-          message=""
-        />
-      ) : (
-        files.map((file) => (
-          <TouchableOpacity
-            key={`file-${file.id}`}
-            style={[s.fileCard, { backgroundColor: theme.colors.card }]}
-            onPress={() => handleOpenFile(file)}
-            activeOpacity={0.7}
-          >
-            <View style={[s.fileIconWrap, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
-              <Ionicons name={getFileIcon(file) as any} size={22} color={theme.colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[s.fileName, { color: theme.colors.text }]} numberOfLines={1}>
-                {file.name}
-              </Text>
-              {file.size ? (
-                <Text style={[s.fileMeta, { color: theme.colors.textMuted }]}>
-                  {formatFileSize(file.size)}
-                </Text>
-              ) : null}
-            </View>
-            {file.url ? (
-              <Ionicons name="download-outline" size={20} color={theme.colors.primary} />
-            ) : null}
-          </TouchableOpacity>
-        ))
-      )}
+      <GroupStaffSection groupId={groupId} staff={staff} canManage={isAdmin} onChanged={loadGroupData} />
+      <GroupFilesSection groupId={groupId} files={files} canManage={isTeacher} onChanged={loadGroupData} />
     </ScrollView>
   );
 
@@ -755,11 +738,22 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
         <View style={s.headerRow}>
           <BackButton onPress={() => navigation.goBack()} tone="onColor" />
           <Text style={s.headerTitle} numberOfLines={1}>{group?.name || t('groups.groupDetails')}</Text>
-          <View style={{ width: 40 }} />
+          {isTeacher && manageActions.length ? (
+            <TouchableOpacity
+              style={s.backBtn}
+              onPress={() => setManageOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('groupManage.manage')}
+            >
+              <Ionicons name="ellipsis-horizontal" size={20} color="#fff" />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 40 }} />
+          )}
         </View>
 
         {/* Tab bar */}
-        <View style={s.tabBar}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.tabBar}>
           {TABS.map((tab) => (
             <TouchableOpacity
               key={tab.key}
@@ -775,13 +769,12 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
               <Text
                 style={[s.tabLabel, activeTab === tab.key && s.tabLabelActive]}
                 numberOfLines={1}
-                adjustsFontSizeToFit
               >
                 {tab.label}
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
       </View>
 
       {/* Tab content */}
@@ -811,7 +804,28 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
 
       {activeTab === 'chat' && renderChatTab()}
 
+      {activeTab === 'progress' && (
+        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing['3xl'] }} showsVerticalScrollIndicator={false}>
+          <GroupProgressPanel groupId={groupId} canToggle={isTeacher} canAssign={isAdmin} />
+        </ScrollView>
+      )}
+
       {activeTab === 'info' && renderInfoTab()}
+
+      <ActionSheet visible={manageOpen} title={group?.name} actions={manageActions} onClose={() => setManageOpen(false)} />
+      <ActionSheet
+        visible={!!activeSubGroup}
+        title={activeSubGroup?.name}
+        actions={subGroupActions}
+        onClose={() => setActiveSubGroup(null)}
+      />
+      <StudentActions
+        scope={{ kind: 'group', groupId, groupName: group?.name ?? '' }}
+        student={activeStudent}
+        canManage={isTeacher}
+        onClose={() => setActiveStudent(null)}
+        onChanged={reloadAll}
+      />
 
       {/* ── Invite Student Modal ── */}
       {isTeacher && (
@@ -928,11 +942,11 @@ const s = StyleSheet.create({
     gap: spacing.xs,
   },
   tab: {
-    flex: 1,
+    minWidth: 76,
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing.md,
     borderRadius: 14,
     gap: 3,
   },
@@ -947,6 +961,13 @@ const s = StyleSheet.create({
   },
   tabLabelActive: {
     color: '#fff',
+  },
+
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
   },
 
   // Search
@@ -1238,6 +1259,7 @@ const ms = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
+    ...sheetFrame,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: spacing.xl,

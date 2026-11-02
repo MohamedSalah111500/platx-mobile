@@ -1,3 +1,5 @@
+import type { PhotoAsset } from './people.types';
+
 export interface Group {
   id: number;
   name: string;
@@ -39,12 +41,7 @@ export interface GroupFile {
   size?: number;
   type?: number;
   attachmentType?: string;
-}
-
-export interface CreateGroupPayload {
-  name: string;
-  description?: string;
-  gradeId?: number;
+  attachementType?: number;
 }
 
 export interface SubGroup {
@@ -53,6 +50,7 @@ export interface SubGroup {
   icon?: string;
   groupId: number;
   studentsCount?: number;
+  status?: number;
   creationTime?: string;
   nextDueDate?: string;
   nextDueTime?: string;
@@ -69,4 +67,51 @@ export interface SubGroupLookup {
   name: string;
   groupId: number;
   groupName: string;
+}
+
+export const GROUP_STATUS = { Active: 0, Inactive: 1 } as const;
+export type GroupStatus = (typeof GROUP_STATUS)[keyof typeof GROUP_STATUS];
+
+export interface GroupFormValues {
+  id?: number;
+  name: string;
+  description: string;
+  status: GroupStatus;
+  icon: PhotoAsset | null;
+}
+
+export interface SubGroupFormValues {
+  id?: number;
+  groupId: number;
+  name: string;
+  status: GroupStatus;
+  icon: PhotoAsset | null;
+}
+
+export type MoveTarget = { kind: 'group' | 'subgroup'; id: number; label: string };
+
+export interface CurriculumSubject {
+  id: number;
+  name: string;
+  isCompleted: boolean;
+}
+
+export interface CurriculumUnit {
+  id: number;
+  name: string;
+  isCompleted: boolean;
+  subjects: CurriculumSubject[];
+}
+
+export interface CurriculumGrade {
+  id: number;
+  name: string;
+  description?: string;
+  isAssignedToGroup?: boolean;
+  units: CurriculumUnit[];
+}
+
+export interface LibraryItem {
+  id: number;
+  name: string;
 }

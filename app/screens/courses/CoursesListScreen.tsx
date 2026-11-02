@@ -7,11 +7,12 @@ import {
   TouchableOpacity,
   RefreshControl,
   Share,
-  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
+import { useContentWidth } from '../../utils/responsive';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -33,6 +34,9 @@ import { RowCard } from '../../components/ui/RowCard';
 import { Chip } from '../../components/ui/Chip';
 import { PlayCircle } from '../../components/ui/PlayCircle';
 import { ProgressBar } from '../../components/ui/ProgressBar';
+import { normalizeSearch } from '../../utils/phoneNumber';
+
+const MANAGER_PAGE_SIZE = 500;
 
 // A single character is too short to search; treat it as "no filter" so the
 // rendered list, the debounced search and loadMore always use the same query.
@@ -46,12 +50,13 @@ type Props = NativeStackScreenProps<CoursesStackParamList, 'CoursesList'>;
 
 export default function CoursesListScreen({ navigation, route }: Props) {
   const { theme } = useTheme();
-  const { user, domain, isStudent } = useAuth();
+  const { user, domain, isStudent, canModule } = useAuth();
+  const isManager = !isStudent;
   const { t, isRTL, locale } = useRTL();
 
   const insets = useSafeAreaInsets();
   const format = useDisplayFormat();
-  const { width: windowWidth } = useWindowDimensions();
+  const windowWidth = useContentWidth();
   // A search handed over from Home must land on the tab that actually searches,
   // otherwise the query is silently dropped on the enrolled tab.
   const openedWithSearch = !!route.params?.search;
@@ -95,6 +100,13 @@ export default function CoursesListScreen({ navigation, route }: Props) {
   const loadCourses = async (pageNum = 1, search?: string) => {
     try {
       setError(null);
+      if (isManager) {
+        const all = await coursesApi.getAll(1, MANAGER_PAGE_SIZE);
+        setCourses(Array.isArray(all?.items) ? all.items : []);
+        setPage(1);
+        setHasMore(false);
+        return;
+      }
       const res: any = domain
         ? await coursesApi.getPublic(domain, pageNum, 10, search)
         : await coursesApi.getAll(pageNum, 10, search);
@@ -173,6 +185,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onSearch = useCallback((text: string) => {
     setSearchQuery(text);
+    if (isManager) return;
     if (searchTimer.current) clearTimeout(searchTimer.current);
     const term = effectiveQuery(text);
     searchTimer.current = setTimeout(() => {
@@ -202,7 +215,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
   };
 
   const isWide = windowWidth >= 600;
-  const columns = isWide && activeTab === 'browse' ? 2 : 1;
+  const columns = activeTab !== 'browse' || !isWide ? 1 : windowWidth >= 900 ? 3 : 2;
 
   const styles = useMemo(
     () =>
@@ -219,7 +232,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
           alignItems: 'center',
         },
         title: { ...typography.screenTitle, color: theme.colors.text, flex: 1 },
-        tabRow: { flexDirection: 'row', gap: spacing.sm },
+        tabRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
         listContent: { paddingHorizontal: spacing.xl, paddingTop: spacing.xs, paddingBottom: spacing.xl, gap: spacing.sm },
         column: { gap: spacing.sm },
         cell: { flex: 1 / columns },
@@ -238,6 +251,24 @@ export default function CoursesListScreen({ navigation, route }: Props) {
     [theme, insets.top, columns],
   );
 
+  const managerFirstFocus = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (!isManager) return;
+      if (managerFirstFocus.current) {
+        managerFirstFocus.current = false;
+        return;
+      }
+      loadCourses(1);
+    }, [isManager])
+  );
+
+  const visibleCourses = useMemo(() => {
+    const term = normalizeSearch(effectiveQuery(searchQuery));
+    if (!isManager || !term) return courses;
+    return courses.filter((c) => normalizeSearch(`${c.title ?? ''} ${c.name ?? ''}`).includes(term));
+  }, [courses, isManager, searchQuery]);
+
   const coursePrice = (item: Course) => {
     if (item.isFree || item.price === 0) return t('courses.free');
     const hasDiscount = item.discountPrice != null && item.discountPrice < (item.price || 0);
@@ -249,7 +280,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
       <MediaCard
         title={item.title || item.name || t('courses.untitled')}
         meta={format.courseMeta(item)}
-        badge={coursePrice(item)}
+        badge={isManager && (item as { isActive?: boolean }).isActive === false ? t('courseManage.inactive') : coursePrice(item)}
         imageUrl={getFullImageUrl(item.previewImageUrl)}
         onPress={() => navigation.navigate('CourseDetail', { courseId: item.id })}
         topEnd={
@@ -337,6 +368,16 @@ export default function CoursesListScreen({ navigation, route }: Props) {
           </View>
         )}
 
+        {isManager ? (
+          <View style={styles.tabRow}>
+            {canModule('OnlineCourses', 'create') ? (
+              <Chip label={t('courseManage.addCourse')} icon="add-circle-outline" onPress={() => (navigation as any).navigate('CourseForm')} />
+            ) : null}
+            <Chip label={t('courseManage.requests')} icon="mail-unread-outline" onPress={() => (navigation as any).navigate('EnrollmentRequests')} />
+            <Chip label={t('courseManage.history.title')} icon="time-outline" onPress={() => (navigation as any).navigate('CourseStudents')} />
+          </View>
+        ) : null}
+
         {activeTab === 'browse' && (
           <SearchBar value={searchQuery} onChangeText={onSearch} placeholder={t('courses.searchCourses')} />
         )}
@@ -366,7 +407,7 @@ export default function CoursesListScreen({ navigation, route }: Props) {
       ) : (
         <FlatList
           key={`browse-${columns}`}
-          data={courses}
+          data={visibleCourses}
           numColumns={columns}
           columnWrapperStyle={columns > 1 ? styles.column : undefined}
           renderItem={renderCourse}

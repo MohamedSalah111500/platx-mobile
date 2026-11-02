@@ -11,6 +11,7 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { PHONE_COUNTRIES, PRIORITY_PHONE_COUNTRY_COUNT, type PhoneCountry } from '../../utils/phoneCountries';
 import { flagEmoji, normalizeSearch } from '../../utils/phoneNumber';
 
+import { sheetFrame } from '../../utils/responsive';
 interface PhoneInputProps {
   label?: string;
   value: string;
@@ -192,6 +193,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   sheet: {
+    ...sheetFrame,
     height: '80%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,

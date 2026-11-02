@@ -29,6 +29,7 @@ import { getFullImageUrl } from '../../utils/imageUrl';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 
 import { BackButton } from '../../components/ui/BackButton';
+import { sheetFrame } from '../../utils/responsive';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'HonorBoard'>;
 
 const MEDAL_COLORS = [
@@ -697,6 +698,7 @@ const modalStyles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
+    ...sheetFrame,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: spacing.xl,

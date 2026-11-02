@@ -1,8 +1,5 @@
 import React from 'react';
-import { View, Pressable, StyleSheet, Dimensions } from 'react-native';
-
-const { width: SCREEN_W } = Dimensions.get('window');
-const isTablet = SCREEN_W >= 768;
+import { View, Pressable, StyleSheet } from 'react-native';
 import { createBottomTabNavigator, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +9,7 @@ import { useRTL } from '../i18n/RTLProvider';
 import { spacing } from '../theme/spacing';
 import type { MainTabParamList } from '../types/navigation.types';
 import { TAB_BAR_HEIGHT, HIDE_TAB_BAR_SCREENS } from './tabBar';
+import { TAB_BAR_MAX_WIDTH, useIsTablet } from '../utils/responsive';
 
 // Import stacks
 import HomeStack from './stacks/HomeStack';
@@ -36,6 +34,7 @@ function shouldHideTabBar(route: any): boolean {
 function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  const isTablet = useIsTablet();
 
   const focusedRoute = state.routes[state.index];
   if (shouldHideTabBar(focusedRoute)) return null;
@@ -134,6 +133,9 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   bar: {
+    width: '100%',
+    maxWidth: TAB_BAR_MAX_WIDTH,
+    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     height: TAB_BAR_HEIGHT,

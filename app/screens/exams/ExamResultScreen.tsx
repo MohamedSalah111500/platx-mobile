@@ -29,14 +29,14 @@ export default function ExamResultScreen({ navigation, route }: Props) {
   const { theme } = useTheme();
   const { t } = useRTL();
   const { user } = useAuth();
+  const studentId = route.params.studentId ?? user?.studentId;
   const [result, setResult] = useState<ExamResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
 
   const loadResults = async () => {
-    if (!user?.studentId) {
-      // Student id not resolved (yet): stop the spinner; the effect re-runs once it arrives.
+    if (!studentId) {
       setError(t('exams.failedToLoadResults'));
       setLoading(false);
       return;
@@ -44,7 +44,7 @@ export default function ExamResultScreen({ navigation, route }: Props) {
     try {
       setError(null);
       setLoading(true);
-      const data = await examApi.getResults(examId, user.studentId);
+      const data = await examApi.getResults(examId, studentId);
       setResult(data);
     } catch (err: any) {
       setError(err?.userMessage || t('exams.failedToLoadResults'));
@@ -55,7 +55,7 @@ export default function ExamResultScreen({ navigation, route }: Props) {
 
   useEffect(() => {
     loadResults();
-  }, [user?.studentId]);
+  }, [studentId]);
 
   const toggleQuestion = (questionId: number) => {
     setExpandedQuestions(prev => {

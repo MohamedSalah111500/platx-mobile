@@ -1,5 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { frameScreenLayout } from './screenFrame';
 import type { ParentStackParamList } from '../types/navigation.types';
 
 import ParentHomeScreen from '../screens/parent/ParentHomeScreen';
@@ -14,7 +15,7 @@ const Stack = createNativeStackNavigator<ParentStackParamList>();
 
 export default function ParentNavigator() {
   return (
-    <Stack.Navigator
+    <Stack.Navigator screenLayout={frameScreenLayout}
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',

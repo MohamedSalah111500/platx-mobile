@@ -31,6 +31,21 @@ export const HIDE_TAB_BAR_SCREENS = [
   'Checkout',
   'EnrollStudent',
   'LessonQuiz',
+  'Students',
+  'StudentForm',
+  'StudentDetail',
+  'StudentDevices',
+  'StudentsBulkImport',
+  'StaffList',
+  'StaffForm',
+  'StaffDetail',
+  'StaffPermissions',
+  'GroupForm',
+  'CourseForm',
+  'CourseContent',
+  'SectionForm',
+  'LessonForm',
+  'EnrollmentCodes',
 ];
 
 const TAB_ROOT_SCREENS = ['Home', 'ExamsList', 'ChatList', 'Profile'];

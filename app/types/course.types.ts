@@ -140,3 +140,143 @@ export interface EnrollmentHistoryItem {
   progressPercentage: number;
   courseAvailability?: CourseAvailability;
 }
+
+export const LESSON_TYPE = {
+  Video: 1,
+  Document: 2,
+  Exam: 3,
+  File: 4,
+  Link: 5,
+  Divider: 6,
+} as const;
+export type LessonType = (typeof LESSON_TYPE)[keyof typeof LESSON_TYPE];
+
+export const QUIZ_POLICY = { NotMandatory: 0, SolveOnly: 1, SolveAndPass: 2 } as const;
+export const QUIZ_POLICY_SCOPE = { EntireCourse: 0, CurrentSection: 1 } as const;
+
+export interface CourseFormValues {
+  name: string;
+  shortDescription: string;
+  description: string;
+  whatYouWillLearn: string;
+  language: string;
+  price: number;
+  discountPrice: number;
+  currencyCode: string;
+  totalHours: number;
+  previewImageUrl: string;
+  previewVideoUrl: string;
+  showOnHomePage: boolean;
+  category: string;
+  subCategory: string;
+  courseTags: string;
+  isFree: boolean;
+  hasCertificate: boolean;
+  sellSectionsSeparately: boolean;
+  sellLessonsSeparately: boolean;
+  quizPolicy: number;
+  quizPolicyScope: number;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface ManagedLesson {
+  id: number;
+  sectionId: number;
+  title: string;
+  description: string;
+  type: LessonType;
+  durationInSeconds: number;
+  freePreview: boolean;
+  price: number | null;
+  coverImageUrl: string;
+  videoUrl: string;
+  attachementId: number | null;
+  attachmentName: string | null;
+  linkUrl: string;
+  openInNewTab: boolean;
+  isInternalExam: boolean;
+  examId: number | null;
+  orderIndex: number;
+}
+
+export interface ManagedSection {
+  id: number;
+  courseId: number;
+  title: string;
+  description: string;
+  freePreview: boolean;
+  price: number | null;
+  orderIndex: number;
+  lessons: ManagedLesson[];
+}
+
+export interface SectionFormValues {
+  title: string;
+  description: string;
+  freePreview: boolean;
+  price: number;
+}
+
+export interface LessonFormValues {
+  title: string;
+  description: string;
+  type: LessonType;
+  durationInSeconds: number;
+  freePreview: boolean;
+  price: number;
+  coverImageUrl: string;
+  videoUrl: string;
+  attachementId: number | null;
+  linkUrl: string;
+  openInNewTab: boolean;
+  isInternalExam: boolean;
+  examId: number | null;
+}
+
+export const ENROLLMENT_TOKEN_STATUS = { Available: 0, Used: 1, Expired: 2 } as const;
+export type EnrollmentTokenStatus = (typeof ENROLLMENT_TOKEN_STATUS)[keyof typeof ENROLLMENT_TOKEN_STATUS];
+
+export interface EnrollmentToken {
+  id: number;
+  courseId: number;
+  courseSectionId: number | null;
+  courseLessonId: number | null;
+  targetTitle: string | null;
+  token: string;
+  serial: number;
+  redeemUrl: string;
+  status: EnrollmentTokenStatus;
+  usedByStudentName: string | null;
+  usedAt: string | null;
+  expireAt: string | null;
+  creationTime: string;
+}
+
+export interface EnrollmentTokenStats {
+  total: number;
+  available: number;
+  used: number;
+  expired: number;
+}
+
+export interface GenerateTokensInput {
+  quantity: number;
+  expireAt: string | null;
+  courseSectionId: number | null;
+  courseLessonId: number | null;
+}
+
+export const PROCESSED_STATUS = { Approved: 1, Rejected: 2, Cancelled: 3 } as const;
+
+export interface ProcessedReservation {
+  id: number;
+  studentName: string;
+  studentEmail: string | null;
+  courseName: string;
+  status: number;
+  processedDate: string;
+  adminNotes: string | null;
+  receiptUrl: string | null;
+  daysUntilDeletion: number;
+}

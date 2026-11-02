@@ -57,6 +57,12 @@ export const walletApi = {
     (await apiClient.post<WalletRedeemResult>(WALLET_URLS.REDEEM, { code })).data,
   pay: async (kind: PayKind, id: number): Promise<WalletPaymentResult> =>
     (await apiClient.post<WalletPaymentResult>(PAY_URL[kind](id), {})).data,
+  studentWallet: async (studentId: number): Promise<Wallet> =>
+    (await apiClient.get<Wallet>(WALLET_URLS.STUDENT(studentId))).data,
+  studentTransactions: async (studentId: number, page: number, size: number): Promise<WalletPage> =>
+    (await apiClient.get<WalletPage>(WALLET_URLS.STUDENT_TRANSACTIONS(studentId), { params: { page, size } })).data,
+  adjust: async (studentId: number, amount: number, reason: string): Promise<Wallet> =>
+    (await apiClient.post<Wallet>(WALLET_URLS.ADJUST(studentId), { amount, reason })).data,
 };
 
 const PAY_URL: Record<PayKind, (id: number) => string> = {

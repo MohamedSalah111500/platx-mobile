@@ -12,7 +12,6 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
-  Dimensions,
   useWindowDimensions,
   PermissionsAndroid,
   TurboModuleRegistry,
@@ -77,7 +76,6 @@ const DARK = {
 
 const CONTROL_SIZE = 52;
 const CONTROL_ICON = 22;
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function LiveClassroomScreen({ navigation, route }: Props) {
   const { roomId, isTeacher } = route.params;
@@ -1386,7 +1384,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     start: 0,
     bottom: 0,
-    width: SCREEN_WIDTH * 0.75,
+    width: '75%',
+    maxWidth: 480,
     maxHeight: '55%',
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,

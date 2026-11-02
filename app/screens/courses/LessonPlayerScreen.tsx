@@ -35,6 +35,7 @@ import type { Lesson } from '../../types/course.types';
 import { useRTL } from '../../i18n/RTLProvider';
 import { useSound } from '../../hooks/useSound';
 import LessonQuiz from './LessonQuiz';
+import { contentFrame } from '../../utils/responsive';
 
 import { BackButton } from '../../components/ui/BackButton';
 type Props = NativeStackScreenProps<CoursesStackParamList, 'LessonPlayer'>;
@@ -428,7 +429,9 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
       {isQuiz ? (
         lesson.examId ? (
           <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <View style={[contentFrame, { flex: 1 }]}>
             <LessonQuiz examId={lesson.examId} onFinished={onQuizFinished} />
+            </View>
           </View>
         ) : (
           <View style={[styles.noVideoContainer, { flex: 1, aspectRatio: undefined, backgroundColor: theme.colors.background }]}>
@@ -702,6 +705,7 @@ const styles = StyleSheet.create({
   videoContainer: {
     width: '100%',
     aspectRatio: 16 / 9,
+    maxHeight: '62%',
     backgroundColor: '#000',
   },
   webview: {
@@ -721,6 +725,7 @@ const styles = StyleSheet.create({
   noVideoContainer: {
     width: '100%',
     aspectRatio: 16 / 9,
+    maxHeight: '62%',
     backgroundColor: '#111',
     justifyContent: 'center',
     alignItems: 'center',
@@ -743,6 +748,7 @@ const styles = StyleSheet.create({
   docPanel: {
     width: '100%',
     aspectRatio: 16 / 9,
+    maxHeight: '62%',
     backgroundColor: '#111',
     justifyContent: 'center',
     alignItems: 'center',
@@ -796,6 +802,7 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   infoContent: {
+    ...contentFrame,
     padding: spacing.xl,
     paddingBottom: 40,
   },

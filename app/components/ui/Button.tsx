@@ -11,6 +11,7 @@ import {
 import { useTheme } from '@theme/ThemeProvider';
 import { spacing, borderRadius } from '@theme/spacing';
 import { typography } from '@theme/typography';
+import { formFrame } from '../../utils/responsive';
 
 const isIOS = Platform.OS === 'ios';
 const NO_BREAK_SPACE = ' ';
@@ -82,7 +83,7 @@ export function Button({
       ...sizeStyles[size],
       ...variantStyles[variant],
       opacity: disabled ? 0.5 : 1,
-      width: fullWidth ? '100%' : undefined,
+      ...(fullWidth ? formFrame : null),
     };
   };
 
