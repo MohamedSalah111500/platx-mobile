@@ -21,7 +21,11 @@ import type {
   RegisterPayload,
   EmailConfirmPayload,
   TenantInfo,
+  ExternalIntent,
+  ExternalNotRegisteredOutcome,
+  ExternalSignInResponse,
 } from '../types/auth.types';
+import { EXTERNAL_ERROR_CODE, EXTERNAL_OUTCOME, isExternalOutcome } from '../types/auth.types';
 
 interface AuthState {
   user: User | null;
@@ -32,6 +36,10 @@ interface AuthState {
   error: string | null;
   pendingTenants: TenantInfo[] | null;
   pendingCredentials: { userName: string; password: string } | null;
+  // Set when Google/Apple sign-in found several academies for the account; the token proves the identity.
+  pendingExternalSelection: { selectionToken: string } | null;
+  // Set when the provider verified an email that has no account yet; the token lets sign-up finish without a second provider round trip.
+  pendingSignup: ExternalNotRegisteredOutcome | null;
   tenantName: string | null;
   tenantLogo: string | null;
   tenantColor: string | null;
@@ -46,8 +54,10 @@ interface AuthActions {
   selectTenant: (tenantId: string) => Promise<void>;
   clearPendingTenants: () => void;
   clearPendingEmailConfirmation: () => void;
-  googleLogin: (domain: string) => Promise<void>;
-  appleLogin: (domain: string) => Promise<void>;
+  googleLogin: (intent: ExternalIntent, domain?: string) => Promise<void>;
+  appleLogin: (intent: ExternalIntent, domain?: string) => Promise<void>;
+  completeSignup: (domain: string) => Promise<void>;
+  clearPendingSignup: () => void;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<void>;
@@ -191,6 +201,8 @@ const LOGGED_OUT_STATE: Partial<AuthState> = {
   error: null,
   pendingTenants: null,
   pendingCredentials: null,
+  pendingExternalSelection: null,
+  pendingSignup: null,
   pendingEmailConfirmation: null,
   tenantName: null,
   tenantLogo: null,
@@ -274,6 +286,8 @@ async function persistAndSetAuth(
     isLoading: false,
     pendingTenants: null,
     pendingCredentials: null,
+    pendingExternalSelection: null,
+    pendingSignup: null,
     pendingEmailConfirmation: null,
     tenantName,
     tenantLogo,
@@ -290,6 +304,48 @@ async function persistAndSetAuth(
   signalRService.startConnection().catch(() => {});
 }
 
+// A provider sign-in ends in one of three ways: a session, "pick one of your academies",
+// or "this verified email has no account yet". The first signs in; the others park their
+// token in the store so the screens can finish the flow.
+async function resolveExternalResponse(
+  set: (state: Partial<AuthState>) => void,
+  response: ExternalSignInResponse,
+  fallbackDomain?: string | null,
+  branding?: TenantInfo
+) {
+  if (isExternalOutcome(response)) {
+    if (response.outcome === EXTERNAL_OUTCOME.SelectTenant) {
+      set({
+        isLoading: false,
+        pendingTenants: response.tenants,
+        pendingExternalSelection: { selectionToken: response.selectionToken },
+        pendingSignup: null,
+      });
+    } else {
+      set({ isLoading: false, pendingSignup: response, pendingTenants: null, pendingExternalSelection: null });
+    }
+    return;
+  }
+
+  const { user, domain } = processAuthResponse(response, fallbackDomain ?? branding?.domain ?? null);
+  await persistAndSetAuth(set, user, response.token, domain || undefined, {
+    tenantName: branding?.tenantName,
+    tenantLogo: branding?.logoUrl,
+    primaryColor: branding?.primaryColor,
+  });
+}
+
+function externalErrorMessage(error: any, fallbackKey: string): string {
+  return error?.response?.data?.message || error?.userMessage || i18n.t(fallbackKey);
+}
+
+// A signup/selection token that expired can never succeed again, so drop it and let the screen start over.
+function expiredFlowState(error: any): Partial<AuthState> {
+  return error?.response?.data?.code === EXTERNAL_ERROR_CODE.TokenExpired
+    ? { pendingSignup: null, pendingExternalSelection: null, pendingTenants: null }
+    : {};
+}
+
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   token: null,
@@ -299,6 +355,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   error: null,
   pendingTenants: null,
   pendingCredentials: null,
+  pendingExternalSelection: null,
+  pendingSignup: null,
   tenantName: null,
   tenantLogo: null,
   tenantColor: null,
@@ -326,6 +384,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         set({
           isLoading: false,
           pendingTenants: response.tenants,
+          pendingExternalSelection: null,
+          pendingSignup: null,
           pendingCredentials: { userName: payload.userName, password: payload.password },
         });
       } else {
@@ -345,7 +405,22 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   selectTenant: async (tenantId: string) => {
-    const { pendingCredentials } = get();
+    const { pendingCredentials, pendingExternalSelection } = get();
+    const selectedTenant = get().pendingTenants?.find((tenant) => tenant.tenantId === tenantId);
+    if (pendingExternalSelection) {
+      try {
+        set({ isLoading: true, error: null });
+        const response = await authApi.externalSelectTenant({
+          selectionToken: pendingExternalSelection.selectionToken,
+          tenantId,
+        });
+        await resolveExternalResponse(set, response, selectedTenant?.domain, selectedTenant);
+      } catch (error: any) {
+        set({ error: externalErrorMessage(error, 'auth.tenantSelectionFailed'), isLoading: false, ...expiredFlowState(error) });
+        throw error;
+      }
+      return;
+    }
     if (!pendingCredentials) return;
 
     try {
@@ -386,18 +461,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   clearPendingTenants: () => {
-    set({ pendingTenants: null, pendingCredentials: null, error: null });
+    set({ pendingTenants: null, pendingCredentials: null, pendingExternalSelection: null, error: null });
   },
 
   clearPendingEmailConfirmation: () => {
     set({ pendingEmailConfirmation: null });
   },
 
-  googleLogin: async (domain: string) => {
+  googleLogin: async (intent: ExternalIntent, domain = '') => {
     set({ error: null });
     const failedMessage = i18n.t('auth.googleSignInFailed');
     try {
-      const result = await signInWithGoogle(domain);
+      const result = await signInWithGoogle(intent, domain);
       if (result.type === 'cancel') return;
       if (result.type === 'error') {
         set({ error: failedMessage });
@@ -405,35 +480,41 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       }
 
       set({ isLoading: true });
-      const { user, domain: resDomain } = processAuthResponse(result.response);
-      await persistAndSetAuth(set, user, result.response.token, resDomain || domain);
+      await resolveExternalResponse(set, result.response, domain);
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message ||
-        error?.userMessage ||
-        failedMessage;
-      set({ error: message, isLoading: false });
+      set({ error: externalErrorMessage(error, 'auth.googleSignInFailed'), isLoading: false });
     }
   },
 
-  appleLogin: async (domain: string) => {
+  appleLogin: async (intent: ExternalIntent, domain = '') => {
     set({ error: null });
     try {
-      const result = await signInWithApple(domain);
+      const result = await signInWithApple(intent, domain);
       if (result.type === 'cancel') return;
 
       set({ isLoading: true });
-      const { user, domain: resDomain } = processAuthResponse(result.response);
-      await persistAndSetAuth(set, user, result.response.token, resDomain || domain);
+      await resolveExternalResponse(set, result.response, domain);
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message ||
-        error?.userMessage ||
-        i18n.t('auth.appleSignInFailed');
-      set({ error: message, isLoading: false });
+      set({ error: externalErrorMessage(error, 'auth.appleSignInFailed'), isLoading: false });
     }
   },
 
+  completeSignup: async (domain: string) => {
+    const { pendingSignup } = get();
+    if (!pendingSignup) return;
+
+    try {
+      set({ isLoading: true, error: null });
+      const response = await authApi.externalSignup({ signupToken: pendingSignup.signupToken, domain });
+      await resolveExternalResponse(set, response, domain);
+    } catch (error: any) {
+      set({ error: externalErrorMessage(error, 'auth.registrationFailed'), isLoading: false, ...expiredFlowState(error) });
+    }
+  },
+
+  clearPendingSignup: () => {
+    set({ pendingSignup: null });
+  },
   register: async (payload: RegisterPayload) => {
     try {
       set({ isLoading: true, error: null });

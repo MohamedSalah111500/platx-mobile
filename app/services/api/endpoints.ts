@@ -16,6 +16,9 @@ export const AUTH_URLS = {
   DELETE_ACCOUNT: `${BASE}api/Auth/me`,
   MOBILE_LOGIN: `${BASE}api/auth/mobile-login`,
   MOBILE_SELECT_TENANT: `${BASE}api/auth/mobile-select-tenant`,
+  EXTERNAL_SIGNUP: `${BASE}api/Auth/external-signup`,
+  EXTERNAL_SELECT_TENANT: `${BASE}api/Auth/external-select-tenant`,
+  EXTERNAL_HANDOFF_REDEEM: `${BASE}api/Auth/external-handoff/redeem`,
 };
 
 export const REGISTRATION_SETTINGS_URLS = {

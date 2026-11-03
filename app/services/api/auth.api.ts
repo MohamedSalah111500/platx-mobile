@@ -11,6 +11,10 @@ import type {
   ResetPasswordPayload,
   ChangePasswordPayload,
   AppleSignInPayload,
+  ExternalHandoffPayload,
+  ExternalSelectTenantPayload,
+  ExternalSignInResponse,
+  ExternalSignupPayload,
 } from '../../types/auth.types';
 
 const DELETE_ACCOUNT_TIMEOUT = 90000;
@@ -68,8 +72,23 @@ export const authApi = {
     await apiClient.post(AUTH_URLS.CHANGE_PASSWORD, payload);
   },
 
-  appleSignIn: async (payload: AppleSignInPayload): Promise<LoginResponse> => {
-    const { data } = await apiClient.post<LoginResponse>(AUTH_URLS.APPLE_SIGNIN, payload);
+  appleSignIn: async (payload: AppleSignInPayload): Promise<ExternalSignInResponse> => {
+    const { data } = await apiClient.post<ExternalSignInResponse>(AUTH_URLS.APPLE_SIGNIN, payload);
+    return data;
+  },
+
+  externalSignup: async (payload: ExternalSignupPayload): Promise<ExternalSignInResponse> => {
+    const { data } = await apiClient.post<ExternalSignInResponse>(AUTH_URLS.EXTERNAL_SIGNUP, payload);
+    return data;
+  },
+
+  externalSelectTenant: async (payload: ExternalSelectTenantPayload): Promise<ExternalSignInResponse> => {
+    const { data } = await apiClient.post<ExternalSignInResponse>(AUTH_URLS.EXTERNAL_SELECT_TENANT, payload);
+    return data;
+  },
+
+  redeemHandoff: async (payload: ExternalHandoffPayload): Promise<ExternalSignInResponse> => {
+    const { data } = await apiClient.post<ExternalSignInResponse>(AUTH_URLS.EXTERNAL_HANDOFF_REDEEM, payload);
     return data;
   },
 

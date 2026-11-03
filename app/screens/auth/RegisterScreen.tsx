@@ -42,7 +42,17 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 export default function RegisterScreen({ navigation, route }: Props) {
   const { theme, isDark } = useTheme();
-  const { register, googleLogin, appleLogin, isLoading, error, clearError } = useAuthStore();
+  const {
+    register,
+    googleLogin,
+    appleLogin,
+    completeSignup,
+    clearPendingSignup,
+    pendingSignup,
+    isLoading,
+    error,
+    clearError,
+  } = useAuthStore();
   const { t, isRTL, locale } = useRTL();
   const insets = useSafeAreaInsets();
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -52,6 +62,8 @@ export default function RegisterScreen({ navigation, route }: Props) {
   useEffect(() => {
     isAppleSignInAvailable().then(setAppleAvailable);
   }, []);
+
+  useEffect(() => clearPendingSignup, [clearPendingSignup]);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -213,7 +225,7 @@ export default function RegisterScreen({ navigation, route }: Props) {
     clearError();
     setGoogleLoading(true);
     try {
-      await googleLogin(domain);
+      await (pendingSignup ? completeSignup(domain) : googleLogin('signup', domain));
     } finally {
       setGoogleLoading(false);
     }
@@ -225,7 +237,7 @@ export default function RegisterScreen({ navigation, route }: Props) {
     clearError();
     setAppleLoading(true);
     try {
-      await appleLogin(domain);
+      await (pendingSignup ? completeSignup(domain) : appleLogin('signup', domain));
     } finally {
       setAppleLoading(false);
     }
@@ -515,7 +527,36 @@ export default function RegisterScreen({ navigation, route }: Props) {
               <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.divider }} />
             </View>
 
-            {appleAvailable && (
+            {pendingSignup && (
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: spacing.md,
+                  backgroundColor: theme.colors.card,
+                  borderWidth: 1,
+                  borderColor: theme.colors.primary,
+                  borderRadius: borderRadius.lg,
+                  paddingVertical: spacing.md,
+                  paddingHorizontal: spacing.xl,
+                  minHeight: 50,
+                  opacity: isLoading ? 0.7 : 1,
+                }}
+                onPress={() => completeSignup(domain)}
+                disabled={isLoading}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />
+                <Text style={{ ...typography.button, color: theme.colors.text }}>
+                  {pendingSignup.email
+                    ? t('auth.completeSignupWith', { email: `\u2068${pendingSignup.email}\u2069` })
+                    : t('auth.completeSignup')}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {!pendingSignup && appleAvailable && (
               <View
                 style={{ marginBottom: spacing.md, opacity: appleLoading || isLoading ? 0.6 : 1 }}
                 pointerEvents={appleLoading || googleLoading || isLoading ? 'none' : 'auto'}
@@ -535,6 +576,7 @@ export default function RegisterScreen({ navigation, route }: Props) {
             )}
 
             {/* Google Sign-Up */}
+            {!pendingSignup && (
             <TouchableOpacity
               style={{
                 flexDirection: 'row',
@@ -564,6 +606,7 @@ export default function RegisterScreen({ navigation, route }: Props) {
                 {googleLoading ? t('common.loading') : t('auth.signUpWithGoogle')}
               </Text>
             </TouchableOpacity>
+            )}
           </>
         )}
 
