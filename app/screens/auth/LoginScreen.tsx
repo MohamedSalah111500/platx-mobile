@@ -7,8 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  Modal,
-  TextInput,
+  Alert,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,9 +23,8 @@ import type { AuthStackParamList } from '../../types/navigation.types';
 import { useRTL } from '../../i18n/RTLProvider';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { GradientBackground } from '../../components/ui/GradientBackground';
-import { dialogFrame, formFrame } from '../../utils/responsive';
+import { formFrame } from '../../utils/responsive';
 import { isAppleSignInAvailable } from '../../services/auth/appleAuth';
-import { academyStorage } from '../../services/storage/academy.storage';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -44,6 +42,8 @@ export default function LoginScreen({ navigation }: Props) {
     pendingTenants,
     pendingEmailConfirmation,
     clearPendingEmailConfirmation,
+    pendingSignup,
+    clearPendingSignup,
   } = useAuthStore();
   const { t } = useRTL();
   const insets = useSafeAreaInsets();
@@ -52,10 +52,6 @@ export default function LoginScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  // Academy domain modal shared by Google and Apple sign-in
-  const [domainModalVisible, setDomainModalVisible] = useState(false);
-  const [domainInput, setDomainInput] = useState('');
-  const [externalProvider, setExternalProvider] = useState<ExternalProvider>('google');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [appleAvailable, setAppleAvailable] = useState(false);
@@ -102,27 +98,33 @@ export default function LoginScreen({ navigation }: Props) {
     }
   };
 
-  const openDomainModal = (provider: ExternalProvider) => {
+  const handleExternalSignIn = async (provider: ExternalProvider) => {
     clearError();
-    setExternalProvider(provider);
-    setDomainInput('');
-    academyStorage.get().then((saved) => saved && setDomainInput((current) => current || saved.domain));
-    setDomainModalVisible(true);
-  };
-
-  const confirmDomainAndSignIn = async () => {
-    const domain = domainInput.trim();
-    if (!domain) return;
-    setDomainModalVisible(false);
-    academyStorage.save({ domain });
-    const setProviderLoading = externalProvider === 'apple' ? setAppleLoading : setGoogleLoading;
+    const setProviderLoading = provider === 'apple' ? setAppleLoading : setGoogleLoading;
     setProviderLoading(true);
     try {
-      await (externalProvider === 'apple' ? appleLogin(domain) : googleLogin(domain));
+      await (provider === 'apple' ? appleLogin('login') : googleLogin('login'));
     } finally {
       setProviderLoading(false);
     }
   };
+
+  // The provider verified the email but no account exists: offer to create one
+  // instead of silently registering (the sign-up token carries the verified identity).
+  useEffect(() => {
+    if (!pendingSignup) return;
+    Alert.alert(
+      t('auth.notRegisteredTitle'),
+      t('auth.notRegisteredMessage', {
+        email: pendingSignup.email ? `\u2068${pendingSignup.email}\u2069` : t('auth.thisAccount'),
+      }),
+      [
+        { text: t('common.cancel'), style: 'cancel', onPress: clearPendingSignup },
+        { text: t('auth.createAccount'), onPress: () => navigation.navigate('Register', {}) },
+      ],
+      { cancelable: true, onDismiss: clearPendingSignup }
+    );
+  }, [pendingSignup, navigation, clearPendingSignup]);
 
   const externalBusy = googleLoading || appleLoading || isLoading;
 
@@ -211,14 +213,14 @@ export default function LoginScreen({ navigation }: Props) {
                 }
                 cornerRadius={borderRadius['2xl']}
                 style={styles.appleButton}
-                onPress={() => openDomainModal('apple')}
+                onPress={() => handleExternalSignIn('apple')}
               />
             </View>
           )}
 
           <TouchableOpacity
             style={[styles.googleButton, externalBusy && { opacity: 0.6 }]}
-            onPress={() => openDomainModal('google')}
+            onPress={() => handleExternalSignIn('google')}
             disabled={externalBusy}
             activeOpacity={0.7}
           >
@@ -251,57 +253,6 @@ export default function LoginScreen({ navigation }: Props) {
         </View>
       </ScrollView>
 
-      {/* Academy domain modal for Google / Apple sign-in */}
-      <Modal
-        visible={domainModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setDomainModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
-            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
-              {t('auth.domain')}
-            </Text>
-            <Text style={[styles.modalSubtitle, { color: theme.colors.textMuted }]}>
-              {t('auth.enterDomain')}
-            </Text>
-            <TextInput
-              style={[styles.domainInput, {
-                borderColor: theme.colors.inputBorder,
-                backgroundColor: theme.colors.inputBackground,
-                color: theme.colors.inputText,
-              }]}
-              placeholder={t('auth.domainPlaceholder') || 'e.g. school'}
-              placeholderTextColor={theme.colors.inputPlaceholder}
-              value={domainInput}
-              onChangeText={setDomainInput}
-              autoCapitalize="none"
-              autoCorrect={false}
-              onSubmitEditing={confirmDomainAndSignIn}
-            />
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalBtn, { borderColor: theme.colors.border }]}
-                onPress={() => setDomainModalVisible(false)}
-              >
-                <Text style={[styles.modalBtnText, { color: theme.colors.textSecondary }]}>
-                  {t('common.cancel')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.modalBtnPrimary, { backgroundColor: theme.colors.primary }]}
-                onPress={confirmDomainAndSignIn}
-                disabled={!domainInput.trim()}
-              >
-                <Text style={[styles.modalBtnText, { color: '#fff' }]}>
-                  {t('common.continue') || 'Continue'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </KeyboardAvoidingView>
     </GradientBackground>
   );
@@ -405,59 +356,6 @@ function createStyles(theme: any) {
     googleButtonText: {
       ...typography.button,
       color: theme.colors.text,
-    },
-    // Domain Modal
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: spacing['2xl'],
-    },
-    modalCard: {
-      ...dialogFrame,
-      borderRadius: 20,
-      padding: spacing['2xl'],
-    },
-    modalTitle: {
-      ...typography.headerTitle,
-      marginBottom: spacing.xs,
-    },
-    modalSubtitle: {
-      fontFamily: 'Cairo_400Regular',
-      fontSize: 14,
-      marginBottom: spacing.lg,
-      textAlign: 'left',
-    },
-    domainInput: {
-      borderWidth: 1.5,
-      borderRadius: 12,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 12,
-      fontSize: 15,
-      fontFamily: 'Cairo_400Regular',
-      marginBottom: spacing.lg,
-      textAlign: 'left',
-    },
-    modalActions: {
-      flexDirection: 'row',
-      gap: spacing.md,
-    },
-    modalBtn: {
-      flex: 1,
-      paddingVertical: 12,
-      borderRadius: 12,
-      borderWidth: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    modalBtnPrimary: {
-      borderWidth: 0,
-    },
-    modalBtnText: {
-      fontFamily: 'Cairo_600SemiBold',
-      fontSize: 15,
-      textAlign: 'left',
     },
   });
 }

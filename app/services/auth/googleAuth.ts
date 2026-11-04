@@ -1,12 +1,14 @@
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { API_CONFIG } from '../../config';
-import type { LoginResponse } from '../../types/auth.types';
+import { authApi } from '../api/auth.api';
+import { createPkcePair } from './pkce';
+import type { ExternalIntent, ExternalSignInResponse } from '../../types/auth.types';
 
 const GOOGLE_WEB_CLIENT_ID = '997004801769-ni3d4vb3d1g551vrj4ku9fsr99k1mhr6.apps.googleusercontent.com';
 
 export type GoogleSignInResult =
-  | { type: 'success'; response: LoginResponse }
+  | { type: 'success'; response: ExternalSignInResponse }
   | { type: 'cancel' }
   | { type: 'error' };
 
@@ -14,16 +16,19 @@ export type GoogleSignInResult =
  * Google rejects custom-scheme redirect URIs (platx://) for our OAuth client,
  * so the app reuses the web's sign-in bridge, whose https redirect URI is
  * already registered: `${CLIENT_URL}/auth/google-bridge`. The bridge
- * exchanges the code through the API, then hands the session back to
+ * exchanges the code through the API and hands a one-time code back to
  * `state.returnOrigin` — here the app's deep link:
- *   success -> `${returnOrigin}/auth/callback#data=<json>&returnPath=`
+ *   success -> `${returnOrigin}/auth/callback#handoff=<code>&returnPath=`
  *   failure -> the bridge's error page, whose back link is `${returnOrigin}/auth/login`
+ * The handoff code is useless without the PKCE verifier that never leaves the
+ * app, so another app that claims the same scheme cannot turn it into a session.
  * Because the bridge calls its own environment's API, CLIENT_URL must be the
  * frontend of the same environment as API_CONFIG.BASE_URL.
  */
-export async function signInWithGoogle(domain: string): Promise<GoogleSignInResult> {
+export async function signInWithGoogle(intent: ExternalIntent, domain = ''): Promise<GoogleSignInResult> {
   const returnOrigin = AuthSession.makeRedirectUri({ path: 'google-auth' }).replace(/\/+$/, '');
-  const state = JSON.stringify({ domain, returnOrigin, returnPath: '' });
+  const { verifier, challenge } = await createPkcePair();
+  const state = JSON.stringify({ domain, returnOrigin, returnPath: '', intent, codeChallenge: challenge });
 
   const params = new URLSearchParams({
     client_id: GOOGLE_WEB_CLIENT_ID,
@@ -44,9 +49,11 @@ export async function signInWithGoogle(domain: string): Promise<GoogleSignInResu
   const [path, fragment = ''] = result.url.slice(returnOrigin.length).split('#');
   if (!path.startsWith('/auth/callback')) return { type: 'error' };
 
-  const data = readFragmentParam(fragment, 'data');
-  const response = data ? parseSession(data) : null;
-  return response?.token ? { type: 'success', response } : { type: 'error' };
+  const code = readFragmentParam(fragment, 'handoff');
+  if (!code) return { type: 'error' };
+
+  const response = await authApi.redeemHandoff({ code: safeDecode(code), codeVerifier: verifier });
+  return { type: 'success', response };
 }
 
 // React Native's URLSearchParams splits values on every '=', so parse by hand.
@@ -55,17 +62,6 @@ function readFragmentParam(fragment: string, name: string): string | null {
     const separator = pair.indexOf('=');
     if (separator > 0 && pair.slice(0, separator) === name) {
       return pair.slice(separator + 1);
-    }
-  }
-  return null;
-}
-
-function parseSession(raw: string): LoginResponse | null {
-  for (const candidate of [safeDecode(raw), raw]) {
-    try {
-      return JSON.parse(candidate);
-    } catch {
-      // try the next form
     }
   }
   return null;

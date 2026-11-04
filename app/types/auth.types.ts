@@ -86,6 +86,7 @@ export interface AppleSignInPayload {
   identityToken: string;
   authorizationCode?: string | null;
   domain: string;
+  intent: ExternalIntent;
   givenName?: string | null;
   familyName?: string | null;
 }
@@ -119,3 +120,50 @@ export interface MobileLoginResponse {
   // Tenant domain lives at the top level, not inside authResponse.
   domain?: string | null;
 }
+
+export type ExternalIntent = 'login' | 'signup';
+
+export const EXTERNAL_OUTCOME = {
+  SelectTenant: 'SelectTenant',
+  NotRegistered: 'NotRegistered',
+} as const;
+
+export interface ExternalSelectTenantOutcome {
+  outcome: typeof EXTERNAL_OUTCOME.SelectTenant;
+  tenants: TenantInfo[];
+  selectionToken: string;
+}
+
+export interface ExternalNotRegisteredOutcome {
+  outcome: typeof EXTERNAL_OUTCOME.NotRegistered;
+  email: string | null;
+  accountExists: boolean;
+  signupToken: string;
+}
+
+export type ExternalOutcome = ExternalSelectTenantOutcome | ExternalNotRegisteredOutcome;
+
+export type ExternalSignInResponse = LoginResponse | ExternalOutcome;
+
+export function isExternalOutcome(response: ExternalSignInResponse): response is ExternalOutcome {
+  const outcome = (response as ExternalOutcome | null)?.outcome;
+  return outcome === EXTERNAL_OUTCOME.SelectTenant || outcome === EXTERNAL_OUTCOME.NotRegistered;
+}
+
+export interface ExternalSignupPayload {
+  signupToken: string;
+  domain: string;
+}
+
+export interface ExternalSelectTenantPayload {
+  selectionToken: string;
+  tenantId: string;
+}
+
+export interface ExternalHandoffPayload {
+  code: string;
+  codeVerifier: string;
+}
+export const EXTERNAL_ERROR_CODE = {
+  TokenExpired: 'TOKEN_EXPIRED',
+} as const;

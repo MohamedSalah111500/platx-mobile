@@ -1,10 +1,10 @@
 import { Platform } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { authApi } from '../api/auth.api';
-import type { LoginResponse } from '../../types/auth.types';
+import type { ExternalIntent, ExternalSignInResponse } from '../../types/auth.types';
 
 export type AppleSignInResult =
-  | { type: 'success'; response: LoginResponse }
+  | { type: 'success'; response: ExternalSignInResponse }
   | { type: 'cancel' };
 
 /** Sign in with Apple is offered on iOS only (native AuthenticationServices sheet). */
@@ -19,11 +19,11 @@ export async function isAppleSignInAvailable(): Promise<boolean> {
 
 /**
  * Runs the native Apple sheet, then exchanges Apple's identity token for a
- * PlatX session in the given academy. Only the name and email scopes are
+ * PlatX session. A login needs no academy (the account decides it); a sign-up does. Only the name and email scopes are
  * requested, and the user may hide their email (Apple then gives a private
  * relay address). Throws on API errors so the store can surface the message.
  */
-export async function signInWithApple(domain: string): Promise<AppleSignInResult> {
+export async function signInWithApple(intent: ExternalIntent, domain = ''): Promise<AppleSignInResult> {
   let credential: AppleAuthentication.AppleAuthenticationCredential;
   try {
     credential = await AppleAuthentication.signInAsync({
@@ -45,6 +45,7 @@ export async function signInWithApple(domain: string): Promise<AppleSignInResult
     identityToken: credential.identityToken,
     authorizationCode: credential.authorizationCode,
     domain,
+    intent,
     givenName: credential.fullName?.givenName,
     familyName: credential.fullName?.familyName,
   });
