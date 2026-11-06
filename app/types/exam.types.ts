@@ -154,5 +154,7 @@ export interface ExamResult {
   startTime?: string;
   endTime?: string;
   showCorrectAnswers?: boolean;
+  passMark?: number | null;
+  resultStatus?: 'Pass' | 'Fail' | 'Pending';
   questionResults: ExamQuestionResult[];
 }

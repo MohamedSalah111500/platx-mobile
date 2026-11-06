@@ -14,7 +14,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as DocumentPicker from 'expo-document-picker';
-import { createAudioPlayer, setAudioModeAsync, type AudioPlayer, type AudioStatus } from 'expo-audio';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
@@ -23,7 +22,8 @@ import { Spinner } from '../../components/ui/Spinner';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { spacing } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
-import { API_CONFIG } from '../../config';
+import { absUrl } from '../../utils/absUrl';
+import { AudioFeedback } from '../../components/homework/AudioFeedback';
 import { homeworkApi } from '../../services/api/homework.api';
 import type { HomeworkStackParamList } from '../../types/navigation.types';
 import {
@@ -40,10 +40,6 @@ type Props = NativeStackScreenProps<HomeworkStackParamList, 'HomeworkDetail'>;
 
 const stripHtml = (s?: string | null) => (s || '').replace(/<[^>]*>/g, '');
 
-const absUrl = (url?: string | null) => {
-  if (!url) return '';
-  return url.startsWith('http') ? url : `${API_CONFIG.BASE_URL}${url.replace(/^\//, '')}`;
-};
 
 export default function HomeworkDetailScreen({ navigation, route }: Props) {
   const { homeworkId } = route.params;
@@ -417,76 +413,6 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
 }
 
 // Plays the teacher's voice-note feedback (expo-audio).
-function AudioFeedback({
-  url,
-  theme,
-  t,
-}: {
-  url: string;
-  theme: any;
-  t: (k: string) => string;
-}) {
-  const [sound, setSound] = useState<AudioPlayer | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    return () => {
-      sound?.remove();
-    };
-  }, [sound]);
-
-  const toggle = async () => {
-    try {
-      if (sound) {
-        if (playing) {
-          sound.pause();
-          setPlaying(false);
-        } else {
-          sound.play();
-          setPlaying(true);
-        }
-        return;
-      }
-      setLoading(true);
-      await setAudioModeAsync({ playsInSilentMode: true });
-      const s = createAudioPlayer({ uri: url });
-      s.addListener('playbackStatusUpdate', (st: AudioStatus) => {
-        if (st.didJustFinish) {
-          setPlaying(false);
-          s.pause();
-          s.seekTo(0);
-        }
-      });
-      s.play();
-      setSound(s);
-      setPlaying(true);
-    } catch {
-      // playback failed silently
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <TouchableOpacity
-      style={[styles.audioBtn, { backgroundColor: theme.colors.primary + '12' }]}
-      onPress={toggle}
-      activeOpacity={0.7}
-    >
-      {loading ? (
-        <ActivityIndicator size="small" color={theme.colors.primary} />
-      ) : (
-        <Ionicons name={playing ? 'pause' : 'play'} size={18} color={theme.colors.primary} />
-      )}
-      <Ionicons name="mic-outline" size={16} color={theme.colors.primary} />
-      <Text style={[styles.audioBtnText, { color: theme.colors.primary }]}>
-        {playing ? t('homework.pauseFeedback') : t('homework.playFeedback')}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
 function QuestionCard({
   q,
   index,
@@ -650,16 +576,6 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   instructions: { ...typography.body },
-  audioBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginTop: 4,
-  },
-  audioBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
   qHeader: {
     flexDirection: 'row',
     alignItems: 'center',

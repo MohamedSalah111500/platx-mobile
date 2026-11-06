@@ -10,6 +10,8 @@ import type {
   GuardianRedeemResponse,
   GuardianWallet,
 } from '../../types/guardian.types';
+import type { ExamResult } from '../../types/exam.types';
+import type { StudentHomework } from '../../types/homework.types';
 
 export const guardianApi = {
   redeem: async (code: string): Promise<GuardianRedeemResponse> =>
@@ -21,6 +23,10 @@ export const guardianApi = {
     (await apiClient.get<GuardianPage<GuardianExamItem>>(GUARDIAN_URLS.EXAMS(studentId), { params: { page, size } })).data,
   homework: async (studentId: number, page: number, size: number): Promise<GuardianPage<GuardianHomeworkItem>> =>
     (await apiClient.get<GuardianPage<GuardianHomeworkItem>>(GUARDIAN_URLS.HOMEWORK(studentId), { params: { page, size } })).data,
+  examResult: async (studentId: number, examId: number): Promise<ExamResult> =>
+    (await apiClient.get<ExamResult>(GUARDIAN_URLS.EXAM_RESULT(studentId, examId))).data,
+  homeworkDetail: async (studentId: number, homeworkId: number): Promise<StudentHomework> =>
+    (await apiClient.get<StudentHomework>(GUARDIAN_URLS.HOMEWORK_DETAIL(studentId, homeworkId))).data,
   wallet: async (studentId: number): Promise<GuardianWallet> =>
     (await apiClient.get<GuardianWallet>(GUARDIAN_URLS.WALLET(studentId))).data,
   notifications: async (page: number, size: number): Promise<GuardianPage<GuardianNotification>> =>

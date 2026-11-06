@@ -35,6 +35,7 @@ export interface GuardianAttendance {
 
 export interface GuardianExamItem {
   studentExamId: number;
+  examId: number;
   examName: string;
   courseName: string | null;
   examDate: string;
@@ -76,7 +77,15 @@ export interface GuardianNotification {
   body: string;
   isRead: boolean;
   createdAt: string;
+  entityId?: number | null;
 }
+
+export const GUARDIAN_NOTIFICATION_TYPE = {
+  Attendance: 1,
+  ExamResult: 2,
+  HomeworkGraded: 3,
+  Wallet: 4,
+} as const;
 
 export interface GuardianPage<T> {
   items: T[];

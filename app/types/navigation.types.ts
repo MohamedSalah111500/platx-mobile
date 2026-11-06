@@ -32,6 +32,8 @@ export type ParentStackParamList = {
   ParentAttendance: undefined;
   ParentExams: undefined;
   ParentHomework: undefined;
+  ParentExamDetail: { studentId: number; examId: number };
+  ParentHomeworkDetail: { studentId: number; homeworkId: number };
   ParentNotifications: undefined;
   ParentLink: { code?: string } | undefined;
   ParentSettings: undefined;

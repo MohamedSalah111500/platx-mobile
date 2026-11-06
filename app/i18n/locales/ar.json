@@ -1176,7 +1176,13 @@
     "sessionEndedTitle": "أُلغي وصول وليّ الأمر",
     "sessionEnded": "أُلغي وصولك بصفتك وليّ أمر. يُرجى الربط مجددًا باستخدام رمز الطالب.",
     "children": "الطلاب",
-    "addChildDesc": "اربط طالبًا آخر باستخدام رمز وليّ الأمر."
+    "addChildDesc": "اربط طالبًا آخر باستخدام رمز وليّ الأمر.",
+    "examDetails": "تفاصيل الامتحان",
+    "homeworkDetails": "تفاصيل الواجب",
+    "childAnswer": "إجابة الطالب",
+    "awaitingGrade": "سُلِّم وبانتظار التصحيح",
+    "notSubmittedYet": "لم يُسلَّم بعد",
+    "submittedAt": "سُلِّم في {{date}}"
   },
   "myExams": {
     "title": "امتحاناتي",

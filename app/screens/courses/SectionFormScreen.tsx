@@ -63,7 +63,6 @@ export default function SectionFormScreen({ navigation, route }: Props) {
   const priceValue = price.trim() ? Number(price.replace(',', '.')) : 0;
   const errors = {
     title: !title.trim() ? t('validation.required') : undefined,
-    description: !description.trim() ? t('validation.required') : undefined,
     price: !Number.isFinite(priceValue) || priceValue < 0 || priceValue > PRICE_MAX ? t('courseManage.invalidAmount') : undefined,
   };
   const shown = (key: keyof typeof errors) => (submitted ? errors[key] : undefined);
@@ -127,7 +126,6 @@ export default function SectionFormScreen({ navigation, route }: Props) {
             value={description}
             onChangeText={setDescription}
             multiline
-            error={shown('description')}
           />
           {!REQUEST_ONLY ? (
             <Input

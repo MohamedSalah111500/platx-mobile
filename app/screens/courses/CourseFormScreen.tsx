@@ -124,8 +124,6 @@ export default function CourseFormScreen({ navigation, route }: Props) {
 
   const errors = {
     name: required(values.name),
-    shortDescription: required(values.shortDescription),
-    description: required(values.description),
     whatYouWillLearn: !learnText.trim()
       ? t('validation.required')
       : learnHtml.length > LEARN_MAX
@@ -228,7 +226,6 @@ export default function CourseFormScreen({ navigation, route }: Props) {
             label={t('courseManage.fields.shortDescription')}
             value={values.shortDescription}
             onChangeText={(v) => set('shortDescription', v)}
-            error={shown('shortDescription')}
           />
           <SelectField
             label={t('courseManage.fields.language')}
@@ -242,7 +239,6 @@ export default function CourseFormScreen({ navigation, route }: Props) {
             value={values.description}
             onChangeText={(v) => set('description', v)}
             multiline
-            error={shown('description')}
           />
           <Input
             label={t('courseManage.fields.whatYouWillLearn')}

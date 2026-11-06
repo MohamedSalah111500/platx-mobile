@@ -1156,7 +1156,13 @@
     "sessionEndedTitle": "Parent access cancelled",
     "sessionEnded": "Your parent access has been cancelled. Please link again using the student's code.",
     "children": "Students",
-    "addChildDesc": "Link another student using a parent code."
+    "addChildDesc": "Link another student using a parent code.",
+    "examDetails": "Exam details",
+    "homeworkDetails": "Homework details",
+    "childAnswer": "Student's answer",
+    "awaitingGrade": "Submitted, awaiting grading",
+    "notSubmittedYet": "Not submitted yet",
+    "submittedAt": "Submitted on {{date}}"
   },
   "myExams": {
     "title": "My exams",

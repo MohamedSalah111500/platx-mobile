@@ -3,7 +3,7 @@ import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, Touchabl
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ParentStackParamList } from '../../types/navigation.types';
-import type { GuardianNotification } from '../../types/guardian.types';
+import { GUARDIAN_NOTIFICATION_TYPE, type GuardianNotification } from '../../types/guardian.types';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
@@ -38,6 +38,15 @@ export default function ParentNotificationsScreen({ navigation }: Props) {
     guardianApi.markRead(item.id).catch(() => fetchUnreadCount());
   };
 
+  const open = (item: GuardianNotification) => {
+    markRead(item);
+    if (!item.entityId) return;
+    if (item.type === GUARDIAN_NOTIFICATION_TYPE.ExamResult)
+      navigation.navigate('ParentExamDetail', { studentId: item.studentId, examId: item.entityId });
+    else if (item.type === GUARDIAN_NOTIFICATION_TYPE.HomeworkGraded)
+      navigation.navigate('ParentHomeworkDetail', { studentId: item.studentId, homeworkId: item.entityId });
+  };
+
   const markAllRead = async () => {
     setItems((items) => items.map((existing) => ({ ...existing, isRead: true })));
     setUnreadCount(0);
@@ -56,7 +65,7 @@ export default function ParentNotificationsScreen({ navigation }: Props) {
   const renderItem = ({ item }: { item: GuardianNotification }) => {
     const unread = !item.isRead;
     return (
-      <TouchableOpacity style={styles.card} onPress={() => markRead(item)} activeOpacity={0.7} accessibilityRole="button">
+      <TouchableOpacity style={styles.card} onPress={() => open(item)} activeOpacity={0.7} accessibilityRole="button">
         <View style={[styles.iconCircle, { backgroundColor: unread ? theme.colors.primary : theme.colors.primary + '1F' }]}>
           <Ionicons
             name={unread ? 'notifications' : 'notifications-outline'}

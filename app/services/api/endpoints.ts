@@ -429,6 +429,8 @@ export const GUARDIAN_URLS = {
   ATTENDANCE: (studentId: number) => `${BASE}api/guardian/children/${studentId}/attendance`,
   EXAMS: (studentId: number) => `${BASE}api/guardian/children/${studentId}/exams`,
   HOMEWORK: (studentId: number) => `${BASE}api/guardian/children/${studentId}/homework`,
+  EXAM_RESULT: (studentId: number, examId: number) => `${BASE}api/guardian/children/${studentId}/exams/${examId}`,
+  HOMEWORK_DETAIL: (studentId: number, homeworkId: number) => `${BASE}api/guardian/children/${studentId}/homework/${homeworkId}`,
   WALLET: (studentId: number) => `${BASE}api/guardian/children/${studentId}/wallet`,
   NOTIFICATIONS: `${BASE}api/guardian/notifications`,
   UNREAD_COUNT: `${BASE}api/guardian/notifications/unread-count`,

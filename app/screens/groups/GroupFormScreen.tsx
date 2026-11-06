@@ -75,7 +75,7 @@ export default function GroupFormScreen({ navigation, route }: Props) {
 
   const errors = {
     name: textError(name, NAME_MAX),
-    description: isSubGroup ? undefined : textError(description, DESCRIPTION_MAX),
+    description: isSubGroup || !description.trim() ? undefined : textError(description, DESCRIPTION_MAX),
   };
   const shown = (key: keyof typeof errors) => (submitted ? errors[key] : undefined);
 

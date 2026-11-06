@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ParentStackParamList } from '../../types/navigation.types';
@@ -38,7 +38,12 @@ export default function ParentExamsScreen({ navigation }: Props) {
     const color = scoreColor(item.percentage, theme.colors);
     const meta = [item.courseName, formatExamDay(item.examDate, locale)].filter(Boolean).join(' · ');
     return (
-      <View style={styles.card}>
+      <TouchableOpacity
+        style={styles.card}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        onPress={() => childId != null && navigation.navigate('ParentExamDetail', { studentId: childId, examId: item.examId })}
+      >
         <View style={[styles.iconWrap, { backgroundColor: color + '1F' }]}>
           <Ionicons name="ribbon-outline" size={20} color={color} />
         </View>
@@ -60,7 +65,7 @@ export default function ParentExamsScreen({ navigation }: Props) {
           <Text style={[styles.scoreText, { color }]}>{`${item.studentScore}/${item.totalMarks}`}</Text>
           <Text style={styles.meta}>{`${Math.round(item.percentage)}%`}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 

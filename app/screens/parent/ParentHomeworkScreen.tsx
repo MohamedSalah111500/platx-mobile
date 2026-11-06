@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ParentStackParamList } from '../../types/navigation.types';
@@ -66,7 +66,12 @@ export default function ParentHomeworkScreen({ navigation }: Props) {
       !done && !item.isAlwaysOpen && !!item.dueDate && parseLocalDate(item.dueDate).getTime() < Date.now();
     const due = item.isAlwaysOpen || !item.dueDate ? t('parent.alwaysOpen') : t('parent.due', { date: formatDay(item.dueDate, locale) });
     return (
-      <View style={styles.card}>
+      <TouchableOpacity
+        style={styles.card}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        onPress={() => childId != null && navigation.navigate('ParentHomeworkDetail', { studentId: childId, homeworkId: item.id })}
+      >
         <View style={[styles.iconWrap, { backgroundColor: theme.colors.primary + '1F' }]}>
           <Ionicons name={typeIcon(item.homeworkType)} size={20} color={theme.colors.primary} />
         </View>
@@ -81,7 +86,7 @@ export default function ParentHomeworkScreen({ navigation }: Props) {
             <Text style={[styles.badgeText, { color: status.color }]}>{status.label}</Text>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 

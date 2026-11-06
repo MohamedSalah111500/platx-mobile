@@ -7,6 +7,8 @@ import ParentHomeScreen from '../screens/parent/ParentHomeScreen';
 import ParentAttendanceScreen from '../screens/parent/ParentAttendanceScreen';
 import ParentExamsScreen from '../screens/parent/ParentExamsScreen';
 import ParentHomeworkScreen from '../screens/parent/ParentHomeworkScreen';
+import ParentExamDetailScreen from '../screens/parent/ParentExamDetailScreen';
+import ParentHomeworkDetailScreen from '../screens/parent/ParentHomeworkDetailScreen';
 import ParentNotificationsScreen from '../screens/parent/ParentNotificationsScreen';
 import ParentLinkScreen from '../screens/parent/ParentLinkScreen';
 import ParentSettingsScreen from '../screens/parent/ParentSettingsScreen';
@@ -25,6 +27,8 @@ export default function ParentNavigator() {
       <Stack.Screen name="ParentAttendance" component={ParentAttendanceScreen} />
       <Stack.Screen name="ParentExams" component={ParentExamsScreen} />
       <Stack.Screen name="ParentHomework" component={ParentHomeworkScreen} />
+      <Stack.Screen name="ParentExamDetail" component={ParentExamDetailScreen} />
+      <Stack.Screen name="ParentHomeworkDetail" component={ParentHomeworkDetailScreen} />
       <Stack.Screen name="ParentNotifications" component={ParentNotificationsScreen} />
       <Stack.Screen name="ParentLink" component={ParentLinkScreen} />
       <Stack.Screen name="ParentSettings" component={ParentSettingsScreen} />
