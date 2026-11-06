@@ -42,6 +42,7 @@ export default function ParentExamsScreen({ navigation }: Props) {
         style={styles.card}
         activeOpacity={0.7}
         accessibilityRole="button"
+        disabled={item.hasPendingReview}
         onPress={() => childId != null && navigation.navigate('ParentExamDetail', { studentId: childId, examId: item.examId })}
       >
         <View style={[styles.iconWrap, { backgroundColor: color + '1F' }]}>

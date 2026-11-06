@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -31,10 +31,12 @@ export function ExamResultView({ title, load, onBack, answerLabel }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
+  const tRef = useRef(t);
+  tRef.current = t;
 
   const loadResults = useCallback(async () => {
     if (!load) {
-      setError(t('exams.failedToLoadResults'));
+      setError(tRef.current('exams.failedToLoadResults'));
       setLoading(false);
       return;
     }
@@ -43,11 +45,11 @@ export function ExamResultView({ title, load, onBack, answerLabel }: Props) {
       setLoading(true);
       setResult(await load());
     } catch (err: any) {
-      setError(err?.userMessage || t('exams.failedToLoadResults'));
+      setError(err?.userMessage || tRef.current('exams.failedToLoadResults'));
     } finally {
       setLoading(false);
     }
-  }, [load, t]);
+  }, [load]);
 
   useEffect(() => {
     loadResults();

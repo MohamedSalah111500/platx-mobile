@@ -46,6 +46,7 @@ export interface GuardianExamItem {
   attemptNumber: number;
   numberOfQuestions: number;
   correctAnswersCount: number;
+  hasPendingReview: boolean;
 }
 
 export interface GuardianHomeworkItem {
