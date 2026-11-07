@@ -1,11 +1,16 @@
 export const PAYMENT_METHOD_VODAFONE = 1;
 export const PAYMENT_METHOD_INSTAPAY = 2;
+export const PAYMENT_METHOD_BANK = 3;
+export const DEFAULT_WALLET_PROVIDER = 'Vodafone Cash';
 
 export interface PaymentMethod {
   id: number;
   method: number;
-  phoneNumber?: string;
-  accountNumber?: string;
+  phoneNumber?: string | null;
+  accountNumber?: string | null;
+  bankName?: string | null;
+  accountHolderName?: string | null;
+  swiftCode?: string | null;
   isActive?: boolean;
 }
 

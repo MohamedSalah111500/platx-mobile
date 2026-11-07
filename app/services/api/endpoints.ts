@@ -366,6 +366,7 @@ export const STAFF_URLS = {
   UPDATE: `${BASE}api/Staffs`,
   DELETE: (id: number) => `${BASE}api/Staffs/${id}`,
   PERMISSIONS: (id: number) => `${BASE}api/Staffs/${id}/permissions`,
+  MY_PERMISSIONS: `${BASE}api/Staffs/my-permissions`,
 };
 
 // Dashboard endpoints

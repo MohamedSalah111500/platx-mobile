@@ -27,7 +27,8 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'Groups'>;
 
 export default function GroupsListScreen({ navigation }: Props) {
   const { theme } = useTheme();
-  const { user, isStudent, isAdmin } = useAuth();
+  const { user, isStudent, canModule } = useAuth();
+  const canCreateGroup = canModule('Groups', 'create');
   const { t, isRTL } = useRTL();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
@@ -179,7 +180,7 @@ export default function GroupsListScreen({ navigation }: Props) {
         title={isStudent ? t('groups.myGroups') : t('groups.title')}
         onBack={() => navigation.goBack()}
         rightElement={
-          isAdmin ? (
+          canCreateGroup ? (
             <TouchableOpacity
               onPress={() => navigation.navigate('GroupForm')}
               style={[styles.addButton, { backgroundColor: theme.colors.primary }]}

@@ -239,11 +239,11 @@
   "checkout": {
     "title": "Checkout",
     "paymentMethod": "Payment Method",
-    "vodafoneCash": "Vodafone Cash",
+    "vodafoneCash": "E-wallet",
     "instapay": "InstaPay",
     "vodafoneNumber": "Vodafone Cash Number",
     "instapayAddress": "InstaPay Address",
-    "payHint": "Transfer the course amount to the number above, then upload a screenshot of the transfer.",
+    "payHint": "Transfer the course amount using the details above, then upload a screenshot of the transfer.",
     "noMethods": "No payment methods are available right now. Please contact the academy.",
     "proofOfPayment": "Proof of Payment",
     "uploadProof": "Upload transfer screenshot",
@@ -261,7 +261,12 @@
     "requestTitle": "Request to Join",
     "requestNotice": "Send a request to join this course. The academy will review your request, and you'll get access once it's approved.",
     "sendRequest": "Send Request",
-    "requestSubmitted": "Your request has been sent to the academy. You'll get access once it's approved."
+    "requestSubmitted": "Your request has been sent to the academy. You'll get access once it's approved.",
+    "bankTransfer": "Bank transfer",
+    "bankName": "Bank",
+    "accountHolder": "Account holder",
+    "accountNumber": "Account number / IBAN",
+    "swiftCode": "SWIFT / BIC code"
   },
   "enrollStudent": {
     "title": "Enroll Student",
@@ -910,9 +915,10 @@
     "rejected": "Request rejected.",
     "failed": "Couldn't complete the action. Please try again.",
     "paymentMethod": "Payment method",
-    "vodafone": "Vodafone Cash",
+    "vodafone": "E-wallet",
     "instapay": "InstaPay",
-    "unknownStudent": "Student"
+    "unknownStudent": "Student",
+    "bank": "Bank transfer"
   },
   "sendNotification": {
     "title": "Send notification",

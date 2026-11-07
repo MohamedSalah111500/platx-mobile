@@ -16,7 +16,7 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { fontSize } from '../../theme/typography';
 import { reservationsApi } from '../../services/api/reservations.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
-import { PAYMENT_METHOD_INSTAPAY, PAYMENT_METHOD_VODAFONE, type PendingReservation } from '../../types/reservation.types';
+import { PAYMENT_METHOD_BANK, PAYMENT_METHOD_INSTAPAY, PAYMENT_METHOD_VODAFONE, type PendingReservation } from '../../types/reservation.types';
 import { REQUEST_ONLY } from '../../config/storePolicy';
 import type { HomeStackParamList } from '../../types/navigation.types';
 
@@ -62,6 +62,7 @@ export default function EnrollmentRequestsScreen({ navigation, route }: Props) {
   const paymentLabel = (method?: number | null) => {
     if (method === PAYMENT_METHOD_VODAFONE) return t('enrollmentRequests.vodafone');
     if (method === PAYMENT_METHOD_INSTAPAY) return t('enrollmentRequests.instapay');
+    if (method === PAYMENT_METHOD_BANK) return t('enrollmentRequests.bank');
     return null;
   };
 

@@ -19,7 +19,6 @@ import { studentsApi } from '../../services/api/students.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { normalizeSearch } from '../../utils/phoneNumber';
 import { fullName } from '../../utils/personName';
-import { useOwnModulePermissions } from '../../hooks/useOwnModulePermissions';
 import type { ManagedStudent } from '../../types/people.types';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 
@@ -37,7 +36,6 @@ export default function StudentsListScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { t } = useRTL();
   const insets = useSafeAreaInsets();
-  useOwnModulePermissions();
 
   const [items, setItems] = useState<ManagedStudent[]>([]);
   const [totalCount, setTotalCount] = useState(0);

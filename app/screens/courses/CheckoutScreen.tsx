@@ -32,9 +32,18 @@ import type { CheckoutParams } from '../../types/navigation.types';
 import {
   PAYMENT_METHOD_VODAFONE,
   PAYMENT_METHOD_INSTAPAY,
+  PAYMENT_METHOD_BANK,
+  DEFAULT_WALLET_PROVIDER,
   type PaymentMethod,
   type ReservationProofImage,
 } from '../../types/reservation.types';
+
+const METHOD_ORDER = [PAYMENT_METHOD_VODAFONE, PAYMENT_METHOD_INSTAPAY, PAYMENT_METHOD_BANK];
+const METHOD_LABEL: Record<number, string> = {
+  [PAYMENT_METHOD_VODAFONE]: 'checkout.vodafoneCash',
+  [PAYMENT_METHOD_INSTAPAY]: 'checkout.instapay',
+  [PAYMENT_METHOD_BANK]: 'checkout.bankTransfer',
+};
 
 import { BackButton } from '../../components/ui/BackButton';
 type Props = {
@@ -58,8 +67,9 @@ export default function CheckoutScreen({ navigation, route }: Props) {
   const [proof, setProof] = useState<ReservationProofImage | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const vodafone = methods.filter((m) => m.method === PAYMENT_METHOD_VODAFONE && m.isActive !== false);
-  const instapay = methods.filter((m) => m.method === PAYMENT_METHOD_INSTAPAY && m.isActive !== false);
+  const active = methods.filter((m) => m.isActive !== false);
+  const availableMethods = METHOD_ORDER.filter((value) => active.some((m) => m.method === value));
+  const hasMethods = availableMethods.length > 0;
 
   useEffect(() => { loadMethods(); }, []);
 
@@ -76,9 +86,7 @@ export default function CheckoutScreen({ navigation, route }: Props) {
       setLoading(true);
       const data = await reservationsApi.getPaymentMethods();
       setMethods(data);
-      const firstVodafone = data.find((m) => m.method === PAYMENT_METHOD_VODAFONE && m.isActive !== false);
-      const firstInstapay = data.find((m) => m.method === PAYMENT_METHOD_INSTAPAY && m.isActive !== false);
-      setSelectedMethod(firstVodafone ? PAYMENT_METHOD_VODAFONE : firstInstapay ? PAYMENT_METHOD_INSTAPAY : null);
+      setSelectedMethod(METHOD_ORDER.find((value) => data.some((m) => m.method === value && m.isActive !== false)) ?? null);
     } catch (err: any) {
       setError(err?.userMessage || t('checkout.loadFailed'));
     } finally {
@@ -104,7 +112,7 @@ export default function CheckoutScreen({ navigation, route }: Props) {
       return;
     }
     if (!REQUEST_ONLY && !selectedMethod) {
-      Alert.alert(t('common.error'), t('checkout.selectMethodFirst'));
+      Alert.alert(t('common.error'), t(hasMethods ? 'checkout.selectMethodFirst' : 'checkout.noMethods'));
       return;
     }
     if (!REQUEST_ONLY && !proof) {
@@ -133,45 +141,48 @@ export default function CheckoutScreen({ navigation, route }: Props) {
 
   const coverUrl = getFullImageUrl(image);
 
-  const renderMethodTab = (methodValue: number, label: string, available: boolean) => {
-    if (!available) return null;
-    const active = selectedMethod === methodValue;
+  const renderMethodTab = (methodValue: number) => {
+    const selected = selectedMethod === methodValue;
     return (
       <TouchableOpacity
         key={methodValue}
         style={[
           styles.methodTab,
-          { backgroundColor: active ? theme.colors.text : theme.colors.card },
+          { backgroundColor: selected ? theme.colors.text : theme.colors.card },
         ]}
         onPress={() => { setSelectedMethod(methodValue); }}
         activeOpacity={0.75}
       >
-        <Text style={[styles.methodTabText, { color: active ? theme.colors.background : theme.colors.text }]}>
-          {label}
+        <Text style={[styles.methodTabText, { color: selected ? theme.colors.background : theme.colors.text }]} numberOfLines={1}>
+          {t(METHOD_LABEL[methodValue])}
         </Text>
       </TouchableOpacity>
     );
   };
 
-  const renderPayTo = () => {
-    if (selectedMethod === PAYMENT_METHOD_VODAFONE) {
-      return vodafone.map((m) => (
-        <View key={m.id} style={styles.payToRow}>
-          <Text style={[styles.payToLabel, { color: theme.colors.textMuted }]}>{t('checkout.vodafoneNumber')}</Text>
-          <Text style={[styles.payToValue, { color: theme.colors.text }]}>{m.phoneNumber}</Text>
-        </View>
-      ));
-    }
-    if (selectedMethod === PAYMENT_METHOD_INSTAPAY) {
-      return instapay.map((m) => (
-        <View key={m.id} style={styles.payToRow}>
-          <Text style={[styles.payToLabel, { color: theme.colors.textMuted }]}>{t('checkout.instapayAddress')}</Text>
-          <Text style={[styles.payToValue, { color: theme.colors.text }]}>{m.accountNumber}</Text>
-        </View>
-      ));
-    }
-    return null;
-  };
+  const renderField = (key: string, label: string, value?: string | null, large = false) =>
+    value ? (
+      <View key={key} style={styles.payToRow}>
+        <Text style={[styles.payToLabel, { color: theme.colors.textMuted }]}>{label}</Text>
+        <Text selectable style={[large ? styles.payToValue : styles.payToDetail, { color: theme.colors.text }]}>{value}</Text>
+      </View>
+    ) : null;
+
+  const renderPayTo = () =>
+    active
+      .filter((m) => m.method === selectedMethod)
+      .map((m) => {
+        if (m.method === PAYMENT_METHOD_VODAFONE) return renderField(`${m.id}`, m.bankName || DEFAULT_WALLET_PROVIDER, m.phoneNumber, true);
+        if (m.method === PAYMENT_METHOD_INSTAPAY) return renderField(`${m.id}`, t('checkout.instapayAddress'), m.accountNumber, true);
+        return (
+          <View key={m.id} style={[styles.bankBlock, { borderColor: theme.colors.border }]}>
+            {renderField('bank', t('checkout.bankName'), m.bankName)}
+            {renderField('holder', t('checkout.accountHolder'), m.accountHolderName)}
+            {renderField('account', t('checkout.accountNumber'), m.accountNumber, true)}
+            {renderField('swift', t('checkout.swiftCode'), m.swiftCode)}
+          </View>
+        );
+      });
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -238,7 +249,7 @@ export default function CheckoutScreen({ navigation, route }: Props) {
           />
           <Text style={[styles.sectionLabel, { color: theme.colors.text }]}>{t('checkout.paymentMethod')}</Text>
 
-          {vodafone.length === 0 && instapay.length === 0 ? (
+          {!hasMethods ? (
             <View style={[styles.noticeCard, { backgroundColor: theme.colors.card }]}>
               <Ionicons name="alert-circle-outline" size={20} color={theme.colors.textMuted} />
               <Text style={[styles.noticeText, { color: theme.colors.textSecondary }]}>{t('checkout.noMethods')}</Text>
@@ -246,8 +257,7 @@ export default function CheckoutScreen({ navigation, route }: Props) {
           ) : (
             <>
               <View style={styles.methodTabs}>
-                {renderMethodTab(PAYMENT_METHOD_VODAFONE, t('checkout.vodafoneCash'), vodafone.length > 0)}
-                {renderMethodTab(PAYMENT_METHOD_INSTAPAY, t('checkout.instapay'), instapay.length > 0)}
+                {availableMethods.map(renderMethodTab)}
               </View>
 
               <View style={[styles.payToCard, { backgroundColor: theme.colors.card }]}>
@@ -257,6 +267,8 @@ export default function CheckoutScreen({ navigation, route }: Props) {
             </>
           )}
 
+          {hasMethods && (
+          <>
           <Text style={[styles.sectionLabel, { color: theme.colors.text }]}>{t('checkout.proofOfPayment')}</Text>
           <TouchableOpacity
             style={[styles.proofPicker, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}
@@ -276,6 +288,8 @@ export default function CheckoutScreen({ navigation, route }: Props) {
             <TouchableOpacity onPress={pickProof} style={styles.changeProof}>
               <Text style={[styles.changeProofText, { color: theme.colors.primary }]}>{t('checkout.changeImage')}</Text>
             </TouchableOpacity>
+          )}
+          </>
           )}
           </>
           )}
@@ -301,6 +315,7 @@ export default function CheckoutScreen({ navigation, route }: Props) {
             title={t(REQUEST_ONLY ? 'checkout.sendRequest' : 'checkout.submitRequest')}
             onPress={handleSubmit}
             loading={submitting}
+            disabled={!REQUEST_ONLY && !hasMethods}
             fullWidth
             size="large"
             icon={<Ionicons name="checkmark-circle" size={20} color={theme.colors.onPrimary} />}
@@ -353,6 +368,8 @@ const styles = StyleSheet.create({
   payToRow: { marginBottom: spacing.sm },
   payToLabel: { fontSize: 14, fontFamily: 'Cairo_500Medium', marginBottom: 2, textAlign: 'left' },
   payToValue: { fontSize: fontSize.xl, fontFamily: 'Cairo_700Bold', letterSpacing: 1, textAlign: 'left' },
+  payToDetail: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  bankBlock: { borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: spacing.sm, marginBottom: spacing.sm },
   payHint: { fontSize: 14, fontFamily: 'Cairo_400Regular', marginTop: spacing.xs, textAlign: 'left' },
 
   noticeCard: {

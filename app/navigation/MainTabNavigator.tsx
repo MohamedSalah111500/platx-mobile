@@ -16,6 +16,7 @@ import HomeStack from './stacks/HomeStack';
 import ChatStack from './stacks/ChatStack';
 import ExamsStack from './stacks/ExamsStack';
 import ProfileStack from './stacks/ProfileStack';
+import { useOwnModulePermissions } from '../hooks/useOwnModulePermissions';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -90,6 +91,7 @@ function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
 export default function MainTabNavigator() {
   const { t } = useRTL();
+  useOwnModulePermissions();
 
   return (
     <Tab.Navigator

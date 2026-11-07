@@ -68,6 +68,11 @@ export const staffApi = {
     return { items, totalCount: Math.max(totalCount, items.length) };
   },
 
+  getMyPermissions: async (): Promise<ModulePermission[]> => {
+    const { data } = await apiClient.get<any>(STAFF_URLS.MY_PERMISSIONS);
+    return toModulePermissions(data);
+  },
+
   getById: async (id: number): Promise<ManagedStaff> => {
     const { data } = await apiClient.get<any>(STAFF_URLS.GET_BY_ID(id));
     return toManagedStaff(data);

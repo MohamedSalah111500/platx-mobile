@@ -9,16 +9,15 @@ export function useOwnModulePermissions() {
   const user = useAuthStore((state) => state.user);
   const setModulePermissions = useAuthStore((state) => state.setModulePermissions);
   const isStaff = !!user?.roles && getUserRole(user.roles) === 'Staff';
-  const staffId = user?.staffId;
 
   useEffect(() => {
-    if (!isStaff || !staffId || refreshed) return;
+    if (!isStaff || refreshed) return;
     refreshed = true;
     staffApi
-      .getById(staffId)
-      .then((staff) => setModulePermissions(staff.permissions))
+      .getMyPermissions()
+      .then(setModulePermissions)
       .catch(() => {
         refreshed = false;
       });
-  }, [isStaff, staffId, setModulePermissions]);
+  }, [isStaff, setModulePermissions]);
 }
