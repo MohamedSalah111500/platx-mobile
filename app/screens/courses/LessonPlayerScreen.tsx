@@ -31,6 +31,7 @@ import type { CoursesStackParamList } from '../../types/navigation.types';
 import type { CourseAvailability } from '../../types/course.types';
 import { isCourseLocked, resolveCourseAvailability } from '../../utils/courseAvailability';
 import { CourseLockedNotice } from '../../components/course/CourseLockedNotice';
+import { LessonReviewsSection } from '../../components/course/LessonReviews';
 import type { Lesson } from '../../types/course.types';
 import { useRTL } from '../../i18n/RTLProvider';
 import { useSound } from '../../hooks/useSound';
@@ -618,6 +619,8 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
                 <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.textMuted} />
               </TouchableOpacity>
             )}
+
+            <LessonReviewsSection lessonId={lessonId} />
           </ScrollView>
         </>
       )}
