@@ -1403,7 +1403,8 @@
       "when": "When to send",
       "modes": {
         "Instant": "Right away",
-        "DailyDigest": "One daily report"
+        "DailyDigest": "One daily report",
+        "WeeklyDigest": "One weekly report"
       },
       "topics": {
         "attendance": "Attendance",

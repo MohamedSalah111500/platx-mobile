@@ -190,7 +190,7 @@ export interface BulkImportJobDetail extends BulkImportJob {
   rows: BulkImportRow[];
 }
 
-export type WhatsAppDeliveryMode = 'Instant' | 'DailyDigest';
+export type WhatsAppDeliveryMode = 'Instant' | 'DailyDigest' | 'WeeklyDigest';
 export type WhatsAppTopic = 'sendAttendance' | 'sendExamResults' | 'sendHomeworkGrades';
 export const WHATSAPP_TOPICS: WhatsAppTopic[] = ['sendAttendance', 'sendExamResults', 'sendHomeworkGrades'];
 

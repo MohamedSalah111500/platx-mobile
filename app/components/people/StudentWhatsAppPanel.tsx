@@ -134,6 +134,7 @@ export function StudentWhatsAppPanel({ studentId, canEdit, canSend }: Props) {
     },
     { value: 'Instant', label: t('people.whatsapp.modes.Instant') },
     { value: 'DailyDigest', label: t('people.whatsapp.modes.DailyDigest') },
+    { value: 'WeeklyDigest', label: t('people.whatsapp.modes.WeeklyDigest') },
   ];
   const sendDisabled =
     !student.whatsAppNumber ||

@@ -1423,7 +1423,8 @@
       "when": "وقت الإرسال",
       "modes": {
         "Instant": "فور حدوثه",
-        "DailyDigest": "تقرير يومي واحد"
+        "DailyDigest": "تقرير يومي واحد",
+        "WeeklyDigest": "تقرير أسبوعي واحد"
       },
       "topics": {
         "attendance": "الحضور والغياب",
