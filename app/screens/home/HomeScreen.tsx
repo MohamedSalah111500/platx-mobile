@@ -41,6 +41,7 @@ import { MediaCard } from '../../components/ui/MediaCard';
 import { RowCard } from '../../components/ui/RowCard';
 import { PlayCircle } from '../../components/ui/PlayCircle';
 import { useNotificationsStore } from '../../store/notifications.store';
+import { usePlatformAccess, type PlatformArea } from '../../store/platformAccess.store';
 import { useTabBarSpace } from '../../navigation/tabBar';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Home'>;
@@ -49,6 +50,7 @@ type EnrolledCourse = Course & { progressPct: number };
 
 type QuickAction = {
   key: string;
+  area?: PlatformArea;
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   onPress: () => void;
@@ -81,6 +83,7 @@ export default function HomeScreen({ navigation }: Props) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
 
+  const isOn = usePlatformAccess();
   const isTeacherOrAdmin = isStaff || isAdmin;
   const canReports = can('REPORTS');
   const canManageNews = can('MANAGE_NEWS');
@@ -234,15 +237,15 @@ export default function HomeScreen({ navigation }: Props) {
     return formatPrice(effectivePrice(course.price, course.discountPrice), course.currencyCode, locale);
   };
 
-  const quickActions: QuickAction[] = [
-    { key: 'courses', icon: 'book-outline', label: t('courses.title'), onPress: () => navigation.navigate('CoursesList') },
-    { key: 'homework', icon: 'document-text-outline', label: t('homework.title'), onPress: () => navigation.navigate('Homework') },
+  const quickActions = ([
+    { key: 'courses', area: 'Courses', icon: 'book-outline', label: t('courses.title'), onPress: () => navigation.navigate('CoursesList') },
+    { key: 'homework', area: 'Homework', icon: 'document-text-outline', label: t('homework.title'), onPress: () => navigation.navigate('Homework') },
     ...(isStudent
-      ? [{ key: 'exams', icon: 'ribbon-outline' as const, label: t('myExams.title'), onPress: () => navigation.navigate('MyExams') }]
+      ? [{ key: 'exams', area: 'Exams' as const, icon: 'ribbon-outline' as const, label: t('myExams.title'), onPress: () => navigation.navigate('MyExams') }]
       : []),
-    { key: 'live', icon: 'videocam-outline', label: t('home.live'), onPress: () => navigation.navigate('LiveSessions') },
-    { key: 'groups', icon: 'people-outline', label: t('groups.title'), onPress: () => navigation.navigate('Groups') },
-    { key: 'chat', icon: 'chatbubbles-outline', label: t('chat.title'), onPress: () => navigation.getParent()?.navigate('ChatTab') },
+    { key: 'live', area: 'Live', icon: 'videocam-outline', label: t('home.live'), onPress: () => navigation.navigate('LiveSessions') },
+    { key: 'groups', area: 'Groups', icon: 'people-outline', label: t('groups.title'), onPress: () => navigation.navigate('Groups') },
+    { key: 'chat', area: 'Chat', icon: 'chatbubbles-outline', label: t('chat.title'), onPress: () => navigation.getParent()?.navigate('ChatTab') },
     ...(isTeacherOrAdmin
       ? [
           {
@@ -259,12 +262,14 @@ export default function HomeScreen({ navigation }: Props) {
           },
           { key: 'requests', icon: 'mail-unread-outline' as const, label: t('enrollmentRequests.title'), onPress: () => navigation.navigate('EnrollmentRequests') },
           ...(canManageNews
-            ? [{ key: 'news', icon: 'newspaper-outline' as const, label: t('createNews.new'), onPress: () => navigation.navigate('CreateNews') }]
+            ? [{ key: 'news', area: 'News' as const, icon: 'newspaper-outline' as const, label: t('createNews.new'), onPress: () => navigation.navigate('CreateNews') }]
             : []),
           { key: 'notify', icon: 'megaphone-outline' as const, label: t('sendNotification.title'), onPress: () => navigation.navigate('SendNotification') },
         ]
       : []),
-  ];
+  ] satisfies QuickAction[] as QuickAction[]).filter((action) => !action.area || isOn(action.area));
+
+  const showCourses = isOn('Courses');
 
   const styles = useMemo(() => {
     const ink = theme.colors.text;
@@ -435,6 +440,7 @@ export default function HomeScreen({ navigation }: Props) {
 
         <Text style={styles.headline}>{t('home.headline')}</Text>
 
+        {showCourses && (
         <SearchBar
           style={styles.search}
           value={searchText}
@@ -445,6 +451,7 @@ export default function HomeScreen({ navigation }: Props) {
             navigation.navigate('CoursesList', q ? { search: q } : undefined);
           }}
         />
+        )}
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           {quickActions.map((action) => (
@@ -471,7 +478,7 @@ export default function HomeScreen({ navigation }: Props) {
                 </React.Fragment>
               ))}
             </View>
-            {canReports && (
+            {canReports && isOn('Reports') && (
               <TouchableOpacity
                 style={styles.cta}
                 activeOpacity={0.85}
@@ -493,7 +500,7 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         )}
 
-        {isStudent && featured && (
+        {isStudent && showCourses && featured && (
           <TouchableOpacity
             style={styles.tintCard}
             activeOpacity={0.9}
@@ -527,7 +534,7 @@ export default function HomeScreen({ navigation }: Props) {
           </TouchableOpacity>
         )}
 
-        {isStudent && otherEnrolled.length > 0 && (
+        {isStudent && showCourses && otherEnrolled.length > 0 && (
           <View style={styles.section}>
             <SectionHeader title={t('home.enrolledCourses')} onSeeAll={() => navigation.navigate('CoursesList')} />
             <View style={styles.list}>
@@ -546,7 +553,7 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         )}
 
-        {isStudent && honorTop3.length > 0 && (
+        {isStudent && isOn('HonorBoard') && honorTop3.length > 0 && (
           <View style={[styles.list, styles.section]}>
             <RowCard
               title={t('honorBoard.title')}
@@ -573,7 +580,7 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         )}
 
-        {coursesError ? (
+        {!showCourses ? null : coursesError ? (
           <Text style={[styles.message, { color: theme.colors.danger }]}>{coursesError}</Text>
         ) : courses.length > 0 ? (
           <View style={styles.section}>
@@ -597,7 +604,7 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         ) : null}
 
-        {events.length > 0 && (
+        {isOn('Events') && events.length > 0 && (
           <View style={styles.section}>
             <SectionHeader title={t('home.upcomingEvents')} />
             <View style={styles.list}>
@@ -620,6 +627,7 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         )}
 
+        {isOn('News') && (
         <View style={styles.section}>
           <SectionHeader title={t('home.latestNews')} />
           {newsError ? (
@@ -642,6 +650,7 @@ export default function HomeScreen({ navigation }: Props) {
             <Text style={[styles.message, { color: theme.colors.textMuted }]}>{t('home.noNewsAvailable')}</Text>
           )}
         </View>
+        )}
       </ScrollView>
       <View style={styles.statusMask} />
     </View>

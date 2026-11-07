@@ -15,6 +15,7 @@ import { signInWithGoogle } from '../services/auth/googleAuth';
 import { signInWithApple } from '../services/auth/appleAuth';
 import i18n from '../i18n/i18n.config';
 import { useNotificationsStore } from './notifications.store';
+import { usePlatformAccessStore } from './platformAccess.store';
 import { useParentStore } from './parent.store';
 import type {
   User,
@@ -220,6 +221,7 @@ async function clearSession(options: { removePushToken: boolean }) {
   signalRService.stopConnection().catch(() => {});
   setInMemoryToken(null);
   useNotificationsStore.getState().clear();
+  usePlatformAccessStore.getState().clear();
   const keys: string[] = [
     STORAGE_KEYS.AUTH_TOKEN,
     STORAGE_KEYS.CURRENT_USER,

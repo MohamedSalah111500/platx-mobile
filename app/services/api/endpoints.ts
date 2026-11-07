@@ -369,6 +369,11 @@ export const STAFF_URLS = {
   MY_PERMISSIONS: `${BASE}api/Staffs/my-permissions`,
 };
 
+export const PLATFORM_ACCESS_URLS = {
+  MY_FEATURES: `${BASE}api/SubscriptionLimits/my-features`,
+  MENU_VISIBILITY: `${BASE}api/menu-visibility`,
+};
+
 // Dashboard endpoints
 export const DASHBOARD_URLS = {
   GET_STATS: `${BASE}api/Dashboard/GetDashboardStats`,

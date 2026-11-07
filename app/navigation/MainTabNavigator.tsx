@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { AppState, View, Pressable, StyleSheet } from 'react-native';
 import { createBottomTabNavigator, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import ChatStack from './stacks/ChatStack';
 import ExamsStack from './stacks/ExamsStack';
 import ProfileStack from './stacks/ProfileStack';
 import { useOwnModulePermissions } from '../hooks/useOwnModulePermissions';
+import { usePlatformAccess, usePlatformAccessStore } from '../store/platformAccess.store';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -92,6 +93,16 @@ function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 export default function MainTabNavigator() {
   const { t } = useRTL();
   useOwnModulePermissions();
+  const loadAccess = usePlatformAccessStore((s) => s.load);
+  const isOn = usePlatformAccess();
+
+  useEffect(() => {
+    loadAccess();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') loadAccess();
+    });
+    return () => subscription.remove();
+  }, [loadAccess]);
 
   return (
     <Tab.Navigator
@@ -105,16 +116,20 @@ export default function MainTabNavigator() {
         component={HomeStack}
         options={{ tabBarLabel: t('tabs.home') }}
       />
-      <Tab.Screen
-        name="ExamsTab"
-        component={ExamsStack}
-        options={{ tabBarLabel: t('tabs.exams') }}
-      />
-      <Tab.Screen
-        name="ChatTab"
-        component={ChatStack}
-        options={{ tabBarLabel: t('tabs.chat') }}
-      />
+      {isOn('Exams') && (
+        <Tab.Screen
+          name="ExamsTab"
+          component={ExamsStack}
+          options={{ tabBarLabel: t('tabs.exams') }}
+        />
+      )}
+      {isOn('Chat') && (
+        <Tab.Screen
+          name="ChatTab"
+          component={ChatStack}
+          options={{ tabBarLabel: t('tabs.chat') }}
+        />
+      )}
       <Tab.Screen
         name="ProfileTab"
         component={ProfileStack}

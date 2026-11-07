@@ -16,6 +16,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
+import { usePlatformAccess } from '../../store/platformAccess.store';
 import { useRTL } from '../../i18n/RTLProvider';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
@@ -51,13 +52,14 @@ export default function ProfileScreen({ navigation }: Props) {
   const canStudents = can('STUDENTS_MANAGE');
   const canStaff = can('STAFF_MANAGE');
   const isStaffOrAdmin = !isStudent;
+  const isOn = usePlatformAccess();
 
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [messageThreadsCount, setMessageThreadsCount] = useState(0);
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [points, setPoints] = useState<number | null>(null);
-  const showPoints = isStudent && !REQUEST_ONLY;
+  const showPoints = isStudent && !REQUEST_ONLY && isOn('Wallet');
 
   useFocusEffect(
     useCallback(() => {
@@ -140,14 +142,14 @@ export default function ProfileScreen({ navigation }: Props) {
       onPress: () => navigation.navigate('StaffList'),
     });
   }
-  generalMenuItems.push({
+  if (isOn('Homework')) generalMenuItems.push({
     iconName: 'document-text',
     iconBg: theme.colors.primaryLight,
     iconColor: theme.colors.primary,
     label: t('homework.title'),
     onPress: () => navigation.navigate('Homework'),
   });
-  if (canManageGroups || canMyGroup) {
+  if ((canManageGroups || canMyGroup) && isOn('Groups')) {
     generalMenuItems.push({
       iconName: 'people',
       iconBg: theme.colors.primaryLight,
@@ -156,7 +158,7 @@ export default function ProfileScreen({ navigation }: Props) {
       onPress: () => navigation.navigate('Groups'),
     });
   }
-  if (canLive) {
+  if (canLive && isOn('Live')) {
     generalMenuItems.push({
       iconName: 'videocam',
       iconBg: theme.colors.primaryLight,
@@ -165,7 +167,7 @@ export default function ProfileScreen({ navigation }: Props) {
       onPress: () => navigation.navigate('LiveSessions'),
     });
   }
-  if (canSessions || canMySessions) {
+  if ((canSessions || canMySessions) && isOn('Sessions')) {
     generalMenuItems.push({
       iconName: 'easel',
       iconBg: theme.colors.primaryLight,
@@ -174,7 +176,7 @@ export default function ProfileScreen({ navigation }: Props) {
       onPress: () => navigation.navigate(canSessions ? 'Sessions' : 'MySessions'),
     });
   }
-  if (isStudent && !REQUEST_ONLY) {
+  if (isStudent && !REQUEST_ONLY && isOn('Wallet')) {
     generalMenuItems.push({
       iconName: 'wallet',
       iconBg: theme.colors.primaryLight,
@@ -183,14 +185,14 @@ export default function ProfileScreen({ navigation }: Props) {
       onPress: () => navigation.navigate('Wallet'),
     });
   }
-  generalMenuItems.push({
+  if (isOn('HonorBoard')) generalMenuItems.push({
     iconName: 'trophy',
     iconBg: theme.colors.primaryLight,
     iconColor: theme.colors.primary,
     label: t('honorBoard.title'),
     onPress: () => navigation.navigate('HonorBoard'),
   });
-  if (canReports) {
+  if (canReports && isOn('Reports')) {
     generalMenuItems.push({
       iconName: 'bar-chart',
       iconBg: theme.colors.primaryLight,
@@ -268,7 +270,7 @@ export default function ProfileScreen({ navigation }: Props) {
                   iconColor: theme.colors.primary,
                   value: statsLoading ? '-' : String(messageThreadsCount),
                   label: t('profile.messages'),
-                  onPress: () => navigation.getParent()?.navigate('ChatTab'),
+                  onPress: isOn('Chat') ? () => navigation.getParent()?.navigate('ChatTab') : undefined,
                 },
                 {
                   key: 'courses',

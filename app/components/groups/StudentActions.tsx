@@ -8,6 +8,7 @@ import { groupsApi } from '../../services/api/groups.api';
 import { subGroupsApi } from '../../services/api/subgroups.api';
 import { fullName } from '../../utils/personName';
 import type { GroupMember } from '../../types/group.types';
+import { usePlatformAccess } from '../../store/platformAccess.store';
 
 export type StudentScope =
   | { kind: 'group'; groupId: number; groupName: string }
@@ -26,6 +27,7 @@ const SUBGROUP_ID_OFFSET = 1_000_000_000;
 export function StudentActions({ scope, student, canManage, onClose, onChanged }: StudentActionsProps) {
   const { t } = useRTL();
   const navigation = useNavigation<any>();
+  const showChat = usePlatformAccess()('Chat');
   const [moving, setMoving] = useState<GroupMember | null>(null);
   const [targets, setTargets] = useState<PickerItem[]>([]);
 
@@ -104,7 +106,9 @@ export function StudentActions({ scope, student, canManage, onClose, onChanged }
   const actions: SheetAction[] = student
     ? [
         { key: 'profile', label: t('groupManage.studentProfile'), icon: 'person-outline', onPress: () => openProfile(student) },
-        { key: 'chat', label: t('groupManage.message'), icon: 'chatbubble-ellipses-outline', onPress: () => openChat(student) },
+        ...(showChat
+          ? [{ key: 'chat', label: t('groupManage.message'), icon: 'chatbubble-ellipses-outline' as const, onPress: () => openChat(student) }]
+          : []),
         ...(canManage
           ? [
               { key: 'move', label: t('groupManage.move.title'), icon: 'swap-horizontal-outline' as const, onPress: () => openMove(student) },

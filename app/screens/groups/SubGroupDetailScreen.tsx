@@ -28,6 +28,7 @@ import { typography, fontSize } from '../../theme/typography';
 import { subGroupsApi } from '../../services/api/subgroups.api';
 import { groupsApi } from '../../services/api/groups.api';
 import { chatApi } from '../../services/api/chat.api';
+import { usePlatformAccess } from '../../store/platformAccess.store';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 import type { GroupMember, SubGroup } from '../../types/group.types';
@@ -58,6 +59,7 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
   const chatListRef = useRef<FlatList>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>('students');
+  const showChat = usePlatformAccess()('Chat');
   const [subGroup, setSubGroup] = useState<SubGroup | null>(null);
   const [students, setStudents] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -414,7 +416,7 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
 
   const TABS: { key: Tab; label: string; icon: string }[] = [
     { key: 'students', label: t('groups.students'), icon: 'people-outline' },
-    { key: 'chat', label: t('groups.chats'), icon: 'chatbubbles-outline' },
+    ...(showChat ? [{ key: 'chat' as Tab, label: t('groups.chats'), icon: 'chatbubbles-outline' }] : []),
     ...(isTeacher ? [{ key: 'progress' as Tab, label: t('groupManage.progress.tab'), icon: 'book-outline' }] : []),
   ];
 
