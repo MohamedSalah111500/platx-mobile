@@ -549,10 +549,10 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
               { key: 'settings', icon: 'options-outline', label: t('courses.manage.settings'), sub: t('courses.manage.settingsSub'), screen: 'CourseSettings' as const },
               { key: 'students', icon: 'people-outline', label: t('courses.manage.students'), sub: t('courses.manage.studentsSub'), screen: 'CourseStudents' as const },
               { key: 'requests', icon: 'mail-unread-outline', label: t('courses.manage.requests'), sub: t(REQUEST_ONLY ? 'courses.manage.joinRequestsSub' : 'courses.manage.requestsSub'), screen: 'EnrollmentRequests' as const },
-            ].map((row) => (
+            ].map((row, index) => (
               <TouchableOpacity
                 key={row.key}
-                style={styles.manageRow}
+                style={[styles.manageRow, index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: lineColor }]}
                 activeOpacity={0.7}
                 onPress={() => {
                   navigation.navigate(row.screen, { courseId, courseName: course.title || course.name });
@@ -569,13 +569,19 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
               </TouchableOpacity>
             ))}
             {canModule('OnlineCourses', 'delete') ? (
-              <TouchableOpacity style={styles.manageRow} activeOpacity={0.7} onPress={confirmDeleteCourse} accessibilityRole="button">
+              <TouchableOpacity
+                style={[styles.manageRow, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: lineColor }]}
+                activeOpacity={0.7}
+                onPress={confirmDeleteCourse}
+                accessibilityRole="button"
+              >
                 <View style={[styles.manageIcon, { backgroundColor: theme.colors.danger + '18' }]}>
                   <Ionicons name="trash-outline" size={18} color={theme.colors.danger} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.manageTitle, { color: theme.colors.danger }]}>{t('courseManage.deleteCourse')}</Text>
                 </View>
+                <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={18} color={theme.colors.danger + '99'} />
               </TouchableOpacity>
             ) : null}
           </View>
@@ -883,16 +889,16 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     marginBottom: spacing.lg,
     borderRadius: borderRadius.xl,
-    paddingVertical: spacing.xs,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingBottom: spacing.xs,
+    overflow: 'hidden',
   },
   manageHeading: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Cairo_600SemiBold',
+    fontSize: fontSize.sm,
+    fontFamily: 'Cairo_700Bold',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xs,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
     textAlign: 'left',
   },
   manageRow: {
@@ -903,8 +909,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   manageIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  manageTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
-  manageSub: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
+  manageTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  manageSub: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left', marginTop: 1 },
 
   backBtnFloat: {
     position: 'absolute',
