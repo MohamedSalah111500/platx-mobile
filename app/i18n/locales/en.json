@@ -1055,7 +1055,9 @@
       "CoursePurchase": "Course purchase",
       "LivePurchase": "Live session",
       "SectionPurchase": "Section purchase",
-      "LessonPurchase": "Lesson purchase"
+      "LessonPurchase": "Lesson purchase",
+      "StorePurchase": "Store purchase",
+      "StoreRefund": "Store refund"
     },
     "points": "points",
     "openSettings": "Open settings",
@@ -1729,7 +1731,8 @@
       "Courses": "Courses",
       "Live": "Paid live sessions",
       "PointsCards": "Points cards",
-      "Manual": "Other income you added"
+      "Manual": "Other income you added",
+      "Store": "Store"
     },
     "topItems": "Top earning courses",
     "soldTimes": "Sales: {{count}}",
@@ -1768,7 +1771,8 @@
       "Section": "Section",
       "Lesson": "Lesson",
       "Live": "Live session",
-      "PointsCard": "Points card"
+      "PointsCard": "Points card",
+      "StoreOrder": "Store order"
     },
     "categories": {
       "CenterFees": "Center fees",

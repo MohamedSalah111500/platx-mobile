@@ -1075,7 +1075,9 @@
       "CoursePurchase": "شراء دورة",
       "LivePurchase": "حضور حصة مباشرة",
       "SectionPurchase": "شراء قسم",
-      "LessonPurchase": "شراء درس"
+      "LessonPurchase": "شراء درس",
+      "StorePurchase": "شراء من المتجر",
+      "StoreRefund": "استرداد من المتجر"
     },
     "points": "نقطة",
     "openSettings": "فتح الإعدادات",
@@ -1749,7 +1751,8 @@
       "Courses": "الكورسات",
       "Live": "البث المباشر المدفوع",
       "PointsCards": "كروت النقاط",
-      "Manual": "إيرادات أضفتها بنفسك"
+      "Manual": "إيرادات أضفتها بنفسك",
+      "Store": "المتجر"
     },
     "topItems": "الأكثر دخلًا",
     "soldTimes": "عدد مرات البيع: {{count}}",
@@ -1788,7 +1791,8 @@
       "Section": "قسم",
       "Lesson": "درس",
       "Live": "بث مباشر",
-      "PointsCard": "كارت نقاط"
+      "PointsCard": "كارت نقاط",
+      "StoreOrder": "طلب من المتجر"
     },
     "categories": {
       "CenterFees": "اشتراكات السنتر",

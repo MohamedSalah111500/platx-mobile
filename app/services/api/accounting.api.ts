@@ -27,6 +27,7 @@ export enum SaleItemKind {
   Lesson = 3,
   Live = 4,
   PointsCard = 5,
+  StoreOrder = 6,
 }
 
 export enum IncomeSource {
@@ -34,6 +35,7 @@ export enum IncomeSource {
   Live = 2,
   PointsCards = 3,
   Manual = 4,
+  Store = 5,
 }
 
 export const MANUAL_METHODS = [
