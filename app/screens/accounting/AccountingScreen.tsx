@@ -33,6 +33,7 @@ import { fontSize, typography } from '../../theme/typography';
 import { formatAmount } from '../../utils/price';
 import { parseServerDate } from '../../utils/date';
 import { sheetFrame } from '../../utils/responsive';
+import { useTabBarSpace } from '../../navigation/tabBar';
 import {
   accountingApi,
   LedgerEntryOrigin,
@@ -88,6 +89,7 @@ export default function AccountingScreen({ navigation }: Props) {
   const { canModule } = useAuth();
   const { date } = useDisplayFormat();
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useTabBarSpace();
   const canCreate = canModule('Accounting', 'create');
   const canEdit = canModule('Accounting', 'edit');
   const canDelete = canModule('Accounting', 'delete');
@@ -379,7 +381,7 @@ export default function AccountingScreen({ navigation }: Props) {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
       <ScreenHeader title={t('accounting.title')} onBack={() => navigation.goBack()} />
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarSpace + spacing.lg }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={theme.colors.primary} />}
       >
         <View style={styles.chips}>
