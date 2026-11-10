@@ -46,10 +46,20 @@ type Props = NativeStackScreenProps<CoursesStackParamList, 'LessonPlayer'>;
 // otherwise the video stream is rejected with 403.
 const PLAYER_REFERER = 'https://platx.net/';
 
-// Wrap the Bunny embed in an iframe hosted by an allowed-referrer page so the stream
-// requests carry an allowed referrer (mirrors how the web embeds the player).
-function buildPlayerHtml(embedUrl: string): string {
-  return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#000;overflow:hidden}iframe{position:absolute;inset:0;width:100%;height:100%;border:0}</style></head><body><iframe src="${embedUrl}" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></body></html>`;
+// Wrap an embed in an iframe hosted by an allowed-referrer page so its requests
+// carry a referer (mirrors how the web embeds the player). Bunny needs it for the
+// stream's allowed-referrer check; YouTube/Vimeo need it or the player fails with a
+// configuration error (e.g. YouTube 153) because a bare WebView sends no referer.
+function buildPlayerHtml(embedUrl: string, allowFullscreen = true): string {
+  const fsAllow = allowFullscreen ? '; fullscreen' : '';
+  const fsAttr = allowFullscreen ? ' allowfullscreen' : '';
+  return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#000;overflow:hidden}iframe{position:absolute;inset:0;width:100%;height:100%;border:0}</style></head><body><iframe src="${embedUrl}" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture${fsAllow}"${fsAttr}></iframe></body></html>`;
+}
+
+// YouTube/Vimeo player URLs must run inside an iframe on a page with a referer;
+// anything else (a plain web link) is loaded directly as before.
+function isFramedPlayer(url: string): boolean {
+  return /(?:youtube(?:-nocookie)?\.com\/embed\/|player\.vimeo\.com\/video\/)/i.test(url);
 }
 
 const MIME_EXT: Record<string, string> = {
@@ -462,7 +472,11 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
             ) : (
               <View style={styles.videoContainer}>
                 <WebView
-                  source={{ uri: (lesson.embedUrl || lesson.linkUrl) as string }}
+                  source={
+                    isFramedPlayer((lesson.embedUrl || lesson.linkUrl) as string)
+                      ? { html: buildPlayerHtml((lesson.embedUrl || lesson.linkUrl) as string, false), baseUrl: PLAYER_REFERER }
+                      : { uri: (lesson.embedUrl || lesson.linkUrl) as string }
+                  }
                   style={styles.webview}
                   originWhitelist={['*']}
                   allowsFullscreenVideo

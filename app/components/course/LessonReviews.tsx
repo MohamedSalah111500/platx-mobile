@@ -25,7 +25,7 @@ const SORTS: { value: LessonReviewSort; label: string }[] = [
 function Stars({ value, size, color, muted }: { value: number; size: number; color: string; muted: string }) {
   const rounded = Math.round(value);
   return (
-    <View style={{ flexDirection: 'row', gap: 1 }}>
+    <View style={{ flexDirection: 'row', gap: 1, direction: 'ltr' }}>
       {STARS.map((star) => (
         <Ionicons key={star} name={star <= rounded ? 'star' : 'star-outline'} size={size} color={star <= rounded ? color : muted} />
       ))}
@@ -198,16 +198,18 @@ export function LessonReviewsSection({ lessonId }: { lessonId: number }) {
 
       {reviews.mine && !editing && (
         <View style={styles.mine}>
-          <Stars value={reviews.mine.rating} size={14} color={theme.colors.warning} muted={theme.colors.border} />
-          <Text style={styles.mineText} numberOfLines={2}>
+          <View style={styles.mineHead}>
+            <Stars value={reviews.mine.rating} size={14} color={theme.colors.warning} muted={theme.colors.border} />
+            {reviews.canReview && (
+              <TouchableOpacity onPress={() => setEditing(true)} accessibilityRole="button" hitSlop={6}>
+                <Text style={styles.link}>{t('lessonReviews.edit')}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <Text style={styles.mineText}>
             <Text style={styles.bold}>{t('lessonReviews.yourRating')} </Text>
             {reviews.mine.comment || t('lessonReviews.noComment')}
           </Text>
-          {reviews.canReview && (
-            <TouchableOpacity onPress={() => setEditing(true)} accessibilityRole="button">
-              <Text style={styles.link}>{t('lessonReviews.edit')}</Text>
-            </TouchableOpacity>
-          )}
         </View>
       )}
 
@@ -318,13 +320,13 @@ export function LessonReviewsSection({ lessonId }: { lessonId: number }) {
 
 function createStyles(theme: Theme) {
   return StyleSheet.create({
-    card: { backgroundColor: theme.colors.card, borderRadius: 16, padding: spacing.lg, marginTop: spacing.md, gap: spacing.md },
+    card: { backgroundColor: theme.colors.card, borderRadius: 20, padding: spacing.xl, marginTop: spacing.md, gap: spacing.md },
     title: { ...typography.body, fontFamily: 'Cairo_700Bold', color: theme.colors.text },
     summary: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
     score: { alignItems: 'center', gap: 2, minWidth: 84 },
     average: { fontSize: 30, lineHeight: 38, fontFamily: 'Cairo_700Bold', color: theme.colors.text },
     distribution: { flex: 1, gap: 4 },
-    distRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    distRow: { flexDirection: 'row', alignItems: 'center', gap: 4, direction: 'ltr' },
     distLabel: { ...typography.bodySmall, color: theme.colors.text, width: 10 },
     bar: { flex: 1, height: 6, borderRadius: 3, backgroundColor: theme.colors.border, overflow: 'hidden', marginHorizontal: 4 },
     barFill: { height: '100%', borderRadius: 3, backgroundColor: theme.colors.warning },
@@ -333,6 +335,7 @@ function createStyles(theme: Theme) {
     bold: { ...typography.bodySmall, fontFamily: 'Cairo_600SemiBold', color: theme.colors.text },
     link: { ...typography.bodySmall, fontFamily: 'Cairo_600SemiBold', color: theme.colors.primary },
     mine: { backgroundColor: theme.colors.background, borderRadius: borderRadius.lg, padding: spacing.md, gap: spacing.xs },
+    mineHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     mineText: { ...typography.bodySmall, color: theme.colors.textMuted },
     form: { borderWidth: 1, borderColor: theme.colors.border, borderRadius: borderRadius.lg, padding: spacing.md, gap: spacing.sm },
     starPicker: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
