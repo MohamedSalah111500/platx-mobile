@@ -26,6 +26,13 @@ export const REGISTRATION_SETTINGS_URLS = {
     `${BASE}api/tenant/registration-settings?domain=${encodeURIComponent(domain)}`,
 };
 
+export const ACCOUNTING_URLS = {
+  SUMMARY: `${BASE}api/accounting/summary`,
+  ENTRIES: `${BASE}api/accounting/entries`,
+  ENTRY: (id: number) => `${BASE}api/accounting/entries/${id}`,
+  CATEGORIES: `${BASE}api/accounting/categories`,
+};
+
 export const WALLET_URLS = {
   ME: `${BASE}api/wallet/me`,
   MY_TRANSACTIONS: `${BASE}api/wallet/me/transactions`,

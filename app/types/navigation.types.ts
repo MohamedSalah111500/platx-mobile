@@ -93,6 +93,7 @@ export type HomeStackParamList = {
   CreateLive: undefined;
   HonorBoard: undefined;
   Reports: undefined;
+  Accounting: undefined;
   AttendanceDetail: { groupId: number; groupName: string };
   ExamReportDetail: { examId: number; examName: string };
   MyExams: undefined;
@@ -161,6 +162,7 @@ export type ProfileStackParamList = {
   HonorBoard: undefined;
   Homework: undefined;
   Reports: undefined;
+  Accounting: undefined;
   Wallet: undefined;
   MySessions: undefined;
   Sessions: undefined;

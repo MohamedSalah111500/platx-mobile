@@ -30,6 +30,7 @@ import LiveSessionsScreen from '../../screens/live/LiveSessionsListScreen';
 import CreateLiveScreen from '../../screens/live/CreateLiveScreen';
 import HonorBoardScreen from '../../screens/profile/HonorBoardScreen';
 import ReportsListScreen from '../../screens/reports/ReportsListScreen';
+import AccountingScreen from '../../screens/accounting/AccountingScreen';
 import AttendanceDetailScreen from '../../screens/reports/AttendanceDetailScreen';
 import ExamReportDetailScreen from '../../screens/reports/ExamReportDetailScreen';
 import MyExamsScreen from '../../screens/exams/MyExamsScreen';
@@ -71,6 +72,7 @@ export default function HomeStack() {
       <Stack.Screen name="CreateLive" component={CreateLiveScreen} />
       <Stack.Screen name="HonorBoard" component={HonorBoardScreen} />
       <Stack.Screen name="Reports" component={ReportsListScreen} />
+      <Stack.Screen name="Accounting" component={AccountingScreen} />
       <Stack.Screen name="AttendanceDetail" component={AttendanceDetailScreen} />
       <Stack.Screen name="ExamReportDetail" component={ExamReportDetailScreen} />
       <Stack.Screen name="MyExams" component={MyExamsScreen} />

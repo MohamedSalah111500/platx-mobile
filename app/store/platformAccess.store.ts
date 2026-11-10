@@ -20,6 +20,7 @@ export const PLATFORM_AREA = {
   Chat: { menu: 'chat', feature: 'chat' },
   Wallet: { menu: 'wallet' },
   Reports: { menu: 'reports', feature: 'advanced_reports' },
+  Accounting: { menu: 'accounting' },
 } satisfies Record<string, AreaRule>;
 export type PlatformArea = keyof typeof PLATFORM_AREA;
 

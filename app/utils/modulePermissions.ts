@@ -1,7 +1,7 @@
 import { PERMISSION_MODULES, type ModuleAction, type ModulePermission, type PermissionModule } from '../types/people.types';
 import type { TRole } from '../types/auth.types';
 
-const VIEW_DENIED_BY_DEFAULT: PermissionModule[] = ['Reports', 'Wallet', 'WhatsApp'];
+const VIEW_DENIED_BY_DEFAULT: PermissionModule[] = ['Reports', 'Wallet', 'WhatsApp', 'Accounting'];
 
 export function toModulePermissions(raw: unknown): ModulePermission[] {
   const list: any[] = Array.isArray(raw) ? raw : [];

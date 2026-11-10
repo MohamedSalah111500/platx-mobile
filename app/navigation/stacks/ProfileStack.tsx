@@ -20,6 +20,7 @@ import DeleteAccountScreen from '../../screens/profile/DeleteAccountScreen';
 import HonorBoardScreen from '../../screens/profile/HonorBoardScreen';
 import HomeworkStack from './HomeworkStack';
 import ReportsListScreen from '../../screens/reports/ReportsListScreen';
+import AccountingScreen from '../../screens/accounting/AccountingScreen';
 import AttendanceDetailScreen from '../../screens/reports/AttendanceDetailScreen';
 import { useStackContentStyle } from '../tabBar';
 import ExamReportDetailScreen from '../../screens/reports/ExamReportDetailScreen';
@@ -53,6 +54,7 @@ export default function ProfileStack() {
       <Stack.Screen name="HonorBoard" component={HonorBoardScreen} />
       <Stack.Screen name="Homework" component={HomeworkStack} />
       <Stack.Screen name="Reports" component={ReportsListScreen} />
+      <Stack.Screen name="Accounting" component={AccountingScreen} />
       <Stack.Screen name="Wallet" component={WalletScreen} />
       <Stack.Screen name="MySessions" component={MySessionsScreen} />
       <Stack.Screen name="Sessions" component={SessionsListScreen} />

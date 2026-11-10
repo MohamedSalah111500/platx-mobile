@@ -1313,7 +1313,8 @@
         "Wallet": "Points",
         "Sessions": "Sessions & attendance",
         "WhatsApp": "Parent WhatsApp",
-        "ContactMessages": "Visitor messages"
+        "ContactMessages": "Visitor messages",
+        "Accounting": "Accounting"
       }
     },
     "devices": {
@@ -1702,6 +1703,75 @@
       "deletesIn": "Deleted in {{days}} days",
       "retention": "Processed requests are deleted after {{days}} days.",
       "empty": "No processed requests"
+    }
+  },
+  "accounting": {
+    "title": "Accounting",
+    "loadFailed": "Could not load the accounts. Try again.",
+    "saveFailed": "Could not save. Try again.",
+    "periods": {
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "thisYear": "This year"
+    },
+    "addEntry": "Add entry",
+    "editEntry": "Edit entry",
+    "income": "Income",
+    "incomeOne": "Income",
+    "expenses": "Expenses",
+    "expense": "Expense",
+    "net": "Net profit",
+    "salesCount": "Platform sales",
+    "amountsIn": "Amounts in {{currency}}",
+    "byMethod": "How the money came in",
+    "topItems": "Top earning courses",
+    "soldTimes": "Sales: {{count}}",
+    "byCategory": "By category",
+    "platformSales": "Platform sales",
+    "uncategorized": "Uncategorized",
+    "entries": "Entries",
+    "noEntries": "No entries in this period.",
+    "loadMore": "Load more",
+    "saleLocked": "Platform sales are recorded automatically and cannot be changed.",
+    "amount": "Amount",
+    "date": "Date",
+    "category": "Category",
+    "chooseCategory": "Choose a category",
+    "method": "Payment method",
+    "descriptionOptional": "Description (optional)",
+    "descriptionPlaceholder": "For example: October rent for the center",
+    "amountInvalid": "Enter an amount greater than zero.",
+    "dateRequired": "Choose the date.",
+    "categoryRequired": "Choose a category.",
+    "entryAdded": "Entry added.",
+    "entryUpdated": "Entry updated.",
+    "deleteTitle": "Delete entry",
+    "deleteConfirm": "Delete this entry? This cannot be undone.",
+    "methods": {
+      "Cash": "Cash",
+      "EWallet": "E-wallet",
+      "BankTransfer": "Bank transfer",
+      "PlatformWallet": "Platform wallet",
+      "CourseCode": "Course code",
+      "Other": "Other"
+    },
+    "items": {
+      "Course": "Course",
+      "Section": "Section",
+      "Lesson": "Lesson",
+      "Live": "Live session"
+    },
+    "categories": {
+      "CenterFees": "Center fees",
+      "PrivateLessons": "Private lessons",
+      "OtherIncome": "Other income",
+      "Rent": "Rent",
+      "Salaries": "Salaries and assistants",
+      "Printing": "Printing and notes",
+      "Marketing": "Marketing",
+      "Subscriptions": "Subscriptions and services",
+      "Refunds": "Refunds to students",
+      "OtherExpense": "Other expenses"
     }
   }
 }

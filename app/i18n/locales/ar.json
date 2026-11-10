@@ -1333,7 +1333,8 @@
         "Wallet": "النقاط",
         "Sessions": "الحصص والحضور",
         "WhatsApp": "واتساب أولياء الأمور",
-        "ContactMessages": "رسائل الزوار"
+        "ContactMessages": "رسائل الزوار",
+        "Accounting": "الحسابات"
       }
     },
     "devices": {
@@ -1722,6 +1723,75 @@
       "deletesIn": "يُحذف بعد {{days}} يوم",
       "retention": "تُحذف الطلبات المعالجة تلقائيًا بعد {{days}} يومًا.",
       "empty": "لا توجد طلبات معالجة"
+    }
+  },
+  "accounting": {
+    "title": "الحسابات",
+    "loadFailed": "تعذر تحميل الحسابات. حاول مرة أخرى.",
+    "saveFailed": "تعذر الحفظ. حاول مرة أخرى.",
+    "periods": {
+      "thisMonth": "هذا الشهر",
+      "lastMonth": "الشهر السابق",
+      "thisYear": "هذه السنة"
+    },
+    "addEntry": "إضافة حركة",
+    "editEntry": "تعديل الحركة",
+    "income": "الإيرادات",
+    "incomeOne": "إيراد",
+    "expenses": "المصروفات",
+    "expense": "مصروف",
+    "net": "صافي الربح",
+    "salesCount": "عمليات البيع",
+    "amountsIn": "المبالغ بعملة {{currency}}",
+    "byMethod": "طرق التحصيل",
+    "topItems": "الأكثر دخلًا",
+    "soldTimes": "عدد مرات البيع: {{count}}",
+    "byCategory": "حسب البند",
+    "platformSales": "مبيعات المنصة",
+    "uncategorized": "بدون بند",
+    "entries": "الحركات",
+    "noEntries": "لا توجد حركات في هذه الفترة.",
+    "loadMore": "عرض المزيد",
+    "saleLocked": "مبيعات المنصة تُسجَّل تلقائيًا ولا يمكن تعديلها.",
+    "amount": "المبلغ",
+    "date": "التاريخ",
+    "category": "البند",
+    "chooseCategory": "اختر البند",
+    "method": "طريقة الدفع",
+    "descriptionOptional": "البيان (اختياري)",
+    "descriptionPlaceholder": "مثال: إيجار السنتر عن شهر أكتوبر",
+    "amountInvalid": "أدخل مبلغًا أكبر من صفر.",
+    "dateRequired": "اختر التاريخ.",
+    "categoryRequired": "اختر البند.",
+    "entryAdded": "تمت إضافة الحركة.",
+    "entryUpdated": "تم تعديل الحركة.",
+    "deleteTitle": "حذف الحركة",
+    "deleteConfirm": "هل تريد حذف هذه الحركة؟ لا يمكن التراجع عن الحذف.",
+    "methods": {
+      "Cash": "نقدًا",
+      "EWallet": "محفظة إلكترونية",
+      "BankTransfer": "تحويل بنكي",
+      "PlatformWallet": "رصيد المنصة",
+      "CourseCode": "كود الكورس",
+      "Other": "أخرى"
+    },
+    "items": {
+      "Course": "كورس",
+      "Section": "قسم",
+      "Lesson": "درس",
+      "Live": "بث مباشر"
+    },
+    "categories": {
+      "CenterFees": "اشتراكات السنتر",
+      "PrivateLessons": "دروس خاصة",
+      "OtherIncome": "إيرادات أخرى",
+      "Rent": "إيجار",
+      "Salaries": "رواتب ومساعدون",
+      "Printing": "طباعة ومذكرات",
+      "Marketing": "إعلانات وتسويق",
+      "Subscriptions": "اشتراكات وخدمات",
+      "Refunds": "مبالغ مردودة للطلاب",
+      "OtherExpense": "مصروفات أخرى"
     }
   }
 }

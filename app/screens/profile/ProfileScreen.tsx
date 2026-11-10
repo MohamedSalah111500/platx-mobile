@@ -37,7 +37,7 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
 
 export default function ProfileScreen({ navigation }: Props) {
   const { theme } = useTheme();
-  const { user, role: authRole, can, isStudent, logout } = useAuth();
+  const { user, role: authRole, can, canModule, isStudent, logout } = useAuth();
   const { t, isRTL } = useRTL();
   const insets = useSafeAreaInsets();
   const tabBarSpace = useTabBarSpace();
@@ -47,6 +47,7 @@ export default function ProfileScreen({ navigation }: Props) {
   const canMyGroup = can('MY_GROUP');
   const canLive = can('LIVE_CLASSROOM');
   const canReports = can('REPORTS');
+  const canAccounting = !isStudent && canModule('Accounting', 'view');
   const canSessions = can('SESSIONS');
   const canMySessions = can('MY_SESSIONS');
   const canStudents = can('STUDENTS_MANAGE');
@@ -199,6 +200,15 @@ export default function ProfileScreen({ navigation }: Props) {
       iconColor: theme.colors.primary,
       label: t('reports.title'),
       onPress: () => navigation.navigate('Reports'),
+    });
+  }
+  if (canAccounting && isOn('Accounting')) {
+    generalMenuItems.push({
+      iconName: 'calculator',
+      iconBg: theme.colors.primaryLight,
+      iconColor: theme.colors.primary,
+      label: t('accounting.title'),
+      onPress: () => navigation.navigate('Accounting'),
     });
   }
 

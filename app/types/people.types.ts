@@ -15,6 +15,7 @@ export const PERMISSION_MODULES = [
   'Sessions',
   'WhatsApp',
   'ContactMessages',
+  'Accounting',
 ] as const;
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[number];
