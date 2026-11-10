@@ -18,6 +18,7 @@ export enum LedgerPaymentMethod {
   PlatformWallet = 4,
   CourseCode = 5,
   Other = 6,
+  PointsCard = 7,
 }
 
 export enum SaleItemKind {
@@ -25,6 +26,14 @@ export enum SaleItemKind {
   Section = 2,
   Lesson = 3,
   Live = 4,
+  PointsCard = 5,
+}
+
+export enum IncomeSource {
+  Courses = 1,
+  Live = 2,
+  PointsCards = 3,
+  Manual = 4,
 }
 
 export const MANUAL_METHODS = [
@@ -76,8 +85,8 @@ export interface CategoryTotal {
   count: number;
 }
 
-export interface MethodTotal {
-  method: LedgerPaymentMethod;
+export interface SourceTotal {
+  source: IncomeSource;
   total: number;
   count: number;
 }
@@ -104,7 +113,7 @@ export interface AccountingSummary {
   previousNet: number;
   incomeByCategory: CategoryTotal[];
   expenseByCategory: CategoryTotal[];
-  incomeByMethod: MethodTotal[];
+  incomeBySource: SourceTotal[];
   topItems: ItemSales[];
 }
 

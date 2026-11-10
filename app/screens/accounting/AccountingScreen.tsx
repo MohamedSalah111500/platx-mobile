@@ -36,6 +36,7 @@ import { sheetFrame } from '../../utils/responsive';
 import { useTabBarSpace } from '../../navigation/tabBar';
 import {
   accountingApi,
+  IncomeSource,
   LedgerEntryOrigin,
   LedgerEntryType,
   LedgerPaymentMethod,
@@ -163,6 +164,7 @@ export default function AccountingScreen({ navigation }: Props) {
 
   const itemLabel = (kind: SaleItemKind | null) => t(`accounting.items.${SaleItemKind[kind ?? SaleItemKind.Course]}`);
   const methodLabel = (method: LedgerPaymentMethod) => t(`accounting.methods.${LedgerPaymentMethod[method]}`);
+  const sourceLabel = (source: IncomeSource) => t(`accounting.sources.${IncomeSource[source]}`);
 
   const entryTitle = (entry: LedgerEntry) =>
     entry.origin === LedgerEntryOrigin.Sale ? entry.itemTitle || itemLabel(entry.saleItem) : categoryLabel(entry.categoryKey, entry.categoryName);
@@ -295,12 +297,12 @@ export default function AccountingScreen({ navigation }: Props) {
         </View>
         <Text style={[styles.currencyNote, muted]}>{t('accounting.amountsIn', { currency: summary.currencyCode })}</Text>
 
-        {summary.incomeByMethod.length > 0 && (
+        {summary.incomeBySource.length > 0 && (
           <View style={card}>
-            <Text style={[styles.cardTitle, text]}>{t('accounting.byMethod')}</Text>
-            {summary.incomeByMethod.map((row) => (
-              <View key={row.method} style={[styles.line, { borderColor: theme.colors.divider }]}>
-                <Text style={[styles.lineLabel, text]}>{methodLabel(row.method)}</Text>
+            <Text style={[styles.cardTitle, text]}>{t('accounting.bySource')}</Text>
+            {summary.incomeBySource.map((row) => (
+              <View key={row.source} style={[styles.line, { borderColor: theme.colors.divider }]}>
+                <Text style={[styles.lineLabel, text]}>{sourceLabel(row.source)}</Text>
                 <Text style={[styles.lineValue, text]}>{money(row.total)}</Text>
               </View>
             ))}

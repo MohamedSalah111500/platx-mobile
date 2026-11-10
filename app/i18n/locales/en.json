@@ -1724,6 +1724,13 @@
     "salesCount": "Platform sales",
     "amountsIn": "Amounts in {{currency}}",
     "byMethod": "How the money came in",
+    "bySource": "Income sources",
+    "sources": {
+      "Courses": "Courses",
+      "Live": "Paid live sessions",
+      "PointsCards": "Points cards",
+      "Manual": "Other income you added"
+    },
     "topItems": "Top earning courses",
     "soldTimes": "Sales: {{count}}",
     "byCategory": "By category",
@@ -1753,13 +1760,15 @@
       "BankTransfer": "Bank transfer",
       "PlatformWallet": "Platform wallet",
       "CourseCode": "Course code",
-      "Other": "Other"
+      "Other": "Other",
+      "PointsCard": "Points card"
     },
     "items": {
       "Course": "Course",
       "Section": "Section",
       "Lesson": "Lesson",
-      "Live": "Live session"
+      "Live": "Live session",
+      "PointsCard": "Points card"
     },
     "categories": {
       "CenterFees": "Center fees",

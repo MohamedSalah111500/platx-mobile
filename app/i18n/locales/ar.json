@@ -1744,6 +1744,13 @@
     "salesCount": "عمليات البيع",
     "amountsIn": "المبالغ بعملة {{currency}}",
     "byMethod": "طرق التحصيل",
+    "bySource": "مصادر الدخل",
+    "sources": {
+      "Courses": "الكورسات",
+      "Live": "البث المباشر المدفوع",
+      "PointsCards": "كروت النقاط",
+      "Manual": "إيرادات أضفتها بنفسك"
+    },
     "topItems": "الأكثر دخلًا",
     "soldTimes": "عدد مرات البيع: {{count}}",
     "byCategory": "حسب البند",
@@ -1773,13 +1780,15 @@
       "BankTransfer": "تحويل بنكي",
       "PlatformWallet": "رصيد المنصة",
       "CourseCode": "كود الكورس",
-      "Other": "أخرى"
+      "Other": "أخرى",
+      "PointsCard": "كارت نقاط"
     },
     "items": {
       "Course": "كورس",
       "Section": "قسم",
       "Lesson": "درس",
-      "Live": "بث مباشر"
+      "Live": "بث مباشر",
+      "PointsCard": "كارت نقاط"
     },
     "categories": {
       "CenterFees": "اشتراكات السنتر",
