@@ -54,7 +54,11 @@ if (hasAgora) {
   }
 }
 import type { RootStackParamList } from '../../types/navigation.types';
+import { LiveMediaProvider } from '../../types/live.types';
 import type { LiveSession, LiveParticipant, LiveMessage, JoinLivePayload } from '../../types/live.types';
+import { liveRealtime } from '../../services/liveRealtime/liveRealtime.service';
+
+const RTCView: any = liveRealtime.isAvailable() ? require('react-native-webrtc').RTCView : null;
 import { WalletPayCard } from '../../components/wallet/WalletPayCard';
 import { REQUEST_ONLY } from '../../config/storePolicy';
 
@@ -99,6 +103,10 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   const [pendingApproval, setPendingApproval] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agoraJoined, setAgoraJoined] = useState(false);
+  const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const [realtimeLocalUrl, setRealtimeLocalUrl] = useState<string | null>(null);
+  const [realtimeRemoteUrl, setRealtimeRemoteUrl] = useState<string | null>(null);
+  const isRealtime = room?.mediaProvider === LiveMediaProvider.CloudflareRealtime;
 
   // Controls state
   const [isMuted, setIsMuted] = useState(false);
@@ -329,9 +337,49 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
     };
   }, []);
 
+  // ─── Cloudflare Realtime Setup ───────────────
+  useEffect(() => {
+    if (!joined || !room || !user || room.mediaProvider !== LiveMediaProvider.CloudflareRealtime) return;
+
+    liveRealtime.setListener({
+      onConnected: setRealtimeConnected,
+      onLocalStream: setRealtimeLocalUrl,
+      onRemoteStream: setRealtimeRemoteUrl,
+    });
+
+    const setupRealtime = async () => {
+      try {
+        if (!liveRealtime.isAvailable()) {
+          Alert.alert(t('live.agoraNotAvailable'), t('live.videoUnavailableHint'));
+          return;
+        }
+        if (isTeacher) {
+          const granted = await requestPermissions();
+          if (!granted) {
+            Alert.alert(t('live.permissionsRequired'), t('live.permissionsExplanation'));
+            return;
+          }
+          await liveRealtime.joinAsHost(room.id);
+        } else {
+          await liveRealtime.joinAsAudience(room.id);
+        }
+      } catch (err: any) {
+        logger.recordError(err, 'Live:setupRealtime');
+        Alert.alert(t('common.error'), err?.userMessage || t('live.joinSessionFailed'));
+      }
+    };
+
+    setupRealtime();
+
+    return () => {
+      liveRealtime.leave();
+      liveRealtime.setListener({});
+    };
+  }, [joined, room?.id, room?.mediaProvider]);
+
   // ─── Agora Setup ─────────────────────────────
   useEffect(() => {
-    if (!joined || !room || !user) return;
+    if (!joined || !room || !user || room.mediaProvider === LiveMediaProvider.CloudflareRealtime) return;
     let mounted = true;
     let eventHandler: IRtcEngineEventHandler;
 
@@ -575,6 +623,11 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           );
         });
 
+        signalRService.onRealtimePublisherChanged(() => {
+          if (!mounted || isTeacher) return;
+          liveRealtime.reconnectAudience().catch(() => {});
+        });
+
         signalRService.onHandLowered((data: any) => {
           if (!mounted) return;
           setParticipants((prev) =>
@@ -611,7 +664,8 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   const handleToggleMic = () => {
     const newMuted = !isMuted;
     setIsMuted(newMuted);
-    AgoraService.toggleMic(newMuted);
+    if (isRealtime) liveRealtime.setMicMuted(newMuted);
+    else AgoraService.toggleMic(newMuted);
     signalRService
       .toggleMute(roomId, hubUserId, newMuted)
       .catch(() => {});
@@ -620,7 +674,8 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   const handleToggleCamera = () => {
     const newOff = !isVideoOff;
     setIsVideoOff(newOff);
-    AgoraService.toggleCamera(newOff);
+    if (isRealtime) liveRealtime.setCameraOff(newOff);
+    else AgoraService.toggleCamera(newOff);
     signalRService
       .toggleVideo(roomId, hubUserId, newOff)
       .catch(() => {});
@@ -724,7 +779,62 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   };
 
   // ─── Render: Video Area ──────────────────────
+  const renderRealtimeVideoArea = () => {
+    if (!RTCView) {
+      return (
+        <View style={styles.videoPlaceholder}>
+          <Ionicons name="videocam-outline" size={48} color={DARK.textSecondary} />
+          <Text style={styles.placeholderText}>{t('live.videoUnavailable')}</Text>
+          <Text style={[styles.placeholderText, { fontSize: 12, marginTop: 4 }]}>
+            {t('live.videoUnavailableHint')}
+          </Text>
+        </View>
+      );
+    }
+
+    if (!realtimeConnected) {
+      return (
+        <View style={styles.videoPlaceholder}>
+          <Spinner />
+          <Text style={styles.placeholderText}>{t('live.connecting')}</Text>
+        </View>
+      );
+    }
+
+    if (isTeacher) {
+      if (isVideoOff || !realtimeLocalUrl) {
+        return (
+          <View style={styles.videoPlaceholder}>
+            <Ionicons name="videocam-off" size={48} color={DARK.textSecondary} />
+            <Text style={styles.placeholderText}>{t('live.cameraOff')}</Text>
+          </View>
+        );
+      }
+      return (
+        <RTCView
+          style={styles.fullVideo}
+          streamURL={realtimeLocalUrl}
+          objectFit="contain"
+          mirror={liveRealtime.isFrontCamera}
+        />
+      );
+    }
+
+    if (realtimeRemoteUrl) {
+      return <RTCView style={styles.fullVideo} streamURL={realtimeRemoteUrl} objectFit="contain" />;
+    }
+
+    return (
+      <View style={styles.videoPlaceholder}>
+        <Ionicons name="videocam-outline" size={48} color={DARK.textSecondary} />
+        <Text style={styles.placeholderText}>{t('live.videoActiveWaiting')}</Text>
+      </View>
+    );
+  };
+
   const renderVideoArea = () => {
+    if (isRealtime) return renderRealtimeVideoArea();
+
     // If Agora is not available, show fallback immediately (don't show infinite spinner)
     if (!RtcSurfaceView || !AgoraService.isAgoraAvailable()) {
       return (
@@ -1003,20 +1113,21 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           instead of taking a strip of it, and the buttons shrink to match. */}
       {joined && (
         <View style={[styles.controlBar, isLandscape && styles.controlBarFloating]}>
-          {/* Mic */}
-          <TouchableOpacity
-            style={[
-              styles.controlButton,
-              { backgroundColor: isMuted ? DARK.danger : DARK.surfaceLight },
-            ]}
-            onPress={handleToggleMic}
-          >
-            <Ionicons
-              name={isMuted ? 'mic-off' : 'mic'}
-              size={CONTROL_ICON}
-              color={DARK.text}
-            />
-          </TouchableOpacity>
+          {isTeacher && (
+            <TouchableOpacity
+              style={[
+                styles.controlButton,
+                { backgroundColor: isMuted ? DARK.danger : DARK.surfaceLight },
+              ]}
+              onPress={handleToggleMic}
+            >
+              <Ionicons
+                name={isMuted ? 'mic-off' : 'mic'}
+                size={CONTROL_ICON}
+                color={DARK.text}
+              />
+            </TouchableOpacity>
+          )}
 
           {/* Camera (teacher only) */}
           {isTeacher && (

@@ -4,6 +4,11 @@ export enum LiveClassroomType {
   External = 1,
 }
 
+export enum LiveMediaProvider {
+  Agora = 0,
+  CloudflareRealtime = 1,
+}
+
 export interface LiveSession {
   id: number;
   liveName?: string;
@@ -29,6 +34,7 @@ export interface LiveSession {
   isEnded?: boolean;
   // External (Zoom/Meet) live sessions
   liveType?: LiveClassroomType;
+  mediaProvider?: LiveMediaProvider;
   externalLink?: string | null;
   scheduledAt?: string | null;
 }

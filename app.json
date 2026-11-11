@@ -49,6 +49,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "@config-plugins/react-native-webrtc",
       [
         "expo-build-properties",
         {

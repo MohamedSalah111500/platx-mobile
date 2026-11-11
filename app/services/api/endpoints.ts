@@ -293,6 +293,14 @@ export const LIVE_URLS = {
   EXTERNAL_LINK: (id: number) => `${BASE}api/liveclassroom/${id}/external-link`,
 };
 
+export const LIVE_REALTIME_URLS = {
+  SESSION: (liveId: number) => `${BASE}api/live-realtime/${liveId}/session`,
+  PUBLISH: (liveId: number) => `${BASE}api/live-realtime/${liveId}/publish`,
+  SUBSCRIBE: (liveId: number) => `${BASE}api/live-realtime/${liveId}/subscribe`,
+  RENEGOTIATE: (liveId: number) => `${BASE}api/live-realtime/${liveId}/renegotiate`,
+  CLOSE: (liveId: number) => `${BASE}api/live-realtime/${liveId}/close`,
+};
+
 // Events endpoints
 export const EVENT_URLS = {
   GET_ALL: (date: string, viewType: number) =>

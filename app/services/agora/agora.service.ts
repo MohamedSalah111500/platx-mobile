@@ -3,6 +3,7 @@ import { TurboModuleRegistry } from 'react-native';
 let createAgoraRtcEngine: any = null;
 let ChannelProfileType: any = {};
 let ClientRoleType: any = {};
+let AudienceLatencyLevelType: any = {};
 
 const hasAgora = !!TurboModuleRegistry.get('AgoraRtcNg');
 if (hasAgora) {
@@ -11,6 +12,7 @@ if (hasAgora) {
     createAgoraRtcEngine = agora.createAgoraRtcEngine;
     ChannelProfileType = agora.ChannelProfileType;
     ClientRoleType = agora.ClientRoleType;
+    AudienceLatencyLevelType = agora.AudienceLatencyLevelType;
   } catch {
     // Agora native module not available
   }
@@ -88,7 +90,9 @@ export function joinAsHost(token: string | null, channel: string, uid: number) {
 
 export function joinAsAudience(token: string | null, channel: string, uid: number) {
   if (!engine) throw new Error('Agora engine not initialized');
-  engine.setClientRole(ClientRoleType.ClientRoleAudience);
+  engine.setClientRole(ClientRoleType.ClientRoleAudience, {
+    audienceLatencyLevel: AudienceLatencyLevelType.AudienceLatencyLevelLowLatency,
+  });
   engine.enableAudio();
   engine.joinChannel(token ?? '', channel, uid, {
     autoSubscribeAudio: true,

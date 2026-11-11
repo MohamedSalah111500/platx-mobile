@@ -316,6 +316,10 @@ class SignalRService {
     this.liveClassroomHub?.on('HandLowered', callback);
   }
 
+  onRealtimePublisherChanged(callback: () => void) {
+    this.liveClassroomHub?.on('RealtimePublisherChanged', callback);
+  }
+
   isNotificationHubConnected(): boolean {
     return this.notificationHub?.state === signalR.HubConnectionState.Connected;
   }
