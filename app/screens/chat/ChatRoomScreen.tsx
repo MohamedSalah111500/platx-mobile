@@ -25,13 +25,6 @@ import { BackButton } from '../../components/ui/BackButton';
 import { appDateLocale, formatClockTime, parseServerDate } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<ChatStackParamList, 'ChatRoom'>;
 
-const AVATAR_COLORS = [
-  { bg: '#F0EDFF', color: '#7c63fd' },
-  { bg: '#E8F8F0', color: '#34C38F' },
-  { bg: '#E8F4FD', color: '#3B82F6' },
-  { bg: '#FFF4E5', color: '#F5A623' },
-];
-
 interface PendingVoice extends RecordedVoice {
   localId: number;
   state: VoiceSendState;
@@ -330,7 +323,6 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
       return renderBubble({
         own: true,
         senderName: ownName,
-        palette: AVATAR_COLORS[0],
         content: (
           <VoiceMessageBubble
             playbackKey={pendingKey(voice.localId)}
@@ -349,13 +341,11 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
     const own = isOwnMessage(msg);
     const senderName = getSenderName(msg);
     const timeStr = formatTime(msg.sentAt || msg.createdAt);
-    const palette = AVATAR_COLORS[(msg.senderStaffId || msg.senderId || 0) % AVATAR_COLORS.length];
 
     if (msg.voice) {
       return renderBubble({
         own,
         senderName,
-        palette,
         content: (
           <VoiceMessageBubble
             playbackKey={messageKey(msg.id)}
@@ -371,7 +361,6 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
     return renderBubble({
       own,
       senderName,
-      palette,
       content: (
         <>
           {msg.deletedAt ? (
@@ -395,12 +384,10 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
   const renderBubble = ({
     own,
     senderName,
-    palette,
     content,
   }: {
     own: boolean;
     senderName: string;
-    palette: (typeof AVATAR_COLORS)[number];
     content: React.ReactNode;
   }) => {
     const initial = (senderName?.[0] || '?').toUpperCase();
@@ -408,14 +395,14 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
       <View style={[styles.msgRow, own ? styles.msgRowOwn : styles.msgRowOther]}>
         {/* Avatar for other's messages */}
         {!own && (
-          <View style={[styles.msgAvatar, { backgroundColor: theme.dark ? palette.color + '26' : palette.bg }]}>
-            <Text style={[styles.msgAvatarText, { color: palette.color }]}>{initial}</Text>
+          <View style={[styles.msgAvatar, { backgroundColor: theme.colors.primaryLight }]}>
+            <Text style={[styles.msgAvatarText, { color: theme.colors.primary }]}>{initial}</Text>
           </View>
         )}
 
         <View style={[styles.msgContent, own ? styles.msgContentOwn : styles.msgContentOther]}>
           {!own && senderName ? (
-            <Text style={[styles.senderLabel, { color: palette.color }]}>{senderName}</Text>
+            <Text style={[styles.senderLabel, { color: theme.colors.primary }]}>{senderName}</Text>
           ) : null}
           <View
             style={[
