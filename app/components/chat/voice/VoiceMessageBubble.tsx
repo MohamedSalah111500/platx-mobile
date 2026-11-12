@@ -25,6 +25,7 @@ interface Props {
 const BAR_COUNT = 40;
 const PLAY = 40;
 const META_HEIGHT = 22;
+const WAVE_INSET = 6;
 const MAX_ROW = 260;
 const ROW_CHROME = 48;
 
@@ -44,10 +45,11 @@ function VoiceMessageBubbleBase({
   const playback = useVoicePlayback(playbackKey, durationMs);
   const bars = useMemo(() => decodeWaveform(waveform, BAR_COUNT), [waveform]);
 
-  const foreground = own ? theme.colors.onPrimary : theme.colors.text;
-  const muted = own ? theme.colors.onPrimary + 'B3' : theme.colors.textMuted;
-  const accent = own ? theme.colors.onPrimary : theme.colors.primary;
-  const idleBars = own ? theme.colors.onPrimary + '66' : theme.colors.textMuted + '66';
+  const foreground = own ? theme.colors.onChatBubbleOwn : theme.colors.text;
+  const muted = own ? theme.colors.onChatBubbleOwn + 'A6' : theme.colors.textMuted;
+  const accent = own ? theme.colors.onChatBubbleOwn : theme.colors.primary;
+  const idleBars = own ? theme.colors.onChatBubbleOwn + '4D' : theme.colors.textMuted + '66';
+  const chipFill = own ? theme.colors.onChatBubbleOwn + '14' : theme.colors.primaryLight;
   const active = playback.status === 'playing' || playback.status === 'loading';
   const timeText = formatVoiceTime(playback.started ? playback.second * 1000 : durationMs);
 
@@ -61,7 +63,7 @@ function VoiceMessageBubbleBase({
           accessibilityLabel={t(active ? 'chat.voice.pause' : 'chat.voice.play')}
           style={({ pressed }) => [
             styles.playButton,
-            { backgroundColor: own ? theme.colors.onPrimary + '33' : theme.colors.primaryLight },
+            { backgroundColor: chipFill },
             pressed && styles.playPressed,
           ]}
         >
@@ -90,7 +92,7 @@ function VoiceMessageBubbleBase({
               onPress={() => voicePlayback.cycleRate()}
               hitSlop={8}
               accessibilityRole="button"
-              style={[styles.rateChip, { backgroundColor: own ? theme.colors.onPrimary + '33' : theme.colors.primaryLight }]}
+              style={[styles.rateChip, { backgroundColor: chipFill }]}
             >
               <Text style={[styles.rateText, { color: accent }]}>{`⁦${playback.rate}×⁩`}</Text>
             </Pressable>
@@ -99,13 +101,13 @@ function VoiceMessageBubbleBase({
         <View style={styles.metaEnd}>
           {sendState === 'sending' ? <Ionicons name="time-outline" size={14} color={muted} /> : null}
           {sendState === 'failed' ? (
-            <Ionicons name="alert-circle" size={16} color={own ? theme.colors.onPrimary : theme.colors.danger} />
+            <Ionicons name="alert-circle" size={16} color={own ? theme.colors.onChatBubbleOwn : theme.colors.danger} />
           ) : null}
           <Text style={[styles.metaText, { color: muted }]}>{timeLabel}</Text>
         </View>
       </View>
       {sendState === 'failed' ? (
-        <View style={[styles.failure, { borderTopColor: own ? theme.colors.onPrimary + '33' : theme.colors.divider }]}>
+        <View style={[styles.failure, { borderTopColor: own ? theme.colors.onChatBubbleOwn + '33' : theme.colors.divider }]}>
           <Text style={[styles.failureText, { color: foreground }]}>{t('chat.voice.sendFailed')}</Text>
           <Pressable onPress={onRetry} hitSlop={8} accessibilityRole="button" style={styles.retry}>
             <Ionicons name="refresh" size={16} color={accent} />
@@ -120,14 +122,14 @@ function VoiceMessageBubbleBase({
 export const VoiceMessageBubble = memo(VoiceMessageBubbleBase);
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   playButton: { width: PLAY, height: PLAY, borderRadius: PLAY / 2, alignItems: 'center', justifyContent: 'center' },
   playPressed: { transform: [{ scale: 0.92 }] },
   body: { flex: 1, justifyContent: 'center' },
   meta: {
     height: META_HEIGHT,
     marginTop: 4,
-    paddingStart: PLAY + spacing.sm,
+    paddingStart: PLAY + spacing.md + WAVE_INSET,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

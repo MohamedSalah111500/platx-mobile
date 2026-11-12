@@ -1,3 +1,4 @@
+import { parseServerDate } from '../../utils/dateLocale';
 import apiClient from './client';
 import { CLASS_SESSION_URLS } from './endpoints';
 
@@ -103,4 +104,4 @@ export const isUnlocked = (session: MySession): boolean =>
   session.status !== SESSION_STATUS.Cancelled &&
   (session.myStatus === ATTENDANCE_STATUS.Present || session.myStatus === ATTENDANCE_STATUS.Late);
 
-export const asUtcDate = (value: string): Date => new Date(/[zZ]|[+-]\d{2}:\d{2}$/.test(value) ? value : `${value}Z`);
+export const asUtcDate = (value: string): Date => parseServerDate(value);

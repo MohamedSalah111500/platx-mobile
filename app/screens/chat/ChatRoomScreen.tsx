@@ -22,7 +22,7 @@ import { voicePlayback, type VoiceTrack } from '../../components/chat/voice/voic
 import { deleteRecording, type RecordedVoice } from '../../components/chat/voice/useVoiceRecorder';
 
 import { BackButton } from '../../components/ui/BackButton';
-import { appDateLocale, formatClockTime } from '../../utils/dateLocale';
+import { appDateLocale, formatClockTime, parseServerDate } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<ChatStackParamList, 'ChatRoom'>;
 
 const AVATAR_COLORS = [
@@ -264,7 +264,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
   const formatTime = (dateStr?: string) => {
     if (!dateStr) return '';
     try {
-      return formatClockTime(dateStr);
+      return formatClockTime(parseServerDate(dateStr));
     } catch {
       return '';
     }
@@ -272,7 +272,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
 
   const formatDateLabel = (dateStr: string) => {
     try {
-      const d = new Date(dateStr);
+      const d = parseServerDate(dateStr);
       const now = new Date();
       const diff = now.getTime() - d.getTime();
       const oneDay = 86400000;
@@ -292,7 +292,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
     messages.forEach((msg, idx) => {
       const dateStr = msg.sentAt || msg.createdAt || '';
       let dateKey = '';
-      try { dateKey = new Date(dateStr).toDateString(); } catch { dateKey = ''; }
+      try { dateKey = parseServerDate(dateStr).toDateString(); } catch { dateKey = ''; }
       if (dateKey && dateKey !== lastDate) {
         lastDate = dateKey;
         items.push({ type: 'date', label: formatDateLabel(dateStr), key: `date-${dateKey}` });
@@ -375,15 +375,15 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
       content: (
         <>
           {msg.deletedAt ? (
-            <Text style={[styles.bubbleText, styles.deletedText, own ? styles.bubbleTextOwn : { color: theme.colors.textMuted }]}>
+            <Text style={[styles.bubbleText, styles.deletedText, { color: own ? theme.colors.onChatBubbleOwn : theme.colors.textMuted }]}>
               {t('chat.messageDeleted')}
             </Text>
           ) : (
-            <Text style={[styles.bubbleText, own ? styles.bubbleTextOwn : { color: theme.colors.text }]}>
+            <Text style={[styles.bubbleText, { color: own ? theme.colors.onChatBubbleOwn : theme.colors.text }]}>
               {msg.content || ''}
             </Text>
           )}
-          <Text style={[styles.timeInBubble, own ? styles.timeOwn : { color: theme.colors.textMuted }]}>
+          <Text style={[styles.timeInBubble, { color: own ? theme.colors.onChatBubbleOwn + 'A6' : theme.colors.textMuted }]}>
             {timeStr}
             {msg.editedAt && !msg.deletedAt ? `  ·  ${t('chat.edited')}` : ''}
           </Text>
@@ -420,7 +420,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
           <View
             style={[
               styles.bubble,
-              own ? [styles.bubbleOwn, { backgroundColor: theme.colors.primary }] : [styles.bubbleOther, { backgroundColor: theme.colors.surface }],
+              own ? [styles.bubbleOwn, { backgroundColor: theme.colors.chatBubbleOwn }] : [styles.bubbleOther, { backgroundColor: theme.colors.surface }],
             ]}
           >
             {content}
@@ -591,7 +591,6 @@ const styles = StyleSheet.create({
   bubbleText: {
     ...typography.body,
   },
-  bubbleTextOwn: { color: '#fff' },
   timeInBubble: {
     fontSize: 14,
     fontFamily: 'Cairo_500Medium',
@@ -599,5 +598,4 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     textAlign: 'left',
   },
-  timeOwn: { color: 'rgba(255,255,255,0.7)' },
 });

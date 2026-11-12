@@ -6,6 +6,8 @@ export interface ThemeColors {
   primaryLight: string;
   primaryDark: string;
   onPrimary: string;
+  chatBubbleOwn: string;
+  onChatBubbleOwn: string;
   heroBackground: string;
   background: string;
   backgroundGradientFrom: string;
@@ -66,6 +68,8 @@ export function buildTheme(dark: boolean, accentColor?: string | null): Theme {
         primaryLight,
         primaryDark,
         onPrimary,
+        chatBubbleOwn: '#E9E9EE',
+        onChatBubbleOwn: '#18181B',
         heroBackground: colors.secondary[800],
 
         background: colors.secondary[900],
@@ -114,6 +118,8 @@ export function buildTheme(dark: boolean, accentColor?: string | null): Theme {
       primaryLight,
       primaryDark,
       onPrimary,
+      chatBubbleOwn: primary,
+      onChatBubbleOwn: onPrimary,
       heroBackground: primary,
 
       // Cards are white, so the page behind them can't also be pure white or

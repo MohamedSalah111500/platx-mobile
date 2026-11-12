@@ -100,7 +100,7 @@ export function VoiceWaveform({ bars, progress, playedColor, idleColor, dotColor
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, height: HEIGHT, justifyContent: 'center' },
+  container: { alignSelf: 'stretch', height: HEIGHT, marginHorizontal: DOT / 2, justifyContent: 'center' },
   row: {
     height: HEIGHT,
     flexDirection: 'row',
@@ -115,6 +115,7 @@ const styles = StyleSheet.create({
     start: 0,
     overflow: 'hidden',
     alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   dot: {
     position: 'absolute',
