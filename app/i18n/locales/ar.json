@@ -649,6 +649,8 @@
     "openCourse": "فتح الكورس"
   },
   "chat": {
+    "messageDeleted": "تم حذف هذه الرسالة",
+    "edited": "تم التعديل",
     "title": "الرسائل",
     "typeMessage": "اكتب رسالة...",
     "send": "إرسال",

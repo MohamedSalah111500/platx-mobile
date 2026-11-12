@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   AudioQuality,
   IOSOutputFormat,
@@ -175,5 +175,8 @@ export function useVoiceRecorder(onLimit: () => void) {
     [recorder, stopSampling],
   );
 
-  return { start, pause, resume, finish, discard, forget: deleteRecording, elapsedMs, snapshot, live };
+  return useMemo(
+    () => ({ start, pause, resume, finish, discard, forget: deleteRecording, elapsedMs, snapshot, live }),
+    [start, pause, resume, finish, discard, elapsedMs, snapshot, live],
+  );
 }

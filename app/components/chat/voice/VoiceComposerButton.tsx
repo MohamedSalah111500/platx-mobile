@@ -9,7 +9,6 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { LOCK_DISTANCE, LockPill } from './LockPill';
 
@@ -60,13 +59,13 @@ export function VoiceComposerButton({
   }, [hasText, morph]);
 
   const settle = () => {
-    'worklet';
     press.value = withSpring(0, SPRING);
     dragX.value = withSpring(0, SPRING);
     dragY.value = withSpring(0, SPRING);
   };
 
   const record = Gesture.Pan()
+    .runOnJS(true)
     .enabled(!hasText && !disabled)
     .minDistance(0)
     .shouldCancelWhenOutside(false)
@@ -75,7 +74,7 @@ export function VoiceComposerButton({
       dragX.value = 0;
       dragY.value = 0;
       press.value = withSpring(1, SPRING);
-      scheduleOnRN(onPressIn);
+      onPressIn();
     })
     .onUpdate((event) => {
       if (gesture.value !== GESTURE_HOLDING) return;
@@ -91,25 +90,26 @@ export function VoiceComposerButton({
       if (towardStart > cancelDistance.value) {
         gesture.value = GESTURE_DONE;
         settle();
-        scheduleOnRN(onCancel);
+        onCancel();
       } else if (up > LOCK_DISTANCE) {
         gesture.value = GESTURE_DONE;
         settle();
-        scheduleOnRN(onLock);
+        onLock();
       }
     })
     .onFinalize(() => {
       if (gesture.value === GESTURE_HOLDING) {
         gesture.value = GESTURE_IDLE;
-        scheduleOnRN(onRelease);
+        onRelease();
       }
       settle();
     });
 
   const send = Gesture.Tap()
+    .runOnJS(true)
     .enabled(hasText && !disabled)
     .onEnd(() => {
-      scheduleOnRN(onSend);
+      onSend();
     });
 
   const buttonStyle = useAnimatedStyle(() => ({

@@ -2,7 +2,6 @@ import React, { memo, useState } from 'react';
 import { I18nManager, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useDerivedValue, useSharedValue, type SharedValue } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
 
 const HEIGHT = 28;
 const BAR_WIDTH = 2.5;
@@ -53,6 +52,7 @@ export function VoiceWaveform({ bars, progress, playedColor, idleColor, dotColor
   };
 
   const pan = Gesture.Pan()
+    .runOnJS(true)
     .enabled(!!onSeek && width > 0)
     .activeOffsetX([-6, 6])
     .failOffsetY([-12, 12])
@@ -65,18 +65,19 @@ export function VoiceWaveform({ bars, progress, playedColor, idleColor, dotColor
     .onEnd(() => {
       const fraction = scrub.value;
       progress.value = fraction;
-      scheduleOnRN(commit, fraction);
+      commit(fraction);
     })
     .onFinalize(() => {
       scrub.value = -1;
     });
 
   const tap = Gesture.Tap()
+    .runOnJS(true)
     .enabled(!!onSeek && width > 0)
     .onEnd((event) => {
       const fraction = toFraction(event.x);
       progress.value = fraction;
-      scheduleOnRN(commit, fraction);
+      commit(fraction);
     });
 
   const onLayout = (event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width);

@@ -629,6 +629,8 @@
     "openCourse": "Open course"
   },
   "chat": {
+    "messageDeleted": "This message was deleted",
+    "edited": "Edited",
     "title": "Messages",
     "typeMessage": "Type a message...",
     "send": "Send",

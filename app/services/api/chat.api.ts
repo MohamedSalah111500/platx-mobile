@@ -20,27 +20,35 @@ const VOICE_URLS: Record<VoiceRoute, string> = {
   studentToSubGroup: CHAT_URLS.SEND_VOICE_TO_SUBGROUP_FROM_STUDENT,
 };
 
+export const CHAT_PAGE_SIZE = 30;
+
+const pageParams = (beforeId?: number) => (beforeId ? { take: CHAT_PAGE_SIZE, beforeId } : { take: CHAT_PAGE_SIZE });
+
 export const chatApi = {
   getMessagesWithStudent: async (
     studentId: number,
-    groupId: number
+    groupId: number,
+    beforeId?: number
   ): Promise<ChatMessage[]> => {
     const { data } = await apiClient.get<ChatMessage[]>(
-      CHAT_URLS.GET_MESSAGES_WITH_STUDENT(studentId, groupId)
+      CHAT_URLS.GET_MESSAGES_WITH_STUDENT(studentId, groupId),
+      { params: pageParams(beforeId) }
     );
     return data;
   },
 
-  getMessagesForTeacher: async (groupId: number): Promise<ChatMessage[]> => {
+  getMessagesForTeacher: async (groupId: number, beforeId?: number): Promise<ChatMessage[]> => {
     const { data } = await apiClient.get<ChatMessage[]>(
-      CHAT_URLS.GET_MESSAGES_FOR_TEACHER(groupId)
+      CHAT_URLS.GET_MESSAGES_FOR_TEACHER(groupId),
+      { params: pageParams(beforeId) }
     );
     return data;
   },
 
-  getMessagesForStudent: async (groupId: number): Promise<ChatMessage[]> => {
+  getMessagesForStudent: async (groupId: number, beforeId?: number): Promise<ChatMessage[]> => {
     const { data } = await apiClient.get<ChatMessage[]>(
-      CHAT_URLS.GET_MESSAGES_FOR_STUDENT(groupId)
+      CHAT_URLS.GET_MESSAGES_FOR_STUDENT(groupId),
+      { params: pageParams(beforeId) }
     );
     return data;
   },
@@ -56,10 +64,12 @@ export const chatApi = {
   // Student: get messages with a specific staff member
   getMessagesWithStaff: async (
     groupId: number,
-    staffId: number
+    staffId: number,
+    beforeId?: number
   ): Promise<ChatMessage[]> => {
     const { data } = await apiClient.get<ChatMessage[]>(
-      CHAT_URLS.GET_MESSAGES_WITH_STAFF(groupId, staffId)
+      CHAT_URLS.GET_MESSAGES_WITH_STAFF(groupId, staffId),
+      { params: pageParams(beforeId) }
     );
     return data;
   },
@@ -111,16 +121,18 @@ export const chatApi = {
     await apiClient.delete(CHAT_URLS.DELETE_MESSAGE(messageId));
   },
 
-  getMessagesForTeacherSubGroup: async (subGroupId: number): Promise<ChatMessage[]> => {
+  getMessagesForTeacherSubGroup: async (subGroupId: number, beforeId?: number): Promise<ChatMessage[]> => {
     const { data } = await apiClient.get<ChatMessage[]>(
-      CHAT_URLS.GET_MESSAGES_FOR_TEACHER_SUBGROUP(subGroupId)
+      CHAT_URLS.GET_MESSAGES_FOR_TEACHER_SUBGROUP(subGroupId),
+      { params: pageParams(beforeId) }
     );
     return data;
   },
 
-  getMessagesForStudentSubGroup: async (subGroupId: number): Promise<ChatMessage[]> => {
+  getMessagesForStudentSubGroup: async (subGroupId: number, beforeId?: number): Promise<ChatMessage[]> => {
     const { data } = await apiClient.get<ChatMessage[]>(
-      CHAT_URLS.GET_MESSAGES_FOR_STUDENT_SUBGROUP(subGroupId)
+      CHAT_URLS.GET_MESSAGES_FOR_STUDENT_SUBGROUP(subGroupId),
+      { params: pageParams(beforeId) }
     );
     return data;
   },

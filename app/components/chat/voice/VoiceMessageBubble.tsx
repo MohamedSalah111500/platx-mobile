@@ -92,7 +92,7 @@ function VoiceMessageBubbleBase({
               accessibilityRole="button"
               style={[styles.rateChip, { backgroundColor: own ? theme.colors.onPrimary + '33' : theme.colors.primaryLight }]}
             >
-              <Text style={[styles.rateText, { color: accent }]}>{`${playback.rate}×`}</Text>
+              <Text style={[styles.rateText, { color: accent }]}>{`⁦${playback.rate}×⁩`}</Text>
             </Pressable>
           ) : null}
         </View>

@@ -70,12 +70,15 @@ export function ChatComposer({ onSendText, onSendVoice }: Props) {
     [recorder],
   );
 
+  const discardRef = useRef(discard);
+  discardRef.current = discard;
+
   useFocusEffect(
     useCallback(
       () => () => {
-        if (phaseRef.current !== 'idle') void discard(false);
+        if (phaseRef.current !== 'idle') void discardRef.current(false);
       },
-      [discard],
+      [],
     ),
   );
 

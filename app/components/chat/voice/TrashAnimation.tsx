@@ -10,8 +10,9 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
 import { useTheme } from '../../../theme/ThemeProvider';
+
+const TRASH_DURATION_MS = 980;
 
 export function TrashAnimation({ onDone }: { onDone: () => void }) {
   const { theme } = useTheme();
@@ -28,10 +29,10 @@ export function TrashAnimation({ onDone }: { onDone: () => void }) {
     );
     bin.value = withSequence(
       withDelay(220, withTiming(1, { duration: 220, easing: Easing.out(Easing.back(1.6)) })),
-      withDelay(300, withTiming(2, { duration: 240, easing: Easing.in(Easing.quad) }, (finished) => {
-        if (finished) scheduleOnRN(finish);
-      })),
+      withDelay(300, withTiming(2, { duration: 240, easing: Easing.in(Easing.quad) })),
     );
+    const timer = setTimeout(finish, TRASH_DURATION_MS);
+    return () => clearTimeout(timer);
   }, [mic, bin]);
 
   const micStyle = useAnimatedStyle(() => ({

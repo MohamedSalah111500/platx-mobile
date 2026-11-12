@@ -39,6 +39,8 @@ export interface ChatMessage {
   senderStaffId?: number;
   senderStaff?: { id?: number; firstName?: string; lastName?: string; profileImage?: string | null; staffId?: number };
   sentAt?: string;
+  editedAt?: string | null;
+  deletedAt?: string | null;
   isSendToGroup?: boolean;
   voice?: ChatVoice | null;
 }

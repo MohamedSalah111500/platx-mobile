@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, KeyboardAvoidingView, Platform, Alert, AppState, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFocusEffect } from '@react-navigation/native';
@@ -12,7 +12,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
-import { chatApi } from '../../services/api/chat.api';
+import { CHAT_PAGE_SIZE, chatApi } from '../../services/api/chat.api';
 import type { ChatStackParamList } from '../../types/navigation.types';
 import type { ChatMessage, VoiceRoute } from '../../types/chat.types';
 import { isOwnMessage as checkIsOwnMessage } from './isOwnMessage';
@@ -43,6 +43,19 @@ type ListItem =
   | { type: 'msg'; data: ChatMessage; key: string }
   | { type: 'pending'; data: PendingVoice; key: string };
 
+const POLL_INTERVAL_MS = 20000;
+
+const sameMessage = (a: ChatMessage, b: ChatMessage) =>
+  a.id === b.id && a.editedAt === b.editedAt && a.deletedAt === b.deletedAt;
+
+function mergeLatestPage(current: ChatMessage[], latest: ChatMessage[]): ChatMessage[] {
+  if (!latest.length) return current.length ? latest : current;
+  const tail = current.slice(-latest.length);
+  if (tail.length === latest.length && tail.every((message, index) => sameMessage(message, latest[index]))) return current;
+  const oldestId = latest[0].id;
+  return [...current.filter((message) => message.id < oldestId), ...latest];
+}
+
 const messageKey = (id: number) => `voice-${id}`;
 const pendingKey = (localId: number) => `voice-local-${localId}`;
 
@@ -55,7 +68,11 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [pending, setPending] = useState<PendingVoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [hasOlder, setHasOlder] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const messagesRef = useRef<ChatMessage[]>([]);
+  messagesRef.current = messages;
   const nextLocalId = useRef(1);
   const pendingRef = useRef<PendingVoice[]>([]);
   pendingRef.current = pending;
@@ -64,36 +81,78 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
   const isSubGroupChat = chatType === 'subgroup' && !!subGroupId;
   const isStudentChat = chatType === 'student' && !!studentId && !isStudent;
 
-  useEffect(() => {
-    loadMessages();
-    const interval = setInterval(loadMessages, 10000);
-    return () => clearInterval(interval);
-  }, [groupId, staffId, subGroupId, studentId]);
+  const fetchPage = (beforeId?: number): Promise<ChatMessage[]> => {
+    if (isStaffChat && staffId) return chatApi.getMessagesWithStaff(groupId, staffId, beforeId);
+    if (isStudentChat && studentId) return chatApi.getMessagesWithStudent(studentId, groupId, beforeId);
+    if (isSubGroupChat && subGroupId) {
+      return isStudent
+        ? chatApi.getMessagesForStudentSubGroup(subGroupId, beforeId)
+        : chatApi.getMessagesForTeacherSubGroup(subGroupId, beforeId);
+    }
+    return isStudent ? chatApi.getMessagesForStudent(groupId, beforeId) : chatApi.getMessagesForTeacher(groupId, beforeId);
+  };
 
   const loadMessages = async () => {
     try {
-      let data: ChatMessage[];
-      if (isStaffChat && staffId) {
-        data = await chatApi.getMessagesWithStaff(groupId, staffId);
-      } else if (isStudentChat && studentId) {
-        data = await chatApi.getMessagesWithStudent(studentId, groupId);
-      } else if (isSubGroupChat && subGroupId) {
-        data = isStudent
-          ? await chatApi.getMessagesForStudentSubGroup(subGroupId)
-          : await chatApi.getMessagesForTeacherSubGroup(subGroupId);
-      } else if (isStudent) {
-        data = await chatApi.getMessagesForStudent(groupId);
-      } else {
-        data = await chatApi.getMessagesForTeacher(groupId);
-      }
-      setMessages(Array.isArray(data) ? data : []);
+      const data = await fetchPage();
+      const latest = Array.isArray(data) ? data : [];
+      setMessages((current) => {
+        if (!current.length) setHasOlder(latest.length >= CHAT_PAGE_SIZE);
+        return mergeLatestPage(current, latest);
+      });
     } catch (err) {
       console.error('[ChatRoom] Load messages failed:', err);
-      setMessages([]);
     } finally {
       setLoading(false);
     }
   };
+
+  const loadOlder = async () => {
+    const oldest = messagesRef.current[0];
+    if (!hasOlder || loadingOlder || !oldest?.id) return;
+    setLoadingOlder(true);
+    try {
+      const older = await fetchPage(oldest.id);
+      setHasOlder(older.length >= CHAT_PAGE_SIZE);
+      setMessages((current) => {
+        const known = new Set(current.map((message) => message.id));
+        return [...older.filter((message) => !known.has(message.id)), ...current];
+      });
+    } catch (err) {
+      console.error('[ChatRoom] Load older messages failed:', err);
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
+
+  const scrollToNewest = () => flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+
+  useEffect(() => {
+    setMessages([]);
+    setHasOlder(false);
+    setLoading(true);
+  }, [groupId, staffId, subGroupId, studentId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let timer: ReturnType<typeof setInterval> | undefined;
+      const start = () => {
+        if (timer) return;
+        loadMessages();
+        timer = setInterval(loadMessages, POLL_INTERVAL_MS);
+      };
+      const stop = () => {
+        if (timer) clearInterval(timer);
+        timer = undefined;
+      };
+      start();
+      const subscription = AppState.addEventListener('change', (state) => (state === 'active' ? start() : stop()));
+      return () => {
+        stop();
+        subscription.remove();
+      };
+    }, [groupId, staffId, subGroupId, studentId]),
+  );
 
   const voiceTarget = useMemo((): { route: VoiceRoute; targetId: number; groupId?: number } => {
     if (isStaffChat && staffId) return { route: 'studentToStaff', targetId: staffId, groupId };
@@ -142,6 +201,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
       setPending((list) => list.filter((entry) => entry.localId !== item.localId));
       deleteRecording(item.uri);
       loadMessages();
+      scrollToNewest();
     } catch (err: any) {
       setPending((list) => list.map((entry) => (entry.localId === item.localId ? { ...entry, state: 'failed' } : entry)));
       if (err?.status === 400 && err?.userMessage) Alert.alert(t('common.error'), err.userMessage);
@@ -156,6 +216,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
       createdAt: new Date().toISOString(),
     };
     setPending((list) => [...list, item]);
+    scrollToNewest();
     uploadVoice(item);
   };
 
@@ -177,6 +238,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
         await chatApi.sendToGroup({ content: messageText, groupId });
       }
       await loadMessages();
+      scrollToNewest();
       return true;
     } catch (err: any) {
       Alert.alert(t('common.error'), err?.userMessage || t('chat.failedToSend'));
@@ -248,6 +310,8 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
     return items;
   }, [messages, pending]);
 
+  const newestFirst = useMemo(() => [...listItems].reverse(), [listItems]);
+
   const renderItem = ({ item }: { item: ListItem }) => {
     if (item.type === 'date') {
       return (
@@ -310,11 +374,18 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
       palette,
       content: (
         <>
-          <Text style={[styles.bubbleText, own ? styles.bubbleTextOwn : { color: theme.colors.text }]}>
-            {msg.content || ''}
-          </Text>
+          {msg.deletedAt ? (
+            <Text style={[styles.bubbleText, styles.deletedText, own ? styles.bubbleTextOwn : { color: theme.colors.textMuted }]}>
+              {t('chat.messageDeleted')}
+            </Text>
+          ) : (
+            <Text style={[styles.bubbleText, own ? styles.bubbleTextOwn : { color: theme.colors.text }]}>
+              {msg.content || ''}
+            </Text>
+          )}
           <Text style={[styles.timeInBubble, own ? styles.timeOwn : { color: theme.colors.textMuted }]}>
             {timeStr}
+            {msg.editedAt && !msg.deletedAt ? `  ·  ${t('chat.edited')}` : ''}
           </Text>
         </>
       ),
@@ -405,14 +476,18 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
           ) : (
             <FlatList
               ref={flatListRef}
-              data={listItems}
+              data={newestFirst}
               renderItem={renderItem}
               keyExtractor={(item) => item.key}
               style={styles.messagesList}
               contentContainerStyle={{ paddingVertical: spacing.md, paddingHorizontal: spacing.lg }}
-              inverted={false}
-              onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-              onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
+              inverted
+              onEndReached={loadOlder}
+              onEndReachedThreshold={0.3}
+              ListFooterComponent={loadingOlder ? <ActivityIndicator style={styles.olderSpinner} color={theme.colors.primary} /> : null}
+              initialNumToRender={CHAT_PAGE_SIZE}
+              maxToRenderPerBatch={CHAT_PAGE_SIZE}
+              windowSize={11}
               keyboardShouldPersistTaps="handled"
               removeClippedSubviews={Platform.OS === 'android'}
             />
@@ -427,6 +502,8 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  olderSpinner: { paddingVertical: spacing.md },
+  deletedText: { fontStyle: 'italic', opacity: 0.85 },
   // Header
   header: {
     flexDirection: 'row',
