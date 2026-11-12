@@ -26,7 +26,7 @@ import { liveApi } from '../../services/api/live.api';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 import { type LiveSession, LiveClassroomType } from '../../types/live.types';
 
-import { appDateLocale } from '../../utils/dateLocale';
+import { appDateLocale, formatClockTime } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'LiveSessions'>;
 
 export default function LiveSessionsListScreen({ navigation }: Props) {
@@ -159,10 +159,7 @@ export default function LiveSessionsListScreen({ navigation }: Props) {
           </Text>
         ) : item.startedAt ? (
           <Text style={styles.sessionTime}>
-            {t('live.started')} {new Date(item.startedAt).toLocaleTimeString(appDateLocale(), {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
+            {t('live.started')} {formatClockTime(item.startedAt)}
           </Text>
         ) : <View />}
         <Button

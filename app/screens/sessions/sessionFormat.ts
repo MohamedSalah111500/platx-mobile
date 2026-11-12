@@ -1,5 +1,6 @@
 import type { ThemeColors } from '../../theme/themes';
 import { ATTENDANCE_STATUS, asUtcDate, type AttendanceStatus } from '../../services/api/sessions.api';
+import { formatClockTime } from '../../utils/dateLocale';
 
 const localeTag = (locale: string): string => (locale === 'ar' ? 'ar-EG-u-ca-gregory-nu-latn' : 'en-GB');
 
@@ -14,7 +15,7 @@ export function formatSessionDate(startsAt: string, locale: string): string {
 }
 
 export function formatRecordedTime(recordedAt: string, locale: string): string {
-  return asUtcDate(recordedAt).toLocaleTimeString(localeTag(locale), { hour: 'numeric', minute: '2-digit' });
+  return formatClockTime(asUtcDate(recordedAt));
 }
 
 export function attendanceColor(status: AttendanceStatus, colors: ThemeColors): string {

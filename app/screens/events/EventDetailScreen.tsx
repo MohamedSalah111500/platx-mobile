@@ -22,7 +22,7 @@ import { useAuth } from '../../hooks/useAuth';
 import type { HomeStackParamList } from '../../types/navigation.types';
 import type { EventDetail } from '../../types/event.types';
 
-import { appDateLocale } from '../../utils/dateLocale';
+import { appDateLocale, formatClockTime } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<HomeStackParamList, 'EventDetail'>;
 
 export default function EventDetailScreen({ navigation, route }: Props) {
@@ -153,15 +153,8 @@ export default function EventDetailScreen({ navigation, route }: Props) {
           <View style={styles.infoRow}>
             <Ionicons name="time-outline" size={20} color={theme.colors.primary} />
             <Text style={styles.infoText}>
-              {startDate.toLocaleTimeString(appDateLocale(), {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-              {endDate &&
-                ` - ${endDate.toLocaleTimeString(appDateLocale(), {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}`}
+              {formatClockTime(startDate)}
+              {endDate && ` - ${formatClockTime(endDate)}`}
             </Text>
           </View>
         )}

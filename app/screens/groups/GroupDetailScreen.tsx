@@ -42,7 +42,7 @@ import { GroupFilesSection, GroupStaffSection } from '../../components/groups/Gr
 import { GROUP_STATUS } from '../../types/group.types';
 
 import { BackButton } from '../../components/ui/BackButton';
-import { appDateLocale } from '../../utils/dateLocale';
+import { formatClockTime } from '../../utils/dateLocale';
 import { sheetFrame } from '../../utils/responsive';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'GroupDetail'>;
 
@@ -359,7 +359,7 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
   const formatTime = (dateStr?: string) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
-    return d.toLocaleTimeString(appDateLocale(), { hour: '2-digit', minute: '2-digit' });
+    return formatClockTime(d);
   };
 
 

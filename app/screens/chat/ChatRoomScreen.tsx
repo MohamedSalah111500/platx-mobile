@@ -20,10 +20,9 @@ import { ChatComposer } from '../../components/chat/ChatComposer';
 import { VoiceMessageBubble, type VoiceSendState } from '../../components/chat/voice/VoiceMessageBubble';
 import { voicePlayback, type VoiceTrack } from '../../components/chat/voice/voicePlayback';
 import { deleteRecording, type RecordedVoice } from '../../components/chat/voice/useVoiceRecorder';
-import { getFullImageUrl } from '../../utils/imageUrl';
 
 import { BackButton } from '../../components/ui/BackButton';
-import { appDateLocale } from '../../utils/dateLocale';
+import { appDateLocale, formatClockTime } from '../../utils/dateLocale';
 type Props = NativeStackScreenProps<ChatStackParamList, 'ChatRoom'>;
 
 const AVATAR_COLORS = [
@@ -203,7 +202,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
   const formatTime = (dateStr?: string) => {
     if (!dateStr) return '';
     try {
-      return new Date(dateStr).toLocaleTimeString(appDateLocale(), { hour: '2-digit', minute: '2-digit' });
+      return formatClockTime(dateStr);
     } catch {
       return '';
     }
@@ -274,8 +273,6 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
             durationMs={voice.durationMs}
             waveform={voice.waveform}
             own
-            senderName={ownName}
-            avatarUri={ownAvatar}
             timeLabel={formatTime(voice.createdAt)}
             sendState={voice.state}
             onRetry={() => uploadVoice(voice)}
@@ -291,7 +288,6 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
     const palette = AVATAR_COLORS[(msg.senderStaffId || msg.senderId || 0) % AVATAR_COLORS.length];
 
     if (msg.voice) {
-      const senderPhoto = msg.senderImage || msg.senderStaff?.profileImage || msg.senderStudent?.profileImage;
       return renderBubble({
         own,
         senderName,
@@ -302,8 +298,6 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
             durationMs={msg.voice.durationMs}
             waveform={msg.voice.waveform}
             own={own}
-            senderName={own ? ownName : senderName}
-            avatarUri={own ? ownAvatar : getFullImageUrl(senderPhoto)}
             timeLabel={timeStr}
           />
         ),
@@ -366,7 +360,6 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
   };
 
   const ownName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
-  const ownAvatar = getFullImageUrl(user?.profileImage);
 
   const headerTitle = isStaffChat ? (staffName || groupName) : groupName;
   const headerInitial = (headerTitle?.[0] || '?').toUpperCase();

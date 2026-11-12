@@ -39,7 +39,7 @@ import { StudentActions } from '../../components/groups/StudentActions';
 import { GroupProgressPanel } from '../../components/groups/GroupProgressPanel';
 
 import { BackButton } from '../../components/ui/BackButton';
-import { appDateLocale } from '../../utils/dateLocale';
+import { formatClockTime } from '../../utils/dateLocale';
 import { sheetFrame } from '../../utils/responsive';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'SubGroupDetail'>;
 
@@ -210,7 +210,7 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
   const formatTime = (dateStr?: string) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
-    return d.toLocaleTimeString(appDateLocale(), { hour: '2-digit', minute: '2-digit' });
+    return formatClockTime(d);
   };
 
   const handleSendMessage = async () => {

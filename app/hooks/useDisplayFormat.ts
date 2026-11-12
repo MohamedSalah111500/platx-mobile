@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useRTL } from '../i18n/RTLProvider';
 import type { Course } from '../types/course.types';
+import { formatClockTime } from '../utils/dateLocale';
 
 const LTR_ISOLATE = '⁦';
 const POP_ISOLATE = '⁩';
@@ -32,10 +33,7 @@ export function useDisplayFormat() {
     [dateLocale],
   );
 
-  const time = useCallback(
-    (value: string | Date) => new Date(value).toLocaleTimeString(dateLocale, { hour: 'numeric', minute: '2-digit' }),
-    [dateLocale],
-  );
+  const time = useCallback((value: string | Date) => formatClockTime(value), []);
 
   const month = useCallback(
     (value: string | Date) => new Date(value).toLocaleString(dateLocale, { month: 'short' }),

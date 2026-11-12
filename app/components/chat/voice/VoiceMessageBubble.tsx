@@ -3,7 +3,6 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View, useWindowDimensio
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { useRTL } from '../../../i18n/RTLProvider';
-import { Avatar } from '../../ui/Avatar';
 import { spacing } from '../../../theme/spacing';
 import { fontFamily, fontSize } from '../../../theme/typography';
 import { VoiceWaveform } from './VoiceWaveform';
@@ -18,26 +17,22 @@ interface Props {
   durationMs: number;
   waveform: string | null;
   own: boolean;
-  senderName: string;
-  avatarUri?: string;
   timeLabel: string;
   sendState?: VoiceSendState;
   onRetry?: () => void;
 }
 
 const BAR_COUNT = 40;
-const AVATAR = 44;
-const PLAY = 38;
-const MAX_ROW = 280;
-const ROW_CHROME = 72;
+const PLAY = 40;
+const META_HEIGHT = 22;
+const MAX_ROW = 260;
+const ROW_CHROME = 48;
 
 function VoiceMessageBubbleBase({
   playbackKey,
   durationMs,
   waveform,
   own,
-  senderName,
-  avatarUri,
   timeLabel,
   sendState,
   onRetry,
@@ -56,43 +51,24 @@ function VoiceMessageBubbleBase({
   const active = playback.status === 'playing' || playback.status === 'loading';
   const timeText = formatVoiceTime(playback.started ? playback.second * 1000 : durationMs);
 
-  const avatarSlot = (
-    <View style={styles.avatarSlot}>
-      {active ? (
-        <Pressable
-          onPress={() => voicePlayback.cycleRate()}
-          hitSlop={8}
-          accessibilityRole="button"
-          style={[styles.rateChip, { backgroundColor: own ? theme.colors.onPrimary + '33' : theme.colors.primaryLight }]}
-        >
-          <Text style={[styles.rateText, { color: accent }]}>{`${playback.rate}×`}</Text>
-        </Pressable>
-      ) : (
-        <View>
-          <Avatar dimension={AVATAR} radius={14} name={senderName} source={avatarUri ? { uri: avatarUri } : undefined} />
-          <View style={[styles.micBadge, { backgroundColor: own ? theme.colors.onPrimary : theme.colors.primary }]}>
-            <Ionicons name="mic" size={11} color={own ? theme.colors.primary : theme.colors.onPrimary} />
-          </View>
-        </View>
-      )}
-    </View>
-  );
-
   return (
     <View>
       <View style={[styles.row, { width: rowWidth }]}>
-        {own ? null : avatarSlot}
         <Pressable
           onPress={playback.toggle}
           hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel={t(active ? 'chat.voice.pause' : 'chat.voice.play')}
-          style={styles.playButton}
+          style={({ pressed }) => [
+            styles.playButton,
+            { backgroundColor: own ? theme.colors.onPrimary + '33' : theme.colors.primaryLight },
+            pressed && styles.playPressed,
+          ]}
         >
           {playback.status === 'loading' ? (
             <ActivityIndicator size="small" color={accent} />
           ) : (
-            <Ionicons name={playback.status === 'playing' ? 'pause' : 'play'} size={28} color={accent} />
+            <Ionicons name={playback.status === 'playing' ? 'pause' : 'play'} size={24} color={accent} />
           )}
         </Pressable>
         <View style={styles.body}>
@@ -104,18 +80,29 @@ function VoiceMessageBubbleBase({
             dotColor={accent}
             onSeek={playback.seek}
           />
-          <View style={styles.meta}>
-            <Text style={[styles.metaText, { color: muted }]}>{timeText}</Text>
-            <View style={styles.metaEnd}>
-              <Text style={[styles.metaText, { color: muted }]}>{timeLabel}</Text>
-              {sendState === 'sending' ? <Ionicons name="time-outline" size={14} color={muted} /> : null}
-              {sendState === 'failed' ? (
-                <Ionicons name="alert-circle" size={16} color={own ? theme.colors.onPrimary : theme.colors.danger} />
-              ) : null}
-            </View>
-          </View>
         </View>
-        {own ? avatarSlot : null}
+      </View>
+      <View style={styles.meta}>
+        <View style={styles.metaStart}>
+          <Text style={[styles.metaText, { color: muted }]}>{timeText}</Text>
+          {active ? (
+            <Pressable
+              onPress={() => voicePlayback.cycleRate()}
+              hitSlop={8}
+              accessibilityRole="button"
+              style={[styles.rateChip, { backgroundColor: own ? theme.colors.onPrimary + '33' : theme.colors.primaryLight }]}
+            >
+              <Text style={[styles.rateText, { color: accent }]}>{`${playback.rate}×`}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+        <View style={styles.metaEnd}>
+          {sendState === 'sending' ? <Ionicons name="time-outline" size={14} color={muted} /> : null}
+          {sendState === 'failed' ? (
+            <Ionicons name="alert-circle" size={16} color={own ? theme.colors.onPrimary : theme.colors.danger} />
+          ) : null}
+          <Text style={[styles.metaText, { color: muted }]}>{timeLabel}</Text>
+        </View>
       </View>
       {sendState === 'failed' ? (
         <View style={[styles.failure, { borderTopColor: own ? theme.colors.onPrimary + '33' : theme.colors.divider }]}>
@@ -134,31 +121,29 @@ export const VoiceMessageBubble = memo(VoiceMessageBubbleBase);
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  avatarSlot: { width: AVATAR, height: AVATAR, alignItems: 'center', justifyContent: 'center' },
-  micBadge: {
-    position: 'absolute',
-    bottom: -2,
-    end: -2,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+  playButton: { width: PLAY, height: PLAY, borderRadius: PLAY / 2, alignItems: 'center', justifyContent: 'center' },
+  playPressed: { transform: [{ scale: 0.92 }] },
+  body: { flex: 1, justifyContent: 'center' },
+  meta: {
+    height: META_HEIGHT,
+    marginTop: 4,
+    paddingStart: PLAY + spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  rateChip: {
-    minWidth: 44,
-    height: 30,
-    paddingHorizontal: spacing.sm,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rateText: { fontSize: fontSize.sm, fontFamily: fontFamily.bold, textAlign: 'center' },
-  playButton: { width: PLAY, height: PLAY, alignItems: 'center', justifyContent: 'center' },
-  body: { flex: 1, paddingTop: spacing.sm },
-  meta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
+  metaStart: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   metaEnd: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   metaText: { fontSize: fontSize.sm, fontFamily: fontFamily.medium, textAlign: 'left' },
+  rateChip: {
+    height: META_HEIGHT,
+    minWidth: 40,
+    paddingHorizontal: spacing.sm,
+    borderRadius: META_HEIGHT / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rateText: { fontSize: fontSize.sm, lineHeight: META_HEIGHT - 2, fontFamily: fontFamily.bold, textAlign: 'center' },
   failure: {
     marginTop: spacing.sm,
     paddingTop: spacing.sm,
