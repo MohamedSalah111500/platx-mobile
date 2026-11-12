@@ -490,7 +490,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   olderSpinner: { paddingVertical: spacing.md },
-  deletedText: { fontStyle: 'italic', opacity: 0.85 },
+  deletedText: { opacity: 0.75 },
   // Header
   header: {
     flexDirection: 'row',
