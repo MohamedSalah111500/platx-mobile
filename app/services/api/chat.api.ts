@@ -1,6 +1,24 @@
 import apiClient from './client';
 import { CHAT_URLS } from './endpoints';
-import type { ChatMessage, StaffChatContact, SendMessageToStaffPayload } from '../../types/chat.types';
+import type {
+  ChatMessage,
+  ChatVoice,
+  StaffChatContact,
+  SendMessageToStaffPayload,
+  SendVoicePayload,
+  VoiceRoute,
+} from '../../types/chat.types';
+
+const VOICE_UPLOAD_TIMEOUT = 120000;
+
+const VOICE_URLS: Record<VoiceRoute, string> = {
+  staffToStudent: CHAT_URLS.SEND_VOICE_TO_STUDENT,
+  studentToStaff: CHAT_URLS.SEND_VOICE_TO_STAFF_FROM_STUDENT,
+  staffToGroup: CHAT_URLS.SEND_VOICE_TO_GROUP,
+  studentToGroup: CHAT_URLS.SEND_VOICE_TO_GROUP_FROM_STUDENT,
+  staffToSubGroup: CHAT_URLS.SEND_VOICE_TO_SUBGROUP,
+  studentToSubGroup: CHAT_URLS.SEND_VOICE_TO_SUBGROUP_FROM_STUDENT,
+};
 
 export const chatApi = {
   getMessagesWithStudent: async (
@@ -123,6 +141,29 @@ export const chatApi = {
       CHAT_URLS.SEND_TO_SUBGROUP_FROM_STUDENT,
       payload
     );
+    return data;
+  },
+
+  sendVoice: async (payload: SendVoicePayload): Promise<ChatMessage> => {
+    const form = new FormData();
+    form.append('Audio', {
+      uri: payload.uri,
+      name: 'voice.m4a',
+      type: 'audio/mp4',
+    } as unknown as Blob);
+    form.append('DurationMs', String(Math.round(payload.durationMs)));
+    form.append('Waveform', payload.waveform);
+    form.append('TargetId', String(payload.targetId));
+    if (payload.groupId != null) form.append('GroupId', String(payload.groupId));
+    const { data } = await apiClient.post<ChatMessage>(VOICE_URLS[payload.route], form, {
+      timeout: VOICE_UPLOAD_TIMEOUT,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
+
+  getVoice: async (messageId: number): Promise<ChatVoice> => {
+    const { data } = await apiClient.get<ChatVoice>(CHAT_URLS.GET_VOICE(messageId));
     return data;
   },
 };

@@ -1,3 +1,26 @@
+export interface ChatVoice {
+  url: string;
+  durationMs: number;
+  waveform: string | null;
+}
+
+export type VoiceRoute =
+  | 'staffToStudent'
+  | 'studentToStaff'
+  | 'staffToGroup'
+  | 'studentToGroup'
+  | 'staffToSubGroup'
+  | 'studentToSubGroup';
+
+export interface SendVoicePayload {
+  route: VoiceRoute;
+  targetId: number;
+  groupId?: number;
+  uri: string;
+  durationMs: number;
+  waveform: string;
+}
+
 export interface ChatMessage {
   id: number;
   content: string;
@@ -17,6 +40,7 @@ export interface ChatMessage {
   senderStaff?: { id?: number; firstName?: string; lastName?: string; profileImage?: string | null; staffId?: number };
   sentAt?: string;
   isSendToGroup?: boolean;
+  voice?: ChatVoice | null;
 }
 
 export interface ChatConversation {

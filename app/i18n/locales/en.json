@@ -642,7 +642,21 @@
     "sendFirstMessage": "Send the first message.",
     "failedToSend": "Failed to send message.",
     "staff": "Staff",
-    "noStaffAvailable": "No staff available to chat with yet."
+    "noStaffAvailable": "No staff available to chat with yet.",
+    "voice": {
+      "message": "Voice message",
+      "holdToRecord": "Hold to record, release to send",
+      "slideToCancel": "Slide to cancel",
+      "micDenied": "Microphone access is needed to record a voice message.",
+      "sendFailed": "The voice message could not be sent.",
+      "retry": "Retry",
+      "deleteRecording": "Delete recording",
+      "pauseRecording": "Pause",
+      "resume": "Resume",
+      "send": "Send",
+      "play": "Play",
+      "pause": "Pause"
+    }
   },
   "groups": {
     "title": "Groups",

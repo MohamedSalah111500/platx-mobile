@@ -156,6 +156,13 @@ export const CHAT_URLS = {
     `${BASE}api/Messages/GetMessagesForStudentInSubGroup/${subGroupId}`,
   SEND_TO_SUBGROUP: `${BASE}api/Messages/SendMessageToSubGroup`,
   SEND_TO_SUBGROUP_FROM_STUDENT: `${BASE}api/Messages/SendMessageToSubGroupFromStudent`,
+  SEND_VOICE_TO_STUDENT: `${BASE}api/Messages/SendVoiceToStudent`,
+  SEND_VOICE_TO_STAFF_FROM_STUDENT: `${BASE}api/Messages/SendVoiceToStaffFromStudent`,
+  SEND_VOICE_TO_GROUP: `${BASE}api/Messages/SendVoiceToGroup`,
+  SEND_VOICE_TO_GROUP_FROM_STUDENT: `${BASE}api/Messages/SendVoiceToGroupFromStudent`,
+  SEND_VOICE_TO_SUBGROUP: `${BASE}api/Messages/SendVoiceToSubGroup`,
+  SEND_VOICE_TO_SUBGROUP_FROM_STUDENT: `${BASE}api/Messages/SendVoiceToSubGroupFromStudent`,
+  GET_VOICE: (messageId: number) => `${BASE}api/Messages/Voice/${messageId}`,
 };
 
 // Courses endpoints

@@ -1,16 +1,8 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from 'react-native';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -22,8 +14,13 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import { chatApi } from '../../services/api/chat.api';
 import type { ChatStackParamList } from '../../types/navigation.types';
-import type { ChatMessage } from '../../types/chat.types';
+import type { ChatMessage, VoiceRoute } from '../../types/chat.types';
 import { isOwnMessage as checkIsOwnMessage } from './isOwnMessage';
+import { ChatComposer } from '../../components/chat/ChatComposer';
+import { VoiceMessageBubble, type VoiceSendState } from '../../components/chat/voice/VoiceMessageBubble';
+import { voicePlayback, type VoiceTrack } from '../../components/chat/voice/voicePlayback';
+import { deleteRecording, type RecordedVoice } from '../../components/chat/voice/useVoiceRecorder';
+import { getFullImageUrl } from '../../utils/imageUrl';
 
 import { BackButton } from '../../components/ui/BackButton';
 import { appDateLocale } from '../../utils/dateLocale';
@@ -36,20 +33,33 @@ const AVATAR_COLORS = [
   { bg: '#FFF4E5', color: '#F5A623' },
 ];
 
-// Turn messages into a list interleaved with date separator labels
-type ListItem = { type: 'date'; label: string; key: string } | { type: 'msg'; data: ChatMessage; key: string };
+interface PendingVoice extends RecordedVoice {
+  localId: number;
+  state: VoiceSendState;
+  createdAt: string;
+}
+
+type ListItem =
+  | { type: 'date'; label: string; key: string }
+  | { type: 'msg'; data: ChatMessage; key: string }
+  | { type: 'pending'; data: PendingVoice; key: string };
+
+const messageKey = (id: number) => `voice-${id}`;
+const pendingKey = (localId: number) => `voice-local-${localId}`;
 
 export default function ChatRoomScreen({ navigation, route }: Props) {
   const { groupId, groupName, staffId, staffName, subGroupId, chatType, membersCount, studentId } =
     route.params;
   const { theme } = useTheme();
   const { user, isStudent } = useAuth();
-  const { t, isRTL } = useRTL();
+  const { t } = useRTL();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [pending, setPending] = useState<PendingVoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const nextLocalId = useRef(1);
+  const pendingRef = useRef<PendingVoice[]>([]);
+  pendingRef.current = pending;
 
   const isStaffChat = chatType === 'staff' && !!staffId;
   const isSubGroupChat = chatType === 'subgroup' && !!subGroupId;
@@ -86,11 +96,71 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
     }
   };
 
-  const handleSend = async () => {
-    if (!newMessage.trim() || sending) return;
-    const messageText = newMessage.trim();
-    setSending(true);
-    setNewMessage('');
+  const voiceTarget = useMemo((): { route: VoiceRoute; targetId: number; groupId?: number } => {
+    if (isStaffChat && staffId) return { route: 'studentToStaff', targetId: staffId, groupId };
+    if (isStudentChat && studentId) return { route: 'staffToStudent', targetId: studentId, groupId };
+    if (isSubGroupChat && subGroupId) {
+      return { route: isStudent ? 'studentToSubGroup' : 'staffToSubGroup', targetId: subGroupId };
+    }
+    return { route: isStudent ? 'studentToGroup' : 'staffToGroup', targetId: groupId };
+  }, [isStaffChat, isStudentChat, isSubGroupChat, isStudent, staffId, studentId, subGroupId, groupId]);
+
+  useFocusEffect(useCallback(() => () => voicePlayback.release(), []));
+
+  useEffect(
+    () => () => {
+      pendingRef.current.forEach((item) => deleteRecording(item.uri));
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const tracks: VoiceTrack[] = [];
+    messages.forEach((msg) => {
+      if (msg.voice?.url) {
+        tracks.push({ key: messageKey(msg.id), uri: msg.voice.url, durationMs: msg.voice.durationMs, messageId: msg.id });
+      }
+    });
+    pending.forEach((item) => {
+      tracks.push({ key: pendingKey(item.localId), uri: item.uri, durationMs: item.durationMs });
+    });
+    voicePlayback.setTracks(tracks);
+  }, [messages, pending]);
+
+  const uploadVoice = async (item: PendingVoice) => {
+    setPending((list) => list.map((entry) => (entry.localId === item.localId ? { ...entry, state: 'sending' } : entry)));
+    try {
+      const sent = await chatApi.sendVoice({
+        ...voiceTarget,
+        uri: item.uri,
+        durationMs: item.durationMs,
+        waveform: item.waveform,
+      });
+      if (sent?.id) {
+        voicePlayback.rekey(pendingKey(item.localId), messageKey(sent.id));
+        setMessages((list) => (list.some((msg) => msg.id === sent.id) ? list : [...list, sent]));
+      }
+      setPending((list) => list.filter((entry) => entry.localId !== item.localId));
+      deleteRecording(item.uri);
+      loadMessages();
+    } catch (err: any) {
+      setPending((list) => list.map((entry) => (entry.localId === item.localId ? { ...entry, state: 'failed' } : entry)));
+      if (err?.status === 400 && err?.userMessage) Alert.alert(t('common.error'), err.userMessage);
+    }
+  };
+
+  const handleSendVoice = (voice: RecordedVoice) => {
+    const item: PendingVoice = {
+      ...voice,
+      localId: nextLocalId.current++,
+      state: 'sending',
+      createdAt: new Date().toISOString(),
+    };
+    setPending((list) => [...list, item]);
+    uploadVoice(item);
+  };
+
+  const handleSend = async (messageText: string): Promise<boolean> => {
     try {
       if (isStaffChat && staffId) {
         await chatApi.sendToStaffFromStudent({ content: messageText, groupId, staffId });
@@ -108,11 +178,10 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
         await chatApi.sendToGroup({ content: messageText, groupId });
       }
       await loadMessages();
+      return true;
     } catch (err: any) {
-      setNewMessage(messageText);
       Alert.alert(t('common.error'), err?.userMessage || t('chat.failedToSend'));
-    } finally {
-      setSending(false);
+      return false;
     }
   };
 
@@ -156,7 +225,7 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
 
   // Build list items with date separators
   const listItems: ListItem[] = useMemo(() => {
-    if (!messages.length) return [];
+    if (!messages.length && !pending.length) return [];
     const items: ListItem[] = [];
     let lastDate = '';
     messages.forEach((msg, idx) => {
@@ -169,8 +238,16 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
       }
       items.push({ type: 'msg', data: msg, key: msg.id ? `msg-${msg.id}` : `msg-idx-${idx}` });
     });
+    pending.forEach((item) => {
+      const dateKey = new Date(item.createdAt).toDateString();
+      if (dateKey !== lastDate) {
+        lastDate = dateKey;
+        items.push({ type: 'date', label: formatDateLabel(item.createdAt), key: `date-${dateKey}` });
+      }
+      items.push({ type: 'pending', data: item, key: pendingKey(item.localId) });
+    });
     return items;
-  }, [messages]);
+  }, [messages, pending]);
 
   const renderItem = ({ item }: { item: ListItem }) => {
     if (item.type === 'date') {
@@ -185,13 +262,83 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
       );
     }
 
+    if (item.type === 'pending') {
+      const voice = item.data;
+      return renderBubble({
+        own: true,
+        senderName: ownName,
+        palette: AVATAR_COLORS[0],
+        content: (
+          <VoiceMessageBubble
+            playbackKey={pendingKey(voice.localId)}
+            durationMs={voice.durationMs}
+            waveform={voice.waveform}
+            own
+            senderName={ownName}
+            avatarUri={ownAvatar}
+            timeLabel={formatTime(voice.createdAt)}
+            sendState={voice.state}
+            onRetry={() => uploadVoice(voice)}
+          />
+        ),
+      });
+    }
+
     const msg = item.data;
     const own = isOwnMessage(msg);
     const senderName = getSenderName(msg);
     const timeStr = formatTime(msg.sentAt || msg.createdAt);
-    const initial = (senderName?.[0] || '?').toUpperCase();
     const palette = AVATAR_COLORS[(msg.senderStaffId || msg.senderId || 0) % AVATAR_COLORS.length];
 
+    if (msg.voice) {
+      const senderPhoto = msg.senderImage || msg.senderStaff?.profileImage || msg.senderStudent?.profileImage;
+      return renderBubble({
+        own,
+        senderName,
+        palette,
+        content: (
+          <VoiceMessageBubble
+            playbackKey={messageKey(msg.id)}
+            durationMs={msg.voice.durationMs}
+            waveform={msg.voice.waveform}
+            own={own}
+            senderName={own ? ownName : senderName}
+            avatarUri={own ? ownAvatar : getFullImageUrl(senderPhoto)}
+            timeLabel={timeStr}
+          />
+        ),
+      });
+    }
+
+    return renderBubble({
+      own,
+      senderName,
+      palette,
+      content: (
+        <>
+          <Text style={[styles.bubbleText, own ? styles.bubbleTextOwn : { color: theme.colors.text }]}>
+            {msg.content || ''}
+          </Text>
+          <Text style={[styles.timeInBubble, own ? styles.timeOwn : { color: theme.colors.textMuted }]}>
+            {timeStr}
+          </Text>
+        </>
+      ),
+    });
+  };
+
+  const renderBubble = ({
+    own,
+    senderName,
+    palette,
+    content,
+  }: {
+    own: boolean;
+    senderName: string;
+    palette: (typeof AVATAR_COLORS)[number];
+    content: React.ReactNode;
+  }) => {
+    const initial = (senderName?.[0] || '?').toUpperCase();
     return (
       <View style={[styles.msgRow, own ? styles.msgRowOwn : styles.msgRowOther]}>
         {/* Avatar for other's messages */}
@@ -211,106 +358,77 @@ export default function ChatRoomScreen({ navigation, route }: Props) {
               own ? [styles.bubbleOwn, { backgroundColor: theme.colors.primary }] : [styles.bubbleOther, { backgroundColor: theme.colors.surface }],
             ]}
           >
-            <Text style={[styles.bubbleText, own ? styles.bubbleTextOwn : { color: theme.colors.text }]}>
-              {msg.content || ''}
-            </Text>
-            <Text style={[styles.timeInBubble, own ? styles.timeOwn : { color: theme.colors.textMuted }]}>
-              {timeStr}
-            </Text>
+            {content}
           </View>
         </View>
       </View>
     );
   };
 
+  const ownName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
+  const ownAvatar = getFullImageUrl(user?.profileImage);
+
   const headerTitle = isStaffChat ? (staffName || groupName) : groupName;
   const headerInitial = (headerTitle?.[0] || '?').toUpperCase();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: theme.colors.divider }]}>
-        <BackButton onPress={() => navigation.goBack()} />
-        <View style={[styles.headerAvatar, { backgroundColor: theme.colors.primaryLight }]}>
-          {isStaffChat ? (
-            <Text style={[styles.headerAvatarText, { color: theme.colors.primary }]}>{headerInitial}</Text>
-          ) : (
-            <Ionicons name={isSubGroupChat ? 'git-branch-outline' : 'people'} size={18} color={theme.colors.primary} />
-          )}
-        </View>
-        <View style={styles.headerInfo}>
-          <Text style={[styles.headerName, { color: theme.colors.text }]} numberOfLines={1}>
-            {headerTitle}
-          </Text>
-          <Text style={[styles.headerSub, { color: theme.colors.textMuted }]}>
-            {isStaffChat
-              ? t('chat.staff')
-              : isSubGroupChat
-                ? t('groups.subGroups')
-                : membersCount != null
-                  ? t('home.membersCount', { count: membersCount })
-                  : t('chat.groupChat')}
-          </Text>
-        </View>
-      </View>
-
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      >
-        {loading ? (
-          <Spinner />
-        ) : listItems.length === 0 ? (
-          <EmptyState title={t('chat.noMessages')} message={t('chat.sendFirstMessage')} />
-        ) : (
-          <FlatList
-            ref={flatListRef}
-            data={listItems}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.key}
-            style={styles.messagesList}
-            contentContainerStyle={{ paddingVertical: spacing.md, paddingHorizontal: spacing.lg }}
-            inverted={false}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
-            keyboardShouldPersistTaps="handled"
-            removeClippedSubviews={Platform.OS === 'android'}
-          />
-        )}
-
-        {/* Input bar */}
-        <View style={[styles.inputBar, { backgroundColor: theme.colors.card, borderTopColor: theme.colors.divider }]}>
-          <View style={[styles.inputWrap, { backgroundColor: theme.colors.surface }]}>
-            <TextInput
-              style={[styles.input, { color: theme.colors.text }]}
-              value={newMessage}
-              onChangeText={setNewMessage}
-              placeholder={t('chat.typeMessage')}
-              placeholderTextColor={theme.colors.inputPlaceholder}
-              multiline
-              maxLength={2000}
-            />
-          </View>
-          <TouchableOpacity
-            style={[
-              styles.sendBtn,
-              { backgroundColor: theme.colors.primary },
-              (!newMessage.trim() || sending) && styles.sendBtnDisabled,
-            ]}
-            onPress={handleSend}
-            disabled={!newMessage.trim() || sending}
-            activeOpacity={0.7}
-          >
-            {sending ? (
-              <Ionicons name="hourglass-outline" size={20} color="#fff" />
+    <GestureHandlerRootView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        {/* Header */}
+        <View style={[styles.header, { borderBottomColor: theme.colors.divider }]}>
+          <BackButton onPress={() => navigation.goBack()} />
+          <View style={[styles.headerAvatar, { backgroundColor: theme.colors.primaryLight }]}>
+            {isStaffChat ? (
+              <Text style={[styles.headerAvatarText, { color: theme.colors.primary }]}>{headerInitial}</Text>
             ) : (
-              <Ionicons name="send" size={18} color="#fff" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
+              <Ionicons name={isSubGroupChat ? 'git-branch-outline' : 'people'} size={18} color={theme.colors.primary} />
             )}
-          </TouchableOpacity>
+          </View>
+          <View style={styles.headerInfo}>
+            <Text style={[styles.headerName, { color: theme.colors.text }]} numberOfLines={1}>
+              {headerTitle}
+            </Text>
+            <Text style={[styles.headerSub, { color: theme.colors.textMuted }]}>
+              {isStaffChat
+                ? t('chat.staff')
+                : isSubGroupChat
+                  ? t('groups.subGroups')
+                  : membersCount != null
+                    ? t('home.membersCount', { count: membersCount })
+                    : t('chat.groupChat')}
+            </Text>
+          </View>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        >
+          {loading ? (
+            <Spinner />
+          ) : listItems.length === 0 ? (
+            <EmptyState title={t('chat.noMessages')} message={t('chat.sendFirstMessage')} />
+          ) : (
+            <FlatList
+              ref={flatListRef}
+              data={listItems}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.key}
+              style={styles.messagesList}
+              contentContainerStyle={{ paddingVertical: spacing.md, paddingHorizontal: spacing.lg }}
+              inverted={false}
+              onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+              onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
+              keyboardShouldPersistTaps="handled"
+              removeClippedSubviews={Platform.OS === 'android'}
+            />
+          )}
+
+          <ChatComposer onSendText={handleSend} onSendVoice={handleSendVoice} />
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
@@ -412,40 +530,4 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   timeOwn: { color: 'rgba(255,255,255,0.7)' },
-  // Input bar
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderTopWidth: 1,
-    gap: spacing.sm,
-  },
-  // minHeight matches the send button so a single-line input is centred with it;
-  // the bar stays bottom-aligned so the button hugs the last line as the input grows.
-  inputWrap: {
-    flex: 1,
-    minHeight: 44,
-    justifyContent: 'center',
-    borderRadius: borderRadius['2xl'],
-    paddingHorizontal: spacing.md,
-  },
-  input: {
-    fontSize: fontSize.base,
-    lineHeight: 24,
-    maxHeight: 100,
-    paddingTop: 10,
-    paddingBottom: 10,
-    textAlignVertical: 'center',
-  },
-  sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sendBtnDisabled: {
-    opacity: 0.4,
-  },
 });
