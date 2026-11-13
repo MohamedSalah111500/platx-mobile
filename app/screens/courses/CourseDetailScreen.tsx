@@ -125,6 +125,15 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
     try {
       setError(null);
       if (!silent) setLoading(true);
+      const studentId = user?.studentId;
+      const sectionsRequest = isStudent ? coursesApi.getCourseSections(courseId).catch(() => null) : null;
+      const enrollmentsRequest = studentId
+        ? coursesApi.getStudentEnrollments(studentId).then(
+            (items) => ({ ok: true as const, items }),
+            () => ({ ok: false as const, items: [] }),
+          )
+        : null;
+      const reservationsRequest = studentId ? reservationsApi.getMine(studentId).catch(() => null) : null;
       let data: Course | null = await coursesApi.getOnlineCourseSingle(courseId);
 
       if (data && !data.sections) {
@@ -142,7 +151,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
 
       if (isStudent || !data?.sections || data.sections.length === 0 || data.sections.every((s: any) => !s.lessons?.length)) {
         try {
-          const sections = await coursesApi.getCourseSections(courseId);
+          const sections = sectionsRequest ? await sectionsRequest : await coursesApi.getCourseSections(courseId);
           if (Array.isArray(sections) && sections.length > 0) {
             data = {
               ...data!,
@@ -171,30 +180,24 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
       let status: RequestStatus = 'none';
       const numCourseId = Number(courseId);
 
-      if (user?.studentId) {
-        try {
-          const enrollments = await coursesApi.getStudentEnrollments(user.studentId);
-          for (const e of enrollments) {
-            const raw = (e as any).courseId ?? (e as any).course?.id;
-            if (Number(String(raw ?? '').trim()) === numCourseId) {
-              found = true;
-              setCertificateCode((e as any).certificateCode ?? null);
-              break;
-            }
+      if (enrollmentsRequest) {
+        const enrollments = await enrollmentsRequest;
+        for (const e of enrollments.items) {
+          const raw = (e as any).courseId ?? (e as any).course?.id;
+          if (Number(String(raw ?? '').trim()) === numCourseId) {
+            found = true;
+            setCertificateCode((e as any).certificateCode ?? null);
+            break;
           }
-          useServerFlag = false;
-        } catch {
-          useServerFlag = true;
         }
+        useServerFlag = !enrollments.ok;
 
         // Not enrolled yet → is there a purchase request in flight?
         if ((!found && !(useServerFlag && serverEnrolled)) || data?.hasFullAccess === false) {
-          try {
-            const mine = (await reservationsApi.getMine(user.studentId))
-              .filter((r) => Number(r.courseId) === numCourseId)
-              .sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
-            status = reservationStatusOf(mine[0]);
-          } catch {}
+          const mine = ((await reservationsRequest) ?? [])
+            .filter((r) => Number(r.courseId) === numCourseId)
+            .sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+          status = reservationStatusOf(mine[0]);
         }
       }
 

@@ -33,17 +33,22 @@ interface PlatformAccessState {
 
 const EMPTY = { features: {}, hiddenMenuItems: [] };
 
-export const usePlatformAccessStore = create<PlatformAccessState>((set) => ({
+const sameValue = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
+export const usePlatformAccessStore = create<PlatformAccessState>((set, get) => ({
   ...EMPTY,
   load: async () => {
     const [features, hidden] = await Promise.allSettled([
       platformAccessApi.getFeatures(),
       platformAccessApi.getHiddenMenuItems(),
     ]);
-    set({
-      ...(features.status === 'fulfilled' && { features: features.value }),
-      ...(hidden.status === 'fulfilled' && { hiddenMenuItems: hidden.value }),
-    });
+    const current = get();
+    const next: Partial<PlatformAccessState> = {};
+    if (features.status === 'fulfilled' && !sameValue(features.value, current.features)) next.features = features.value;
+    if (hidden.status === 'fulfilled' && !sameValue(hidden.value, current.hiddenMenuItems)) {
+      next.hiddenMenuItems = hidden.value;
+    }
+    if (Object.keys(next).length) set(next);
   },
   clear: () => set(EMPTY),
 }));

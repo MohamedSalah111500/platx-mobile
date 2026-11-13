@@ -84,26 +84,22 @@ export const studentsApi = {
   },
 
   getAll: async (): Promise<TopStudent[]> => {
-    const all: TopStudent[] = [];
-    for (let page = 1; page <= ALL_STUDENTS_MAX_PAGES; page++) {
-      const { data } = await apiClient.get<any>(
-        withPagination(STUDENTS_URLS.GET_ALL, page, ALL_STUDENTS_PAGE_SIZE)
-      );
-      if (Array.isArray(data)) {
-        all.push(...data);
-        break;
-      }
-      const items: TopStudent[] = data?.items || data?.data || [];
-      all.push(...items);
-      const totalCount = Number(data?.totalCount);
-      if (
-        items.length < ALL_STUDENTS_PAGE_SIZE ||
-        (Number.isFinite(totalCount) && all.length >= totalCount)
-      ) {
-        break;
-      }
+    const fetchPage = async (page: number) => {
+      const { data } = await apiClient.get<any>(withPagination(STUDENTS_URLS.GET_ALL, page, ALL_STUDENTS_PAGE_SIZE));
+      return data;
+    };
+    const first = await fetchPage(1);
+    if (Array.isArray(first)) return first;
+    const firstItems: TopStudent[] = first?.items || first?.data || [];
+    const totalCount = Number(first?.totalCount);
+    if (!Number.isFinite(totalCount) || firstItems.length < ALL_STUDENTS_PAGE_SIZE || firstItems.length >= totalCount) {
+      return firstItems;
     }
-    return all;
+    const pages = Math.min(Math.ceil(totalCount / ALL_STUDENTS_PAGE_SIZE), ALL_STUDENTS_MAX_PAGES);
+    const rest = await Promise.all(
+      Array.from({ length: pages - 1 }, (_, index) => fetchPage(index + 2)),
+    );
+    return [...firstItems, ...rest.flatMap((data) => (data?.items || data?.data || []) as TopStudent[])];
   },
 
   getPage: async (page: number, size: number): Promise<Paged<ManagedStudent>> => {
