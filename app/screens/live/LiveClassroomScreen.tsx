@@ -10,13 +10,13 @@ import {
   Modal,
   Image,
   StatusBar,
-  KeyboardAvoidingView,
   Platform,
   useWindowDimensions,
   PermissionsAndroid,
   TurboModuleRegistry,
   Linking,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
@@ -63,12 +63,12 @@ type Props = NativeStackScreenProps<RootStackParamList, 'LiveClassroom'>;
 // Dark video-call theme (always dark regardless of app theme) — used for the
 // video stage, top bar, controls and chat overlay. Sheets/modals follow the app theme.
 const DARK = {
-  bg: '#0f0f1a',
-  surface: '#1a1a2e',
-  surfaceLight: '#252540',
+  bg: '#111113',
+  surface: '#1c1c1f',
+  surfaceLight: '#27272a',
   text: '#ffffff',
-  textSecondary: '#a0a0b8',
-  accent: '#4f46e5',
+  textSecondary: '#a1a1aa',
+  accent: '#3f3f46',
   danger: '#ef4444',
   success: '#22c55e',
   warning: '#f59e0b',
@@ -733,7 +733,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           <Text style={styles.placeholderText}>
             {t('live.videoUnavailable')}
           </Text>
-          <Text style={[styles.placeholderText, { fontSize: 12, marginTop: 4 }]}>
+          <Text style={[styles.placeholderText, { fontSize: 14, marginTop: 4 }]}>
             {t('live.videoUnavailableHint')}
           </Text>
         </View>

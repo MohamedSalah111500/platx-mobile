@@ -6,8 +6,8 @@ import { useAuthStore } from '../store/auth.store';
 import { useRTL } from '../i18n/RTLProvider';
 import { isValidHexColor, darken } from '../utils/color';
 
-const DEFAULT_ACCENT = '#7c63fd';
-const VISIBLE_MS = 2600;
+const DEFAULT_ACCENT = '#18181b';
+const VISIBLE_MS = 1400;
 const ENTER_MS = 550;
 const EXIT_MS = 350;
 const PROGRESS_WIDTH = 140;
@@ -70,8 +70,6 @@ export default function WelcomeSplash() {
 
   return (
     <Animated.View style={[styles.overlay, { opacity: overlay }]} accessibilityRole="header" accessibilityLabel={tenantName ?? undefined}>
-      <View style={[styles.glow, styles.glowTop, { backgroundColor: accent }]} />
-      <View style={[styles.glow, styles.glowBottom, { backgroundColor: deepAccent }]} />
 
       <View style={styles.center}>
         <Animated.View style={[styles.logoWrap, logoStyle]}>
@@ -82,9 +80,7 @@ export default function WelcomeSplash() {
               resizeMode="contain"
               onError={() => setLogoFailed(true)}
             />
-          ) : (
-            <Text style={[styles.monogram, { color: accent }]}>{(tenantName || 'P').trim().charAt(0).toUpperCase()}</Text>
-          )}
+          ) : null}
         </Animated.View>
 
         <Animated.View style={[styles.textBlock, textStyle]}>
@@ -125,21 +121,6 @@ const styles = StyleSheet.create({
     zIndex: 100,
     overflow: 'hidden',
   },
-  glow: {
-    position: 'absolute',
-    width: 420,
-    height: 420,
-    borderRadius: 210,
-    opacity: 0.07,
-  },
-  glowTop: {
-    top: -200,
-    right: -140,
-  },
-  glowBottom: {
-    bottom: -220,
-    left: -160,
-  },
   center: {
     flex: 1,
     alignItems: 'center',
@@ -150,12 +131,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 28,
-  },
-  monogram: {
-    fontFamily: 'Cairo_700Bold',
-    fontSize: 96,
-    lineHeight: 120,
-    textAlign: 'left',
   },
   textBlock: {
     alignItems: 'center',

@@ -255,7 +255,7 @@ function QuestionResultCard({
                 size={12}
                 color={statusColor}
               />
-              <Text style={{ fontSize: 11, fontFamily: 'Cairo_600SemiBold', color: statusColor }}>
+              <Text style={{ fontSize: 14, fontFamily: 'Cairo_600SemiBold', color: statusColor }}>
                 {isPending
                   ? t('exams.pendingReview')
                   : isCorrect

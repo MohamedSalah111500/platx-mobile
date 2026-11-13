@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,6 @@ import {
   Alert,
   Modal,
   RefreshControl,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,19 +25,16 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import { subGroupsApi } from '../../services/api/subgroups.api';
 import { groupsApi } from '../../services/api/groups.api';
-import { chatApi } from '../../services/api/chat.api';
 import { usePlatformAccess } from '../../store/platformAccess.store';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import type { ProfileStackParamList } from '../../types/navigation.types';
 import type { GroupMember, SubGroup } from '../../types/group.types';
-import type { ChatMessage } from '../../types/chat.types';
-import { isOwnMessage } from '../chat/isOwnMessage';
 import { ActionSheet, type SheetAction } from '../../components/ui/ActionSheet';
 import { StudentActions } from '../../components/groups/StudentActions';
 import { GroupProgressPanel } from '../../components/groups/GroupProgressPanel';
 
 import { BackButton } from '../../components/ui/BackButton';
-import { formatClockTime } from '../../utils/dateLocale';
+import { ChatConversation } from '../../components/chat/ChatConversation';
 import { sheetFrame } from '../../utils/responsive';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'SubGroupDetail'>;
 
@@ -48,15 +43,14 @@ type Tab = 'students' | 'chat' | 'progress';
 export default function SubGroupDetailScreen({ navigation, route }: Props) {
   const { subGroupId, subGroupName, groupId } = route.params;
   const { theme } = useTheme();
-  const { t, isRTL } = useRTL();
-  const { isStaff, isAdmin, isStudent, user, canModule } = useAuth();
+  const { t } = useRTL();
+  const { isStaff, isAdmin, canModule } = useAuth();
   const insets = useSafeAreaInsets();
   const isTeacher = isStaff || isAdmin;
   const canEdit = canModule('Groups', 'edit');
   const canDelete = canModule('Groups', 'delete');
   const [manageOpen, setManageOpen] = useState(false);
   const [activeStudent, setActiveStudent] = useState<GroupMember | null>(null);
-  const chatListRef = useRef<FlatList>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>('students');
   const showChat = usePlatformAccess()('Chat');
@@ -71,11 +65,6 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
   const [addSearch, setAddSearch] = useState('');
   const [adding, setAdding] = useState<number | null>(null);
 
-  // Chat state
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [chatLoading, setChatLoading] = useState(false);
-  const [messageText, setMessageText] = useState('');
-  const [sending, setSending] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -126,33 +115,9 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
       : []),
   ];
 
-  const loadMessages = useCallback(async () => {
-    setChatLoading(true);
-    try {
-      const data = isStudent
-        ? await chatApi.getMessagesForStudentSubGroup(subGroupId)
-        : await chatApi.getMessagesForTeacherSubGroup(subGroupId);
-      setMessages(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('[SubGroupDetail] Chat load failed:', err);
-      setMessages([]);
-    } finally {
-      setChatLoading(false);
-    }
-  }, [subGroupId, isStudent]);
-
-  useEffect(() => {
-    if (activeTab === 'chat') {
-      loadMessages();
-      const interval = setInterval(loadMessages, 10000);
-      return () => clearInterval(interval);
-    }
-  }, [activeTab, loadMessages]);
-
   const onRefresh = () => {
     setRefreshing(true);
     loadData();
-    if (activeTab === 'chat') loadMessages();
   };
 
   const filteredStudents = students.filter((s) => {
@@ -196,62 +161,24 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
     }
   };
 
-  // ─── Chat helpers ───
-
-  const isMySender = (msg: ChatMessage) => isOwnMessage(msg, user, isStudent);
-
-  const getSenderName = (msg: ChatMessage) => {
-    if (msg.senderName) return msg.senderName;
-    if (msg.senderStaff) return `${msg.senderStaff.firstName || ''} ${msg.senderStaff.lastName || ''}`.trim();
-    if (msg.senderStudent) return `${msg.senderStudent.firstName || ''} ${msg.senderStudent.lastName || ''}`.trim();
-    return '';
-  };
-
-  const formatTime = (dateStr?: string) => {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    return formatClockTime(d);
-  };
-
-  const handleSendMessage = async () => {
-    const text = messageText.trim();
-    if (!text) return;
-    setSending(true);
-    try {
-      if (isStudent) {
-        await chatApi.sendToSubGroupFromStudent({ content: text, subGroupId });
-      } else {
-        await chatApi.sendToSubGroup({ content: text, subGroupId });
-      }
-      setMessageText('');
-      await loadMessages();
-      setTimeout(() => chatListRef.current?.scrollToEnd({ animated: true }), 200);
-    } catch (err: any) {
-      console.error('[SubGroupDetail] Send failed:', err);
-      Alert.alert(t('common.error'), err?.userMessage || t('chat.failedToSend'));
-    } finally {
-      setSending(false);
-    }
-  };
-
   const renderStudentItem = ({ item }: { item: GroupMember }) => {
     const initials = getInitials(item.firstName, item.lastName);
     const imageUrl = getFullImageUrl(item.profileImage);
 
     return (
       <View style={[s.studentCard, { backgroundColor: theme.colors.card }]}>
-        <View style={[s.avatar, { backgroundColor: theme.dark ? theme.colors.surface : theme.colors.primaryLight }]}>
+        <View style={[s.avatar, { backgroundColor: theme.colors.primary }]}>
           {imageUrl ? (
             <Image source={{ uri: imageUrl }} style={s.avatarImg} />
           ) : (
-            <Text style={[s.avatarText, { color: theme.colors.primary }]}>{initials}</Text>
+            <Text style={[s.avatarText, { color: theme.colors.onPrimary }]}>{initials}</Text>
           )}
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[s.studentName, { color: theme.colors.text }]}>
             {item.firstName} {item.lastName}
           </Text>
-          {item.email ? (
+          {isTeacher && item.email ? (
             <Text style={[s.studentMeta, { color: theme.colors.textMuted }]} numberOfLines={1}>
               {item.email}
             </Text>
@@ -317,99 +244,14 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
     />
   );
 
-  // ─── Chat Tab ───
-
-  const renderChatMessage = ({ item }: { item: ChatMessage }) => {
-    const isMine = isMySender(item);
-    const senderName = getSenderName(item);
-    const time = formatTime(item.sentAt || item.createdAt);
-
-    return (
-      <View style={[s.messageBubbleRow, isMine && { flexDirection: 'row-reverse' }]}>
-        <View
-          style={[
-            s.messageBubble,
-            {
-              backgroundColor: isMine ? theme.colors.primary : (theme.dark ? theme.colors.surface : theme.colors.primaryLight),
-              alignSelf: isMine ? 'flex-end' : 'flex-start',
-            },
-          ]}
-        >
-          {!isMine && senderName ? (
-            <Text style={[s.msgSender, { color: theme.colors.primary }]}>{senderName}</Text>
-          ) : null}
-          <Text style={[s.msgText, { color: isMine ? '#fff' : theme.colors.text }]}>
-            {item.content}
-          </Text>
-          <Text style={[s.msgTime, { color: isMine ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted }]}>
-            {time}
-          </Text>
-        </View>
-      </View>
-    );
-  };
-
   const renderChatTab = () => (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 120 : 0}
-    >
-      {chatLoading && messages.length === 0 ? (
-        <Spinner />
-      ) : messages.length === 0 ? (
-        <View style={{ flex: 1 }}>
-          <EmptyState
-            icon={<Ionicons name="chatbubbles-outline" size={40} color={theme.colors.textMuted} />}
-            title={t('groups.noMessages')}
-            message=""
-          />
-        </View>
-      ) : (
-        <FlatList
-          ref={chatListRef}
-          data={messages}
-          renderItem={renderChatMessage}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.sm }}
-          showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => chatListRef.current?.scrollToEnd({ animated: false })}
-          style={{ flex: 1 }}
-        />
-      )}
-
-      <View
-        style={[
-          s.chatInputRow,
-          {
-            backgroundColor: theme.colors.card,
-            borderColor: theme.colors.border,
-            paddingBottom: Math.max(insets.bottom, spacing.sm),
-          },
-        ]}
-      >
-        <TextInput
-          style={[s.chatInput, { color: theme.colors.text }]}
-          placeholder={t('groups.typeMessage')}
-          placeholderTextColor={theme.colors.inputPlaceholder}
-          value={messageText}
-          onChangeText={setMessageText}
-          multiline
-          maxLength={1000}
-        />
-        <TouchableOpacity
-          style={[s.sendBtn, { opacity: messageText.trim() ? 1 : 0.4, backgroundColor: theme.colors.primary }]}
-          onPress={handleSendMessage}
-          disabled={!messageText.trim() || sending}
-        >
-          {sending ? (
-            <Spinner size="small" color="#fff" style={{ padding: 0 }} />
-          ) : (
-            <Ionicons name="send" size={20} color="#fff" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined} />
-          )}
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+    <ChatConversation
+      groupId={subGroup?.groupId ?? groupId}
+      chatType="subgroup"
+      subGroupId={subGroupId}
+     
+      bottomInset={insets.bottom}
+    />
   );
 
   const title = subGroup?.name || subGroupName || t('groups.subGroupDetails');
@@ -522,7 +364,7 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
                     disabled={adding === item.id}
                   >
                     <View style={[ms.studentAvatar, { backgroundColor: theme.colors.primaryLight }]}>
-                      <Text style={{ color: theme.colors.primary, fontFamily: 'Cairo_700Bold', fontSize: 13 }}>
+                      <Text style={{ color: theme.colors.primary, fontFamily: 'Cairo_700Bold', fontSize: 14 }}>
                         {(item.firstName?.[0] || '?').toUpperCase()}
                       </Text>
                     </View>
@@ -595,7 +437,8 @@ const s = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    height: 48,
+    minHeight: 56,
+    paddingVertical: 6,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
@@ -607,6 +450,7 @@ const s = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 14,
+    lineHeight: 22,
     fontFamily: 'Cairo_600SemiBold',
     color: 'rgba(255,255,255,0.5)',
     textAlign: 'center',
@@ -712,62 +556,6 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // Chat
-  messageBubbleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    marginBottom: spacing.sm,
-    gap: spacing.xs,
-  },
-  messageBubble: {
-    maxWidth: '78%',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 18,
-  },
-  msgSender: {
-    fontSize: 14,
-    fontFamily: 'Cairo_700Bold',
-    marginBottom: 2,
-    textAlign: 'left',
-  },
-  msgText: {
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'left',
-  },
-  msgTime: {
-    fontSize: 14,
-    marginTop: 4,
-    alignSelf: 'flex-end',
-    textAlign: 'left',
-  },
-  chatInputRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderTopWidth: 1,
-    gap: spacing.sm,
-  },
-  chatInput: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
-    minHeight: 40,
-    maxHeight: 100,
-    paddingHorizontal: spacing.md,
-    paddingTop: 10,
-    paddingBottom: 10,
-    textAlignVertical: 'center',
-  },
-  sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
 });
 
 const ms = StyleSheet.create({

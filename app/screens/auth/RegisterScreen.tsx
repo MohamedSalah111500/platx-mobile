@@ -4,11 +4,11 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
   Image,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import axios from 'axios';
 import type { CountryCode } from 'libphonenumber-js/mobile';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';

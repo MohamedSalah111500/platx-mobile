@@ -58,7 +58,7 @@ export const groupsApi = {
   },
 
   getGroupStaff: async (groupId: number): Promise<GroupMember[]> => {
-    const { data } = await apiClient.get<any>(GROUPS_URLS.GET_GROUP_STAFF(groupId));
+    const { data } = await apiClient.get<any>(withPagination(GROUPS_URLS.GET_GROUP_STAFF(groupId), 1, 100));
     return listOf<GroupMember>(data);
   },
 

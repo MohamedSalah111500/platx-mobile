@@ -630,6 +630,8 @@
   },
   "chat": {
     "messageDeleted": "This message was deleted",
+    "deleteFailed": "Could not delete the message. Please try again.",
+    "loadFailed": "Could not load messages.",
     "edited": "Edited",
     "title": "Messages",
     "typeMessage": "Type a message...",
@@ -645,6 +647,7 @@
     "failedToSend": "Failed to send message.",
     "staff": "Staff",
     "noStaffAvailable": "No staff available to chat with yet.",
+    "student": "Student",
     "voice": {
       "message": "Voice message",
       "holdToRecord": "Hold to record, release to send",

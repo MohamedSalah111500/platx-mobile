@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 
@@ -58,14 +59,16 @@ export default function App() {
   const [fontsTimedOut, setFontsTimedOut] = useState(false);
 
   // Log font-load lifecycle for production debugging
+  const fontsSettled = fontsLoaded || !!fontsError;
+
   useEffect(() => {
-    logger.log('[App] mount');
+    if (fontsSettled) return;
     const t = setTimeout(() => {
       logger.log('[App] fonts timeout fired');
       setFontsTimedOut(true);
     }, FONTS_TIMEOUT_MS);
     return () => clearTimeout(t);
-  }, []);
+  }, [fontsSettled]);
 
   useEffect(() => {
     if (fontsLoaded) logger.log('[App] fonts loaded');
@@ -75,7 +78,7 @@ export default function App() {
     }
   }, [fontsLoaded, fontsError]);
 
-  const ready = fontsLoaded || !!fontsError || fontsTimedOut;
+  const ready = fontsSettled || fontsTimedOut;
 
   // Hide native splash as soon as we know we can render — even if fonts errored
   useEffect(() => {
@@ -91,11 +94,13 @@ export default function App() {
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <ThemeProvider>
-          <RTLProvider>
-            <RootNavigator />
-          </RTLProvider>
-        </ThemeProvider>
+        <KeyboardProvider>
+          <ThemeProvider>
+            <RTLProvider>
+              <RootNavigator />
+            </RTLProvider>
+          </ThemeProvider>
+        </KeyboardProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
   );

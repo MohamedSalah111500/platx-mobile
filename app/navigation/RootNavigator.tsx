@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, StyleSheet, Image, Dimensions, AppState, Linking } from 'react-native';
+import { View, StyleSheet, Image, AppState, Linking } from 'react-native';
 import * as Notifications from 'expo-notifications';
 
 import { useAuthStore } from '../store/auth.store';
@@ -25,25 +25,15 @@ import { registerForPushNotifications } from '../services/realtime/pushNotificat
 import { guardianCodeFromUrl } from '../utils/guardianCode';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-const { width: SCREEN_W } = Dimensions.get('window');
-const isTablet = SCREEN_W >= 768;
 
 const STARTUP_HARD_TIMEOUT_MS = 6000;
 
 let coldStartHandled = false;
 
 function BrandedLoading() {
-  // Prefer the tenant's logo once a session is restored; fall back to the app icon.
-  const tenantLogo = useAuthStore((s) => s.tenantLogo);
-  const [logoFailed, setLogoFailed] = useState(false);
   return (
     <View style={styles.splash}>
-      <Image
-        source={tenantLogo && !logoFailed ? { uri: tenantLogo } : require('../../assets/images/logo-icon.png')}
-        style={styles.splashIcon}
-        resizeMode="contain"
-        onError={() => setLogoFailed(true)}
-      />
+      <Image source={require('../../assets/splash-icon.png')} style={styles.splashIcon} resizeMode="contain" />
     </View>
   );
 }
@@ -197,13 +187,12 @@ export default function RootNavigator() {
 const styles = StyleSheet.create({
   splash: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#121935',
+    backgroundColor: '#111111',
     justifyContent: 'center',
     alignItems: 'center',
   },
   splashIcon: {
-    width: isTablet ? 100 : 76,
-    height: isTablet ? 100 : 76,
-    marginBottom: 20,
+    width: 200,
+    height: 200,
   },
 });

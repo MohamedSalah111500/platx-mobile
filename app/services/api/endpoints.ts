@@ -147,7 +147,10 @@ export const CHAT_URLS = {
   SEND_TO_GROUP_FROM_STUDENT: `${BASE}api/Messages/SendMessageToGroupFromStudent`,
   SEND_TO_STAFF_FROM_STUDENT: `${BASE}api/Messages/SendMessageToStaffFromStudent`,
   DELETE_MESSAGE: (messageId: number) => `${BASE}api/Messages/DeleteMessage/${messageId}`,
+  DELETE_MY_MESSAGE: (messageId: number) => `${BASE}api/Messages/DeleteMyMessage/${messageId}`,
   GET_STAFF_HAS_MESSAGES: `${BASE}api/Messages/GetStaffHasMessages`,
+  GET_CHAT_CONTACTS: `${BASE}api/Messages/GetChatContacts`,
+  GET_STUDENTS_HAVE_MESSAGES: `${BASE}api/Messages/GetStudentsHaveMessages`,
   GET_MESSAGES_WITH_STAFF: (groupId: number, staffId: number) =>
     `${BASE}api/Messages/GetMessagesWithStaff?groupId=${groupId}&staffId=${staffId}`,
   GET_MESSAGES_FOR_TEACHER_SUBGROUP: (subGroupId: number) =>

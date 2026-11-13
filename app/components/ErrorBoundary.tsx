@@ -75,7 +75,7 @@ export class ErrorBoundary extends Component<Props, State> {
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Image
-            source={require('../../assets/images/logo-color.png')}
+            source={require('../../assets/splash-icon.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -105,7 +105,7 @@ export class ErrorBoundary extends Component<Props, State> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121935',
+    backgroundColor: '#111111',
   },
   scrollContent: {
     flexGrow: 1,
@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   logo: {
-    width: 120,
-    height: 48,
+    width: 140,
+    height: 140,
     marginBottom: 24,
   },
   title: {
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   },
   errorLabel: {
     fontSize: 14,
-    color: '#7c63fd',
+    color: '#a1a1aa',
     fontWeight: '700',
     marginBottom: 4,
     textAlign: 'left',
@@ -155,14 +155,14 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   button: {
-    backgroundColor: '#7c63fd',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 12,
     marginBottom: 12,
   },
   buttonText: {
-    color: '#ffffff',
+    color: '#18181b',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'left',

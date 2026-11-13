@@ -38,10 +38,6 @@ const MEDAL_COLORS = [
   { bg: '#FFF3E0', border: '#FFB74D', icon: '#E65100' }, // Bronze - Rank 3
 ];
 
-const RANK_COLORS = [
-  '#F0EDFF', '#E8F8F0', '#E8F4FD', '#FFF4E5', '#FCE8EC',
-  '#F0EDFF', '#E8F8F0', '#E8F4FD', '#FFF4E5', '#FCE8EC',
-];
 
 const PYRAMID_ROWS = [
   { ranks: [1], label: 'top' },
@@ -207,7 +203,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
     const entry = getEntryForRank(rank);
     const isTopThree = rank <= 3;
     const medal = isTopThree ? MEDAL_COLORS[rank - 1] : null;
-    const bgColor = RANK_COLORS[(rank - 1) % RANK_COLORS.length];
+    const bgColor = theme.colors.surface;
 
     if (!entry) {
       // Empty slot
@@ -411,7 +407,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
                       <Text style={{
                         color: selectedRank === rank ? '#fff' : theme.colors.text,
                         fontFamily: 'Cairo_700Bold',
-                        fontSize: 13,
+                        fontSize: 14,
                       }}>
                         {rank}
                       </Text>
@@ -449,7 +445,7 @@ export default function HonorBoardScreen({ navigation }: Props) {
                       onPress={() => setSelectedStudent(item)}
                     >
                       <View style={[modalStyles.studentAvatar, { backgroundColor: theme.colors.primaryLight }]}>
-                        <Text style={{ color: theme.colors.primary, fontFamily: 'Cairo_700Bold', fontSize: 13 }}>
+                        <Text style={{ color: theme.colors.primary, fontFamily: 'Cairo_700Bold', fontSize: 14 }}>
                           {(item.firstName?.[0] || '?').toUpperCase()}
                         </Text>
                       </View>

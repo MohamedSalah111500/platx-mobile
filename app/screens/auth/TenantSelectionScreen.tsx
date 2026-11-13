@@ -133,9 +133,8 @@ export default function TenantSelectionScreen({ navigation }: Props) {
       alignItems: 'center',
     },
     tenantLogo: {
-      width: 48,
+      width: 64,
       height: 48,
-      borderRadius: borderRadius.lg,
     },
     tenantLogoPlaceholder: {
       justifyContent: 'center',

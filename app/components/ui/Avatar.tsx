@@ -166,7 +166,7 @@ export function Avatar({
       width: dimension,
       height: dimension,
       borderRadius: radius ?? borderRadius.full,
-      backgroundColor: theme.colors.primaryLight,
+      backgroundColor: theme.colors.primary,
       alignItems: 'center',
       justifyContent: 'center',
       overflow: 'hidden',
@@ -178,7 +178,7 @@ export function Avatar({
     initials: {
       fontSize: dimensionOverride ? dimensionOverride / 3 : fontSizeMap[size],
       fontFamily: 'Cairo_600SemiBold',
-      color: theme.colors.primary,
+      color: theme.colors.onPrimary,
       textAlign: 'left',
     },
     wrapper: {

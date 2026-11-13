@@ -3,7 +3,7 @@ import { CHAT_URLS } from './endpoints';
 import type {
   ChatMessage,
   ChatVoice,
-  StaffChatContact,
+  StaffChatContact, StudentChatContact,
   SendMessageToStaffPayload,
   SendVoicePayload,
   VoiceRoute,
@@ -58,6 +58,16 @@ export const chatApi = {
     const { data } = await apiClient.get<StaffChatContact[]>(
       CHAT_URLS.GET_STAFF_HAS_MESSAGES
     );
+    return data;
+  },
+
+  getChatContacts: async (): Promise<StaffChatContact[]> => {
+    const { data } = await apiClient.get<StaffChatContact[]>(CHAT_URLS.GET_CHAT_CONTACTS);
+    return data;
+  },
+
+  getStudentsHaveMessages: async (): Promise<StudentChatContact[]> => {
+    const { data } = await apiClient.get<StudentChatContact[]>(CHAT_URLS.GET_STUDENTS_HAVE_MESSAGES);
     return data;
   },
 
@@ -119,6 +129,10 @@ export const chatApi = {
 
   deleteMessage: async (messageId: number): Promise<void> => {
     await apiClient.delete(CHAT_URLS.DELETE_MESSAGE(messageId));
+  },
+
+  deleteMyMessage: async (messageId: number): Promise<void> => {
+    await apiClient.delete(CHAT_URLS.DELETE_MY_MESSAGE(messageId));
   },
 
   getMessagesForTeacherSubGroup: async (subGroupId: number, beforeId?: number): Promise<ChatMessage[]> => {

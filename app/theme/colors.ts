@@ -1,19 +1,17 @@
 // PLATX Color Palette — neutral gray/white/black base, one dynamic tenant
 // accent color layered on top at runtime (see theme/themes.ts buildTheme()).
 export const colors = {
-  // Default accent — used only as a fallback until a tenant's brand color
-  // (HomeSetting.PrimaryColor, from the backend) is loaded.
   primary: {
-    50: '#f5f3ff',
-    100: '#ede9fe',
-    200: '#ddd6fe',
-    300: '#c4b5fd',
-    400: '#a78bfa',
-    500: '#7c63fd', // Default accent color
-    600: '#6d52e8',
-    700: '#5b3fd4',
-    800: '#4c2db8',
-    900: '#3d2196',
+    50: '#fafafa',
+    100: '#f4f4f5',
+    200: '#e4e4e7',
+    300: '#d4d4d8',
+    400: '#a1a1aa',
+    500: '#18181b',
+    600: '#111113',
+    700: '#0c0c0e',
+    800: '#09090b',
+    900: '#000000',
   },
 
   // Neutral gray scale — the app's real base palette. No hue tint on

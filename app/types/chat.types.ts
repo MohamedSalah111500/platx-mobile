@@ -78,6 +78,14 @@ export interface StaffChatContact {
   staffId?: number;
 }
 
+export interface StudentChatContact {
+  id: number;
+  firstName: string;
+  lastName: string;
+  profileImage?: string | null;
+  groupId?: number | null;
+}
+
 export interface SendMessageToStaffPayload {
   staffId: number;
   groupId: number;

@@ -59,19 +59,17 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     }
   };
 
-  const toggleTheme = () => {
-    const next: ThemeMode = isDark ? 'light' : 'dark';
-    setThemeMode(next);
-    persist(next);
-  };
-
-  const setTheme = (mode: ThemeMode) => {
-    setThemeMode(mode);
-    persist(mode);
-  };
+  const value = useMemo(() => {
+    const setTheme = (mode: ThemeMode) => {
+      setThemeMode(mode);
+      persist(mode);
+    };
+    const toggleTheme = () => setTheme(isDark ? 'light' : 'dark');
+    return { theme, isDark, themeMode, toggleTheme, setTheme };
+  }, [theme, isDark, themeMode]);
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark, themeMode, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={value}>
       <StatusBar
         barStyle={theme.colors.statusBar}
         backgroundColor={theme.colors.headerBackground}

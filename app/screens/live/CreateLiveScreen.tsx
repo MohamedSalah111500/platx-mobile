@@ -446,7 +446,7 @@ export default function CreateLiveScreen({ navigation }: Props) {
                                       color={isSubSelected ? theme.colors.primary : theme.colors.textMuted}
                                     />
                                     <Ionicons name="git-branch-outline" size={14} color={theme.colors.textMuted} />
-                                    <Text style={[styles.groupOptionText, { color: theme.colors.text, fontSize: 13 }]}>
+                                    <Text style={[styles.groupOptionText, { color: theme.colors.text, fontSize: 14 }]}>
                                       {sg.name}
                                     </Text>
                                   </TouchableOpacity>

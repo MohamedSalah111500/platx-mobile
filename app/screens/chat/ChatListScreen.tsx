@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarSpace } from '../../navigation/tabBar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { SearchBar } from '../../components/ui/SearchBar';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
@@ -25,11 +26,13 @@ import { subGroupsApi } from '../../services/api/subgroups.api';
 import { chatApi } from '../../services/api/chat.api';
 import type { ChatStackParamList } from '../../types/navigation.types';
 import type { Group, SubGroupLookup } from '../../types/group.types';
-import type { StaffChatContact } from '../../types/chat.types';
+import type { StaffChatContact, StudentChatContact } from '../../types/chat.types';
 
 type ChatEntry =
   | { kind: 'group'; data: Group }
-  | { kind: 'subgroup'; data: SubGroupLookup };
+  | { kind: 'subgroup'; data: SubGroupLookup }
+  | { kind: 'staff'; data: StaffChatContact }
+  | { kind: 'student'; data: StudentChatContact };
 
 type Props = NativeStackScreenProps<ChatStackParamList, 'ChatList'>;
 
@@ -42,53 +45,85 @@ export default function ChatListScreen({ navigation }: Props) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [subGroups, setSubGroups] = useState<SubGroupLookup[]>([]);
   const [staffContacts, setStaffContacts] = useState<StaffChatContact[]>([]);
+  const [studentContacts, setStudentContacts] = useState<StudentChatContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
 
+  const loadStudentChats = async (studentId: number) => {
+    const [staffRes, contactsRes, groupIdsRes, subGroupIdsRes] = await Promise.allSettled([
+      chatApi.getStaffHasMessages(),
+      chatApi.getChatContacts(),
+      groupsApi.getStudentGroups(studentId),
+      subGroupsApi.getStudentSubGroups(studentId),
+    ]);
+    const groupIds = groupIdsRes.status === 'fulfilled' ? groupIdsRes.value?.groupIds ?? [] : [];
+    const subGroupIds = subGroupIdsRes.status === 'fulfilled' ? subGroupIdsRes.value?.subGroupIds ?? [] : [];
+    const [groupDetails, subGroupDetails] = await Promise.all([
+      Promise.all(groupIds.map((id) => groupsApi.getGroup(id).catch(() => null))),
+      Promise.all(subGroupIds.map((id) => subGroupsApi.getById(id).catch(() => null))),
+    ]);
+    const myGroups = groupDetails.filter((group): group is Group => !!group);
+    setGroups(myGroups);
+    setSubGroups(
+      subGroupDetails
+        .filter((subGroup): subGroup is NonNullable<typeof subGroup> => !!subGroup)
+        .map((subGroup) => ({
+          id: subGroup.id,
+          name: subGroup.name,
+          groupId: subGroup.groupId,
+          groupName: myGroups.find((group) => group.id === subGroup.groupId)?.name ?? '',
+        })),
+    );
+    const withMessages = staffRes.status === 'fulfilled' && Array.isArray(staffRes.value) ? staffRes.value : [];
+    const contacts = contactsRes.status === 'fulfilled' && Array.isArray(contactsRes.value) ? contactsRes.value : [];
+    const known = new Set(withMessages.map((staff) => staff.id));
+    setStaffContacts([...withMessages, ...contacts.filter((staff) => !known.has(staff.id))]);
+  };
+
+  const loadStaffChats = async () => {
+    const [groupsRes, subGroupsRes, studentsRes] = await Promise.allSettled([
+      groupsApi.getAll(1, 50),
+      subGroupsApi.getAllLookup(),
+      chatApi.getStudentsHaveMessages(),
+    ]);
+    setGroups(groupsRes.status === 'fulfilled' ? groupsRes.value.items || [] : []);
+    setSubGroups(subGroupsRes.status === 'fulfilled' ? subGroupsRes.value : []);
+    setStudentContacts(studentsRes.status === 'fulfilled' && Array.isArray(studentsRes.value) ? studentsRes.value : []);
+  };
+
   const loadData = async () => {
     try {
       if (isStudent) {
-        const staffList = await chatApi.getStaffHasMessages();
-        setStaffContacts(Array.isArray(staffList) ? staffList : []);
+        if (user?.studentId) await loadStudentChats(user.studentId);
       } else {
-        const [groupsRes, subGroupsRes] = await Promise.allSettled([
-          groupsApi.getAll(1, 50),
-          subGroupsApi.getAllLookup(),
-        ]);
-        setGroups(groupsRes.status === 'fulfilled' ? groupsRes.value.items || [] : []);
-        setSubGroups(subGroupsRes.status === 'fulfilled' ? subGroupsRes.value : []);
+        await loadStaffChats();
       }
-    } catch (err) {
-      if (isStudent) setStaffContacts([]);
-      else {
-        setGroups([]);
-        setSubGroups([]);
-      }
+    } catch {
+      setGroups([]);
+      setSubGroups([]);
+      setStaffContacts([]);
+      setStudentContacts([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [isStudent, user?.studentId]),
+  );
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = () => {
     setRefreshing(true);
     loadData();
-  }, []);
+  };
 
   const bgColor = theme.colors.background;
   const searchTerm = search.toLowerCase().trim();
 
-  // Filter by search
-  const filteredStaff = staffContacts.filter((s) => {
-    if (!searchTerm) return true;
-    const name = `${s.firstName} ${s.lastName}`.toLowerCase();
-    return name.includes(searchTerm);
-  });
   const combinedEntries: ChatEntry[] = [];
   groups.forEach((g) => {
     combinedEntries.push({ kind: 'group', data: g });
@@ -96,47 +131,56 @@ export default function ChatListScreen({ navigation }: Props) {
       .filter((sg) => sg.groupId === g.id)
       .forEach((sg) => combinedEntries.push({ kind: 'subgroup', data: sg }));
   });
-  const filteredEntries = combinedEntries.filter((entry) => {
-    if (!searchTerm) return true;
-    return entry.data.name?.toLowerCase().includes(searchTerm);
-  });
-  const listData: any[] = isStudent ? filteredStaff : filteredEntries;
-  const totalCount = isStudent ? staffContacts.length : groups.length + subGroups.length;
+  staffContacts.forEach((staff) => combinedEntries.push({ kind: 'staff', data: staff }));
+  studentContacts.forEach((student) => combinedEntries.push({ kind: 'student', data: student }));
+  const entryName = (entry: ChatEntry) =>
+    entry.kind === 'staff' || entry.kind === 'student'
+      ? `${entry.data.firstName || ''} ${entry.data.lastName || ''}`
+      : entry.data.name || '';
+  const listData = combinedEntries.filter((entry) => !searchTerm || entryName(entry).toLowerCase().includes(searchTerm));
+  const totalCount = combinedEntries.length;
 
-  const renderStaffItem = ({ item, index }: { item: StaffChatContact; index: number }) => {
+  const renderPersonItem = (name: string, subtitle: string, onPress: () => void) => (
+    <TouchableOpacity style={[styles.card, { backgroundColor: theme.colors.card }]} onPress={onPress} activeOpacity={0.7}>
+      <View style={styles.avatarWrap}>
+        <View style={[styles.avatarCircle, { backgroundColor: theme.colors.primary }]}>
+          <Text style={[styles.avatarLetter, { color: theme.colors.onPrimary }]}>{(name[0] || '?').toUpperCase()}</Text>
+        </View>
+      </View>
+      <View style={styles.cardInfo}>
+        <Text style={[styles.cardName, { color: theme.colors.text }]} numberOfLines={1}>
+          {name}
+        </Text>
+        <Text style={[styles.cardSub, { color: theme.colors.textMuted }]} numberOfLines={1}>
+          {subtitle}
+        </Text>
+      </View>
+      <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color={theme.colors.textMuted} />
+    </TouchableOpacity>
+  );
+
+  const renderStaffItem = ({ item }: { item: StaffChatContact }) => {
     const name = `${item.firstName || ''} ${item.lastName || ''}`.trim();
-    const initial = (item.firstName?.[0] || 'S').toUpperCase();
+    return renderPersonItem(name, t('chat.staff'), () =>
+      navigation.navigate('ChatRoom', {
+        groupId: item.groupId,
+        groupName: name,
+        staffId: item.staffId || item.id,
+        staffName: name,
+        chatType: 'staff',
+      }),
+    );
+  };
 
-    return (
-      <TouchableOpacity
-        style={[styles.card, { backgroundColor: theme.colors.card }]}
-        onPress={() => {
-          navigation.navigate('ChatRoom', {
-            groupId: item.groupId,
-            groupName: name,
-            staffId: item.staffId || item.id,
-            staffName: name,
-            chatType: 'staff',
-          });
-        }}
-        activeOpacity={0.7}
-      >
-        <View style={styles.avatarWrap}>
-          <View style={[styles.avatarCircle, { backgroundColor: theme.colors.primaryLight }]}>
-            <Text style={[styles.avatarLetter, { color: theme.colors.primary }]}>{initial}</Text>
-          </View>
-          <View style={[styles.onlineDot, { borderColor: theme.colors.card, backgroundColor: theme.colors.success }]} />
-        </View>
-        <View style={styles.cardInfo}>
-          <Text style={[styles.cardName, { color: theme.colors.text }]} numberOfLines={1}>
-            {name}
-          </Text>
-          <Text style={[styles.cardSub, { color: theme.colors.textMuted }]} numberOfLines={1}>
-            {t('chat.staff')}
-          </Text>
-        </View>
-        <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color={theme.colors.textMuted} />
-      </TouchableOpacity>
+  const renderStudentItem = ({ item }: { item: StudentChatContact }) => {
+    const name = `${item.firstName || ''} ${item.lastName || ''}`.trim();
+    return renderPersonItem(name, t('chat.student'), () =>
+      navigation.navigate('ChatRoom', {
+        groupId: item.groupId ?? 0,
+        groupName: name,
+        studentId: item.id,
+        chatType: 'student',
+      }),
     );
   };
 
@@ -214,10 +258,12 @@ export default function ChatListScreen({ navigation }: Props) {
     </TouchableOpacity>
   );
 
-  const renderChatEntry = ({ item, index }: { item: ChatEntry; index: number }) =>
-    item.kind === 'group'
-      ? renderGroupItem({ item: item.data, index })
-      : renderSubGroupItem({ item: item.data });
+  const renderChatEntry = ({ item, index }: { item: ChatEntry; index: number }) => {
+    if (item.kind === 'group') return renderGroupItem({ item: item.data, index });
+    if (item.kind === 'subgroup') return renderSubGroupItem({ item: item.data });
+    if (item.kind === 'student') return renderStudentItem({ item: item.data });
+    return renderStaffItem({ item: item.data });
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: bgColor }]}>
@@ -240,9 +286,9 @@ export default function ChatListScreen({ navigation }: Props) {
       {/* List */}
       <FlatList
         data={listData}
-        renderItem={isStudent ? renderStaffItem as any : renderChatEntry as any}
-        keyExtractor={(item: any) =>
-          isStudent ? `${item.id}-${item.groupId || ''}` : `${item.kind}-${item.data.id}`
+        renderItem={renderChatEntry}
+        keyExtractor={(item) =>
+          item.kind === 'staff' ? `staff-${item.data.id}-${item.data.groupId || ''}` : `${item.kind}-${item.data.id}`
         }
         initialNumToRender={10}
         maxToRenderPerBatch={10}
@@ -331,15 +377,6 @@ const styles = StyleSheet.create({
     fontSize: 21,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
-  },
-  onlineDot: {
-    position: 'absolute',
-    bottom: 0,
-    end: 0,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2.5,
   },
   cardInfo: {
     flex: 1,

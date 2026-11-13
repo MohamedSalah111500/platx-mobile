@@ -109,12 +109,6 @@ export default function GroupsListScreen({ navigation }: Props) {
               <Text style={styles.groupMembers}>{t('home.studentsCount', { count: item.studentsCount })}</Text>
             </View>
           )}
-          {item.nextDueDate ? (
-            <View style={styles.statItem}>
-              <Ionicons name="calendar-outline" size={12} color={theme.colors.textMuted} />
-              <Text style={styles.groupMembers}>{item.nextDueDate}</Text>
-            </View>
-          ) : null}
         </View>
       </View>
       <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color={theme.colors.textMuted} />

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StackActions, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeProvider';

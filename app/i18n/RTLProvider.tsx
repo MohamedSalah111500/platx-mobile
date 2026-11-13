@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { I18nManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from './i18n.config';
@@ -81,16 +81,19 @@ export function RTLProvider({ children }: RTLProviderProps) {
     await changeLocale(newLocale, true);
   };
 
-  const t = (key: string, options?: Record<string, unknown>) => {
-    try {
-      return i18n.t(key, options);
-    } catch {
-      return key;
-    }
-  };
+  const value = useMemo(() => {
+    const t = (key: string, options?: Record<string, unknown>) => {
+      try {
+        return i18n.t(key, options);
+      } catch {
+        return key;
+      }
+    };
+    return { isRTL, locale, setLocale, t };
+  }, [isRTL, locale]);
 
   return (
-    <RTLContext.Provider value={{ isRTL, locale, setLocale, t }}>
+    <RTLContext.Provider value={value}>
       {children}
     </RTLContext.Provider>
   );
