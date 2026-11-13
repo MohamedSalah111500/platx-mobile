@@ -3,14 +3,14 @@
     "name": "PlatX",
     "slug": "platx",
     "scheme": "platx",
-    "version": "1.0.26",
+    "version": "1.0.27",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.platx.platform",
-      "buildNumber": "26",
+      "buildNumber": "27",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSMicrophoneUsageDescription": "The microphone is used for live class audio, to record voice feedback and to send voice messages in chat.",
@@ -21,7 +21,7 @@
     },
     "android": {
       "package": "com.platx.platform",
-      "versionCode": 48,
+      "versionCode": 49,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
