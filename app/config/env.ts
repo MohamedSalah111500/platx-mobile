@@ -5,7 +5,7 @@ export const ENV = {
     CLIENT_URL: 'http://localhost:4200',
   },
   PROD: {
-    API_URL: 'https://platx-backend-prod.tryasp.net/',
+    API_URL: 'https://api.platx.net/',
     AI_API_URL: 'https://exam-ai-14pq.onrender.com/',
     CLIENT_URL: 'https://platx.net',
   },
