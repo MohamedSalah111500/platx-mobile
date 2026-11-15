@@ -31,6 +31,7 @@ import type { Enrollment } from '../../types/course.types';
 import { StudentCodeButton } from '../../components/profile/StudentCodeButton';
 import { useFocusEffect } from '@react-navigation/native';
 import { walletApi } from '../../services/api/wallet.api';
+import { storeApi, type StoreMe } from '../../services/api/store.api';
 import { formatAmount } from '../../utils/price';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
@@ -54,6 +55,7 @@ export default function ProfileScreen({ navigation }: Props) {
   const canStaff = can('STAFF_MANAGE');
   const isStaffOrAdmin = !isStudent;
   const isOn = usePlatformAccess();
+  const canManageStore = !isStudent && canModule('Store', 'view') && isOn('Store');
 
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [messageThreadsCount, setMessageThreadsCount] = useState(0);
@@ -61,6 +63,22 @@ export default function ProfileScreen({ navigation }: Props) {
   const [statsLoading, setStatsLoading] = useState(true);
   const [points, setPoints] = useState<number | null>(null);
   const showPoints = isStudent && !REQUEST_ONLY && isOn('Wallet');
+  const [storeMe, setStoreMe] = useState<StoreMe | null>(null);
+  const checkStore = isStudent && isOn('Store');
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!checkStore) return;
+      let active = true;
+      storeApi
+        .me()
+        .then((me) => active && setStoreMe(me))
+        .catch(() => undefined);
+      return () => {
+        active = false;
+      };
+    }, [checkStore])
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -200,6 +218,33 @@ export default function ProfileScreen({ navigation }: Props) {
       iconColor: theme.colors.primary,
       label: t('reports.title'),
       onPress: () => navigation.navigate('Reports'),
+    });
+  }
+  if (checkStore && storeMe?.enabled) {
+    generalMenuItems.push({
+      iconName: 'storefront',
+      iconBg: theme.colors.primaryLight,
+      iconColor: theme.colors.primary,
+      label: t('store.TITLE'),
+      onPress: () => navigation.navigate('StoreShop'),
+    });
+  }
+  if (checkStore && (storeMe?.enabled || storeMe?.hasOrders)) {
+    generalMenuItems.push({
+      iconName: 'cube',
+      iconBg: theme.colors.primaryLight,
+      iconColor: theme.colors.primary,
+      label: t('store.MY_ORDERS'),
+      onPress: () => navigation.navigate('StoreMyOrders'),
+    });
+  }
+  if (canManageStore) {
+    generalMenuItems.push({
+      iconName: 'storefront',
+      iconBg: theme.colors.primaryLight,
+      iconColor: theme.colors.primary,
+      label: t('store.TITLE'),
+      onPress: () => navigation.navigate('StoreOrders'),
     });
   }
   if (canAccounting && isOn('Accounting')) {

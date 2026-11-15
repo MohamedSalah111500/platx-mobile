@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     gap: spacing.md,
   },
-  thumb: { width: 60, height: 60, borderRadius: 16, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
+  thumb: { width: 54, height: 54, borderRadius: 16, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
   fill: { width: '100%', height: '100%' },
   body: { flex: 1, alignItems: 'flex-start' },
   title: { fontFamily: fontFamily.bold, fontSize: fontSize.base, lineHeight: 24, textAlign: 'left' },

@@ -59,7 +59,7 @@ export function Button({
 
     const sizeStyles: Record<ButtonSize, ViewStyle> = {
       small: { paddingVertical: 6, paddingHorizontal: spacing.md },
-      medium: { paddingVertical: 10, paddingHorizontal: spacing.lg + 2 },
+      medium: { paddingVertical: 8, paddingHorizontal: spacing.lg + 2 },
       large: { paddingVertical: spacing.md, paddingHorizontal: spacing.xl },
     };
 

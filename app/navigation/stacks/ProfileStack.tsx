@@ -34,6 +34,16 @@ import StaffListScreen from '../../screens/people/StaffListScreen';
 import StaffFormScreen from '../../screens/people/StaffFormScreen';
 import StaffDetailScreen from '../../screens/people/StaffDetailScreen';
 import StaffPermissionsScreen from '../../screens/people/StaffPermissionsScreen';
+import StoreShopScreen from '../../screens/store/StoreShopScreen';
+import StoreProductScreen from '../../screens/store/StoreProductScreen';
+import StoreCartScreen from '../../screens/store/StoreCartScreen';
+import StoreMyOrdersScreen from '../../screens/store/StoreMyOrdersScreen';
+import StoreOrderDetailScreen from '../../screens/store/StoreOrderDetailScreen';
+import StoreOrdersScreen from '../../screens/store/manage/StoreOrdersScreen';
+import StoreProductsScreen from '../../screens/store/manage/StoreProductsScreen';
+import StoreProductFormScreen from '../../screens/store/manage/StoreProductFormScreen';
+import StoreCategoriesScreen from '../../screens/store/manage/StoreCategoriesScreen';
+import StoreSettingsScreen from '../../screens/store/manage/StoreSettingsScreen';
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
 
@@ -71,6 +81,16 @@ export default function ProfileStack() {
       <Stack.Screen name="StaffDetail" component={StaffDetailScreen} />
       <Stack.Screen name="StaffPermissions" component={StaffPermissionsScreen} />
       <Stack.Screen name="ExamResult" component={ExamResultScreen} />
+      <Stack.Screen name="StoreShop" component={StoreShopScreen} />
+      <Stack.Screen name="StoreProduct" component={StoreProductScreen} />
+      <Stack.Screen name="StoreCart" component={StoreCartScreen} />
+      <Stack.Screen name="StoreMyOrders" component={StoreMyOrdersScreen} />
+      <Stack.Screen name="StoreOrderDetail" component={StoreOrderDetailScreen} />
+      <Stack.Screen name="StoreOrders" component={StoreOrdersScreen} />
+      <Stack.Screen name="StoreProducts" component={StoreProductsScreen} />
+      <Stack.Screen name="StoreProductForm" component={StoreProductFormScreen} />
+      <Stack.Screen name="StoreCategories" component={StoreCategoriesScreen} />
+      <Stack.Screen name="StoreSettings" component={StoreSettingsScreen} />
     </Stack.Navigator>
   );
 }

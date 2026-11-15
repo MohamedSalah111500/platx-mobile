@@ -91,7 +91,7 @@ export function SelectField<T extends string>({ label, placeholder, value, optio
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   label: {
     fontSize: fontSize.sm,
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    height: 50,
+    height: 46,
     borderWidth: 1,
     borderRadius: 14,
     paddingHorizontal: spacing.lg,

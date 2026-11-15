@@ -38,6 +38,7 @@ import { SearchBar } from '../../components/ui/SearchBar';
 import { Spinner } from '../../components/ui/Spinner';
 import { Chip } from '../../components/ui/Chip';
 import { MediaCard } from '../../components/ui/MediaCard';
+import { HomeStoreSection } from '../../components/store/HomeStoreSection';
 import { RowCard } from '../../components/ui/RowCard';
 import { PlayCircle } from '../../components/ui/PlayCircle';
 import { useNotificationsStore } from '../../store/notifications.store';
@@ -80,6 +81,7 @@ export default function HomeScreen({ navigation }: Props) {
   const [honorTop3, setHonorTop3] = useState<HonorBoardEntry[]>([]);
   const [reportsSummary, setReportsSummary] = useState<ReportsSummary | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [storeRefreshKey, setStoreRefreshKey] = useState(0);
   const [initialLoading, setInitialLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
 
@@ -203,6 +205,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   const onRefresh = async () => {
     setRefreshing(true);
+    setStoreRefreshKey((key) => key + 1);
     await Promise.all([loadAll(), loadEnrollments()]);
     setRefreshing(false);
   };
@@ -229,6 +232,9 @@ export default function HomeScreen({ navigation }: Props) {
 
   const fullName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
   const goProfile = () => navigation.getParent()?.navigate('ProfileTab');
+  const openStoreProduct = (productId: number) =>
+    navigation.getParent()?.navigate('ProfileTab', { screen: 'StoreProduct', params: { productId }, initial: false });
+  const openStore = () => navigation.getParent()?.navigate('ProfileTab', { screen: 'StoreShop', initial: false });
   const openCourse = (courseId: number) => navigation.navigate('CourseDetail', { courseId });
 
   const coursePrice = (course: Course) => {
@@ -603,6 +609,10 @@ export default function HomeScreen({ navigation }: Props) {
             </View>
           </View>
         ) : null}
+
+        {isOn('Store') && (
+          <HomeStoreSection refreshKey={storeRefreshKey} onOpenProduct={openStoreProduct} onSeeAll={openStore} />
+        )}
 
         {isOn('Events') && events.length > 0 && (
           <View style={styles.section}>

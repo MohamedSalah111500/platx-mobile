@@ -179,4 +179,14 @@ export type ProfileStackParamList = {
   StaffDetail: { staffId: number };
   StaffPermissions: { staffId: number; staffName?: string };
   ExamResult: { examId: number; studentId?: number };
+  StoreShop: undefined;
+  StoreProduct: { productId: number };
+  StoreCart: undefined;
+  StoreMyOrders: undefined;
+  StoreOrderDetail: { orderId: number; mine: boolean };
+  StoreOrders: undefined;
+  StoreProducts: undefined;
+  StoreProductForm: { productId?: number } | undefined;
+  StoreCategories: undefined;
+  StoreSettings: undefined;
 };

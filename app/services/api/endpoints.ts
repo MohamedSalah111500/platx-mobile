@@ -506,3 +506,35 @@ export const CLASS_SESSION_URLS = {
   ATTENDANCE: (id: number) => `${BASE}api/class-sessions/${id}/attendance`,
   SCAN: (id: number) => `${BASE}api/class-sessions/${id}/attendance/scan`,
 };
+
+const STORE_BASE = `${BASE}api/store`;
+
+export const STORE_URLS = {
+  PUBLIC_STATUS: `${STORE_BASE}/public/status`,
+  PUBLIC_CATEGORIES: `${STORE_BASE}/public/categories`,
+  PUBLIC_PRODUCTS: `${STORE_BASE}/public/products`,
+  PUBLIC_PRODUCT: (id: number) => `${STORE_BASE}/public/products/${id}`,
+  PUBLIC_PRODUCTS_LOOKUP: `${STORE_BASE}/public/products/lookup`,
+  ME: `${STORE_BASE}/me`,
+  ORDERS: `${STORE_BASE}/orders`,
+  MY_ORDERS: `${STORE_BASE}/orders/mine`,
+  MY_ORDER: (id: number) => `${STORE_BASE}/orders/mine/${id}`,
+  CANCEL_MY_ORDER: (id: number) => `${STORE_BASE}/orders/mine/${id}/cancel`,
+  MY_ORDER_RECEIPT: (id: number) => `${STORE_BASE}/orders/mine/${id}/receipt`,
+  TRANSFER_ORDERS: `${STORE_BASE}/orders/transfer`,
+  ORDER: (id: number) => `${STORE_BASE}/orders/${id}`,
+  ORDER_STATUS: (id: number) => `${STORE_BASE}/orders/${id}/status`,
+  ORDER_RECEIPT: (id: number) => `${STORE_BASE}/orders/${id}/receipt`,
+  APPROVE_PAYMENT: (id: number) => `${STORE_BASE}/orders/${id}/payment/approve`,
+  REJECT_PAYMENT: (id: number) => `${STORE_BASE}/orders/${id}/payment/reject`,
+  SETTINGS: `${STORE_BASE}/settings`,
+  SHOW_ON_LANDING: `${STORE_BASE}/settings/show-on-landing`,
+  CATEGORIES: `${STORE_BASE}/categories`,
+  CATEGORY: (id: number) => `${STORE_BASE}/categories/${id}`,
+  PRODUCTS: `${STORE_BASE}/products`,
+  PRODUCT: (id: number) => `${STORE_BASE}/products/${id}`,
+  PRODUCT_IMAGES: (id: number) => `${STORE_BASE}/products/${id}/images`,
+  PRODUCT_IMAGE: (id: number, imageId: number) => `${STORE_BASE}/products/${id}/images/${imageId}`,
+  PRODUCT_COVER: (id: number, imageId: number) => `${STORE_BASE}/products/${id}/images/${imageId}/cover`,
+  PRODUCT_VISIBILITY: (id: number) => `${STORE_BASE}/products/${id}/visibility`,
+};

@@ -21,6 +21,7 @@ export const PLATFORM_AREA = {
   Wallet: { menu: 'wallet' },
   Reports: { menu: 'reports', feature: 'advanced_reports' },
   Accounting: { menu: 'accounting' },
+  Store: { menu: 'store', feature: 'store_enabled' },
 } satisfies Record<string, AreaRule>;
 export type PlatformArea = keyof typeof PLATFORM_AREA;
 

@@ -96,7 +96,7 @@ export function Input({
             // and starts writing at the top of the box.
             multiline
               ? { minHeight: 110, paddingVertical: 10, textAlignVertical: 'top' as const }
-              : { height: 50, paddingVertical: 0 },
+              : { height: 46, paddingVertical: 0 },
             // Caller styles refine the field rather than replacing it.
             inputStyle,
           ]}
@@ -148,7 +148,7 @@ export function Input({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   label: {
     fontSize: fontSize.sm,
