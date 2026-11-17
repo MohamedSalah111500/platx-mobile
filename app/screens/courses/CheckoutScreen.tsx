@@ -70,6 +70,7 @@ export default function CheckoutScreen({ navigation, route }: Props) {
   const active = methods.filter((m) => m.isActive !== false);
   const availableMethods = METHOD_ORDER.filter((value) => active.some((m) => m.method === value));
   const hasMethods = availableMethods.length > 0;
+  const joinRequestOnly = REQUEST_ONLY || !hasMethods;
 
   useEffect(() => { loadMethods(); }, []);
 
@@ -111,11 +112,11 @@ export default function CheckoutScreen({ navigation, route }: Props) {
       Alert.alert(t('common.error'), t('courses.missingStudentId'));
       return;
     }
-    if (!REQUEST_ONLY && !selectedMethod) {
-      Alert.alert(t('common.error'), t(hasMethods ? 'checkout.selectMethodFirst' : 'checkout.noMethods'));
+    if (!joinRequestOnly && !selectedMethod) {
+      Alert.alert(t('common.error'), t('checkout.selectMethodFirst'));
       return;
     }
-    if (!REQUEST_ONLY && !proof) {
+    if (!joinRequestOnly && !proof) {
       Alert.alert(t('common.error'), t('checkout.proofRequired'));
       return;
     }
@@ -125,11 +126,11 @@ export default function CheckoutScreen({ navigation, route }: Props) {
         studentId: user.studentId,
         courseId,
         studentMessage: message.trim(),
-        paymentMethod: REQUEST_ONLY ? undefined : selectedMethod ?? undefined,
-        proofImage: REQUEST_ONLY ? undefined : proof ?? undefined,
+        paymentMethod: joinRequestOnly ? undefined : selectedMethod ?? undefined,
+        proofImage: joinRequestOnly ? undefined : proof ?? undefined,
       });
       play('success');
-      Alert.alert(t('common.success'), t(REQUEST_ONLY ? 'checkout.requestSubmitted' : 'checkout.submitted'), [
+      Alert.alert(t('common.success'), t(joinRequestOnly ? 'checkout.requestSubmitted' : 'checkout.submitted'), [
         { text: t('common.ok'), onPress: () => navigation.goBack() },
       ]);
     } catch (err: any) {
@@ -189,7 +190,7 @@ export default function CheckoutScreen({ navigation, route }: Props) {
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm, borderBottomColor: theme.colors.divider }]}>
         <BackButton onPress={() => navigation.goBack()} />
         <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>
-          {t(REQUEST_ONLY ? 'checkout.requestTitle' : 'checkout.title')}
+          {t(joinRequestOnly ? 'checkout.requestTitle' : 'checkout.title')}
         </Text>
         <View style={{ width: 22 }} />
       </View>
@@ -247,12 +248,14 @@ export default function CheckoutScreen({ navigation, route }: Props) {
             }
             onError={(message) => Alert.alert(t('common.error'), message)}
           />
-          <Text style={[styles.sectionLabel, { color: theme.colors.text }]}>{t('checkout.paymentMethod')}</Text>
+          {hasMethods && (
+            <Text style={[styles.sectionLabel, { color: theme.colors.text }]}>{t('checkout.paymentMethod')}</Text>
+          )}
 
           {!hasMethods ? (
             <View style={[styles.noticeCard, { backgroundColor: theme.colors.card }]}>
-              <Ionicons name="alert-circle-outline" size={20} color={theme.colors.textMuted} />
-              <Text style={[styles.noticeText, { color: theme.colors.textSecondary }]}>{t('checkout.noMethods')}</Text>
+              <Ionicons name="information-circle-outline" size={20} color={theme.colors.primary} />
+              <Text style={[styles.noticeText, { color: theme.colors.textSecondary }]}>{t('checkout.requestNotice')}</Text>
             </View>
           ) : (
             <>
@@ -312,10 +315,9 @@ export default function CheckoutScreen({ navigation, route }: Props) {
       {!loading && (
         <View style={[styles.stickyBar, { backgroundColor: theme.colors.card, paddingBottom: insets.bottom + spacing.md, borderTopColor: theme.dark ? theme.colors.border : theme.colors.divider }]}>
           <Button
-            title={t(REQUEST_ONLY ? 'checkout.sendRequest' : 'checkout.submitRequest')}
+            title={t(joinRequestOnly ? 'checkout.sendRequest' : 'checkout.submitRequest')}
             onPress={handleSubmit}
             loading={submitting}
-            disabled={!REQUEST_ONLY && !hasMethods}
             fullWidth
             size="large"
             icon={<Ionicons name="checkmark-circle" size={20} color={theme.colors.onPrimary} />}
