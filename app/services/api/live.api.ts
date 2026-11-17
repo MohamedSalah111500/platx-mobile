@@ -3,7 +3,7 @@ import { LIVE_URLS, withPagination } from './endpoints';
 import type {
   LiveSession,
   LiveParticipant,
-  AgoraTokenResponse,
+  // AgoraTokenResponse,
   CreateLivePayload,
   JoinLivePayload,
 } from '../../types/live.types';
@@ -58,22 +58,22 @@ export const liveApi = {
     return [];
   },
 
-  getToken: async (payload: {
-    channelName: string;
-    uid: number;
-    role: number;
-  }): Promise<AgoraTokenResponse> => {
-    const { data } = await apiClient.post<AgoraTokenResponse>(
-      LIVE_URLS.GET_TOKEN,
-      payload
-    );
-    return data;
-  },
+  // getToken: async (payload: {
+    // channelName: string;
+    // uid: number;
+    // role: number;
+  // }): Promise<AgoraTokenResponse> => {
+    // const { data } = await apiClient.post<AgoraTokenResponse>(
+      // LIVE_URLS.GET_TOKEN,
+      // payload
+    // );
+    // return data;
+  // },
 
-  getAgoraAppId: async (): Promise<string | null> => {
-    const { data } = await apiClient.get<{ appId?: string }>(LIVE_URLS.CONFIG);
-    return data?.appId ?? null;
-  },
+  // getAgoraAppId: async (): Promise<string | null> => {
+    // const { data } = await apiClient.get<{ appId?: string }>(LIVE_URLS.CONFIG);
+    // return data?.appId ?? null;
+  // },
 
   getRoom: async (roomId: number): Promise<LiveSession> => {
     const { data } = await apiClient.get<LiveSession>(LIVE_URLS.GET_ROOM(roomId));

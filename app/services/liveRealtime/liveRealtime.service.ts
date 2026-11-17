@@ -20,6 +20,7 @@ const CAMERA_CONSTRAINTS = { facingMode: 'user', width: 1280, height: 720, frame
 const CAMERA_MAX_BITRATE = 900_000;
 const ICE_GATHERING_TIMEOUT_MS = 3000;
 const RECOVERY_DELAY_MS = 2000;
+const RECOVERY_MAX_DELAY_MS = 15000;
 
 export interface LiveRealtimeListener {
   onLocalStream?: (url: string | null) => void;
@@ -45,6 +46,7 @@ class LiveRealtimeService {
   private videoPausedInBackground = false;
   private appStateSubscription: NativeEventSubscription | null = null;
   private recoveryTimer?: ReturnType<typeof setTimeout>;
+  private recoveryAttempts = 0;
 
   isAvailable(): boolean {
     return !!webrtc;
@@ -86,6 +88,7 @@ class LiveRealtimeService {
       const answer = await liveRealtimeApi.publish(liveId, this.sessionId, this.localDescription(pc), tracks);
       if (generation !== this.generation) return;
       await pc.setRemoteDescription(new rtc.RTCSessionDescription(answer));
+      this.recoveryAttempts = 0;
       this.listener.onConnected?.(true);
     });
   }
@@ -96,7 +99,11 @@ class LiveRealtimeService {
     this.pc!.addEventListener('track', (event: any) => this.onRemoteTrack(event.track));
     this.appStateSubscription = AppState.addEventListener('change', (state) => this.handleAppState(state));
     this.listener.onConnected?.(true);
-    await this.pull([REALTIME_TRACK_KIND.Audio, REALTIME_TRACK_KIND.Video]);
+    try {
+      await this.pull([REALTIME_TRACK_KIND.Audio, REALTIME_TRACK_KIND.Video]);
+    } catch {
+      this.scheduleRecovery(generation);
+    }
   }
 
   async reconnectAudience(): Promise<void> {
@@ -178,11 +185,13 @@ class LiveRealtimeService {
     if (generation !== this.generation) return;
     clearTimeout(this.recoveryTimer);
     const { liveId, isHost } = this;
+    this.recoveryAttempts++;
+    const delay = Math.min(RECOVERY_DELAY_MS * this.recoveryAttempts, RECOVERY_MAX_DELAY_MS);
     this.recoveryTimer = setTimeout(() => {
       if (generation !== this.generation) return;
       const rejoin = isHost ? this.joinAsHost(liveId) : this.joinAsAudience(liveId);
       rejoin.catch(() => this.scheduleRecovery(this.generation));
-    }, RECOVERY_DELAY_MS);
+    }, delay);
   }
 
   private pull(kinds: RealtimeTrackKind[]): Promise<void> {
@@ -206,6 +215,7 @@ class LiveRealtimeService {
   }
 
   private onRemoteTrack(track: RtcMediaStreamTrack): void {
+    this.recoveryAttempts = 0;
     const others = (this.remoteStream?.getTracks() ?? []).filter(
       (t) => t.kind !== track.kind && t.readyState === 'live',
     );

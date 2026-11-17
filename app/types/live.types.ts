@@ -39,6 +39,41 @@ export interface LiveSession {
   scheduledAt?: string | null;
 }
 
+export const PARTICIPANT_STATUS = {
+  Pending: 'pending',
+  Approved: 'approved',
+  Rejected: 'rejected',
+  Left: 'left',
+} as const;
+export type ParticipantStatusName = (typeof PARTICIPANT_STATUS)[keyof typeof PARTICIPANT_STATUS];
+
+const PARTICIPANT_STATUS_BY_CODE: Record<number, ParticipantStatusName> = {
+  0: PARTICIPANT_STATUS.Pending,
+  1: PARTICIPANT_STATUS.Approved,
+  2: PARTICIPANT_STATUS.Rejected,
+  3: PARTICIPANT_STATUS.Left,
+};
+
+export function participantStatusOf(status: unknown): ParticipantStatusName {
+  if (typeof status === 'number') return PARTICIPANT_STATUS_BY_CODE[status] ?? PARTICIPANT_STATUS.Approved;
+  if (typeof status === 'string' && status) return status.toLowerCase() as ParticipantStatusName;
+  return PARTICIPANT_STATUS.Approved;
+}
+
+export function presentParticipants(list: unknown): LiveParticipant[] {
+  if (!Array.isArray(list)) return [];
+  const seen = new Set<number>();
+  const result: LiveParticipant[] = [];
+  for (const raw of list) {
+    if (raw?.studentId == null || seen.has(raw.studentId)) continue;
+    const status = participantStatusOf(raw.status);
+    if (status !== PARTICIPANT_STATUS.Pending && status !== PARTICIPANT_STATUS.Approved) continue;
+    seen.add(raw.studentId);
+    result.push({ ...raw, status });
+  }
+  return result;
+}
+
 export interface LiveParticipant {
   id: number;
   studentId: number;

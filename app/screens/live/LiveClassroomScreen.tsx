@@ -13,7 +13,7 @@ import {
   Platform,
   useWindowDimensions,
   PermissionsAndroid,
-  TurboModuleRegistry,
+  // TurboModuleRegistry,
   Linking,
 } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
@@ -30,32 +30,33 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { liveApi } from '../../services/api/live.api';
 import { signalRService } from '../../services/realtime/signalr.service';
-import * as AgoraService from '../../services/agora/agora.service';
+// import * as AgoraService from '../../services/agora/agora.service';
 import { logger } from '../../services/logger';
 import { usePreventScreenCapture } from 'expo-screen-capture';
-import type { IRtcEngineEventHandler } from '../../services/agora/agora.service';
+// import type { IRtcEngineEventHandler } from '../../services/agora/agora.service';
 
-// Conditionally load RtcSurfaceView (only available in dev builds, not Expo Go)
-let RtcSurfaceView: any = null;
-// Show the whole frame instead of filling the view with it. Agora crops by default,
-// which cuts off most of a teacher who is holding the phone the other way round or
-// showing something written down. (RenderModeType.RenderModeFit)
-let RENDER_FIT = 2;
-const hasAgora = !!TurboModuleRegistry.get('AgoraRtcNg');
-if (hasAgora) {
-  try {
-    const agora = require('react-native-agora');
-    RtcSurfaceView = agora.RtcSurfaceView;
-    if (agora.RenderModeType?.RenderModeFit != null) {
-      RENDER_FIT = agora.RenderModeType.RenderModeFit;
-    }
-  } catch {
-    // Agora not available
-  }
-}
+// // Conditionally load RtcSurfaceView (only available in dev builds, not Expo Go)
+// let RtcSurfaceView: any = null;
+// // Show the whole frame instead of filling the view with it. Agora crops by default,
+// // which cuts off most of a teacher who is holding the phone the other way round or
+// // showing something written down. (RenderModeType.RenderModeFit)
+// let RENDER_FIT = 2;
+// const hasAgora = !!TurboModuleRegistry.get('AgoraRtcNg');
+// if (hasAgora) {
+  // try {
+    // const agora = require('react-native-agora');
+    // RtcSurfaceView = agora.RtcSurfaceView;
+    // if (agora.RenderModeType?.RenderModeFit != null) {
+      // RENDER_FIT = agora.RenderModeType.RenderModeFit;
+    // }
+  // } catch {
+    // // Agora not available
+  // }
+// }
 import type { RootStackParamList } from '../../types/navigation.types';
-import { LiveMediaProvider } from '../../types/live.types';
+// import { LiveMediaProvider } from '../../types/live.types';
 import type { LiveSession, LiveParticipant, LiveMessage, JoinLivePayload } from '../../types/live.types';
+import { PARTICIPANT_STATUS, presentParticipants } from '../../types/live.types';
 import { liveRealtime } from '../../services/liveRealtime/liveRealtime.service';
 
 const RTCView: any = liveRealtime.isAvailable() ? require('react-native-webrtc').RTCView : null;
@@ -96,17 +97,18 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   // Room & session state
   const [room, setRoom] = useState<LiveSession | null>(null);
   const [participants, setParticipants] = useState<LiveParticipant[]>([]);
-  const [remoteUids, setRemoteUids] = useState<number[]>([]);
+  const presentCount = participants.filter((p) => p.status === PARTICIPANT_STATUS.Approved).length;
+  // const [remoteUids, setRemoteUids] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [joined, setJoined] = useState(false);
   const [pendingApproval, setPendingApproval] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [agoraJoined, setAgoraJoined] = useState(false);
+  // const [agoraJoined, setAgoraJoined] = useState(false);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
   const [realtimeLocalUrl, setRealtimeLocalUrl] = useState<string | null>(null);
   const [realtimeRemoteUrl, setRealtimeRemoteUrl] = useState<string | null>(null);
-  const isRealtime = room?.mediaProvider === LiveMediaProvider.CloudflareRealtime;
+  // const isRealtime = room?.mediaProvider === LiveMediaProvider.CloudflareRealtime;
 
   // Controls state
   const [isMuted, setIsMuted] = useState(false);
@@ -129,10 +131,10 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   const [submittingPayment, setSubmittingPayment] = useState(false);
 
   const chatListRef = useRef<FlatList>(null);
-  // Join already answers with a token bound to a server-assigned Agora uid. Reusing
-  // it avoids a second round trip and keeps two people from picking the same uid,
-  // which Agora resolves by kicking the first one out of the channel.
-  const agoraCredsRef = useRef<{ token?: string; uid?: number } | null>(null);
+  // // Join already answers with a token bound to a server-assigned Agora uid. Reusing
+  // // it avoids a second round trip and keeps two people from picking the same uid,
+  // // which Agora resolves by kicking the first one out of the channel.
+  // const agoraCredsRef = useRef<{ token?: string; uid?: number } | null>(null);
 
   // Numeric id used for hub calls (same id JoinClassroom is invoked with).
   const hubUserId = user?.studentId ?? 0;
@@ -194,12 +196,12 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           staffId: userId,
         });
       }
-      if (response?.token) {
-        agoraCredsRef.current = {
-          token: response.token,
-          uid: typeof response.uid === 'number' ? response.uid : undefined,
-        };
-      }
+      // if (response?.token) {
+        // agoraCredsRef.current = {
+          // token: response.token,
+          // uid: typeof response.uid === 'number' ? response.uid : undefined,
+        // };
+      // }
       const status = response?.status;
       if (status === 1) {
         setPendingApproval(true);
@@ -275,7 +277,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   const loadParticipants = async () => {
     try {
       const data = await liveApi.getParticipants(roomId);
-      setParticipants(Array.isArray(data) ? data : []);
+      setParticipants(presentParticipants(data));
     } catch {
       // Non-critical
     }
@@ -339,7 +341,8 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
 
   // ─── Cloudflare Realtime Setup ───────────────
   useEffect(() => {
-    if (!joined || !room || !user || room.mediaProvider !== LiveMediaProvider.CloudflareRealtime) return;
+    // if (!joined || !room || !user || room.mediaProvider !== LiveMediaProvider.CloudflareRealtime) return;
+    if (!joined || !room || !user) return;
 
     liveRealtime.setListener({
       onConnected: setRealtimeConnected,
@@ -377,142 +380,142 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
     };
   }, [joined, room?.id, room?.mediaProvider]);
 
-  // ─── Agora Setup ─────────────────────────────
-  useEffect(() => {
-    if (!joined || !room || !user || room.mediaProvider === LiveMediaProvider.CloudflareRealtime) return;
-    let mounted = true;
-    let eventHandler: IRtcEngineEventHandler;
+  // // ─── Agora Setup ─────────────────────────────
+  // useEffect(() => {
+    // if (!joined || !room || !user || room.mediaProvider === LiveMediaProvider.CloudflareRealtime) return;
+    // let mounted = true;
+    // let eventHandler: IRtcEngineEventHandler;
 
-    const setupAgora = async () => {
-      try {
-        if (!AgoraService.isAgoraAvailable()) {
-          logger.log('[Live] Agora native module not available');
-          Alert.alert(
-            t('live.agoraNotAvailable') || 'Live not available',
-            'The live video module is not available on this build.',
-          );
-          return;
-        }
+    // const setupAgora = async () => {
+      // try {
+        // if (!AgoraService.isAgoraAvailable()) {
+          // logger.log('[Live] Agora native module not available');
+          // Alert.alert(
+            // t('live.agoraNotAvailable') || 'Live not available',
+            // 'The live video module is not available on this build.',
+          // );
+          // return;
+        // }
 
-        logger.log('[Live] requesting permissions');
-        const granted = await requestPermissions();
-        if (!granted) {
-          logger.log('[Live] permissions denied');
-          Alert.alert(
-            t('live.permissionsRequired') || 'Permissions required',
-            t('live.permissionsExplanation') ||
-              'Camera and microphone access are required to join.',
-          );
-          return;
-        }
+        // logger.log('[Live] requesting permissions');
+        // const granted = await requestPermissions();
+        // if (!granted) {
+          // logger.log('[Live] permissions denied');
+          // Alert.alert(
+            // t('live.permissionsRequired') || 'Permissions required',
+            // t('live.permissionsExplanation') ||
+              // 'Camera and microphone access are required to join.',
+          // );
+          // return;
+        // }
 
-        const joinCreds = agoraCredsRef.current;
-        let token = joinCreds?.token;
-        let uid = joinCreds?.uid;
-        let appId: string | undefined;
+        // const joinCreds = agoraCredsRef.current;
+        // let token = joinCreds?.token;
+        // let uid = joinCreds?.uid;
+        // let appId: string | undefined;
 
-        if (!token) {
-          logger.log(`[Live] fetching Agora token for channel=${room.channelName}`);
-          const tokenResp = await liveApi.getToken({
-            channelName: room.channelName,
-            uid: uid ?? user.studentId ?? 0,
-            role: isTeacher ? 1 : 0,
-          });
-          token = tokenResp?.token;
-          uid = typeof tokenResp?.uid === 'number' ? tokenResp.uid : uid;
-          appId = (tokenResp as any)?.appId as string | undefined;
-        }
+        // if (!token) {
+          // logger.log(`[Live] fetching Agora token for channel=${room.channelName}`);
+          // const tokenResp = await liveApi.getToken({
+            // channelName: room.channelName,
+            // uid: uid ?? user.studentId ?? 0,
+            // role: isTeacher ? 1 : 0,
+          // });
+          // token = tokenResp?.token;
+          // uid = typeof tokenResp?.uid === 'number' ? tokenResp.uid : uid;
+          // appId = (tokenResp as any)?.appId as string | undefined;
+        // }
 
-        // Servers that leave the app id out of the token response publish it on its
-        // own endpoint, so fetch it there instead of failing the join.
-        if (token && !appId) {
-          logger.log('[Live] no appId with the token, asking the config endpoint');
-          appId = (await liveApi.getAgoraAppId().catch(() => null)) ?? undefined;
-        }
-        if (!appId || !token) {
-          logger.log(`[Live] cannot join: appId=${!!appId} token=${!!token}`);
-          Alert.alert(
-            t('common.error'),
-            t('live.invalidTokenResponse') || 'Failed to get live session token.',
-          );
-          return;
-        }
+        // // Servers that leave the app id out of the token response publish it on its
+        // // own endpoint, so fetch it there instead of failing the join.
+        // if (token && !appId) {
+          // logger.log('[Live] no appId with the token, asking the config endpoint');
+          // appId = (await liveApi.getAgoraAppId().catch(() => null)) ?? undefined;
+        // }
+        // if (!appId || !token) {
+          // logger.log(`[Live] cannot join: appId=${!!appId} token=${!!token}`);
+          // Alert.alert(
+            // t('common.error'),
+            // t('live.invalidTokenResponse') || 'Failed to get live session token.',
+          // );
+          // return;
+        // }
 
-        logger.log('[Live] initializing Agora engine');
-        AgoraService.initEngine(appId);
+        // logger.log('[Live] initializing Agora engine');
+        // AgoraService.initEngine(appId);
 
-        eventHandler = {
-          onJoinChannelSuccess: (_connection: any, _elapsed: number) => {
-            if (!mounted) return;
-            logger.log('[Live] Agora joined channel successfully');
-            setAgoraJoined(true);
-          },
-          onUserJoined: (_connection: any, remoteUid: number) => {
-            if (!mounted) return;
-            logger.log(`[Live] remote user joined uid=${remoteUid}`);
-            setRemoteUids((prev) =>
-              prev.includes(remoteUid) ? prev : [...prev, remoteUid],
-            );
-          },
-          onUserOffline: (_connection: any, remoteUid: number) => {
-            if (!mounted) return;
-            logger.log(`[Live] remote user left uid=${remoteUid}`);
-            setRemoteUids((prev) => prev.filter((id) => id !== remoteUid));
-          },
-          onError: (errCode: number, msg: string) => {
-            logger.log(`[Live] Agora error code=${errCode} msg=${msg}`);
-            logger.recordError(new Error(`Agora error ${errCode}: ${msg}`), 'Live:Agora');
-          },
-          // 1 = capturing, 2 = encoding, 3 = failed. A non-zero error means the
-          // microphone never started (permission, or another app holding it).
-          onLocalAudioStateChanged: (_c: any, state: number, error: number) => {
-            logger.log(`[Live] local audio state=${state} error=${error}`);
-          },
-          // Reason 5 = the sender muted, 6 = the receiver muted, 7 = the sender left.
-          onRemoteAudioStateChanged: (
-            _c: any,
-            remoteUid: number,
-            state: number,
-            reason: number,
-          ) => {
-            logger.log(`[Live] remote audio uid=${remoteUid} state=${state} reason=${reason}`);
-          },
-          onUserMuteAudio: (_c: any, remoteUid: number, muted: boolean) => {
-            logger.log(`[Live] uid=${remoteUid} muted=${muted}`);
-          },
-          onAudioRoutingChanged: (routing: number) => {
-            logger.log(`[Live] audio route=${routing}`);
-          },
-        };
-        AgoraService.registerEvents(eventHandler);
+        // eventHandler = {
+          // onJoinChannelSuccess: (_connection: any, _elapsed: number) => {
+            // if (!mounted) return;
+            // logger.log('[Live] Agora joined channel successfully');
+            // setAgoraJoined(true);
+          // },
+          // onUserJoined: (_connection: any, remoteUid: number) => {
+            // if (!mounted) return;
+            // logger.log(`[Live] remote user joined uid=${remoteUid}`);
+            // setRemoteUids((prev) =>
+              // prev.includes(remoteUid) ? prev : [...prev, remoteUid],
+            // );
+          // },
+          // onUserOffline: (_connection: any, remoteUid: number) => {
+            // if (!mounted) return;
+            // logger.log(`[Live] remote user left uid=${remoteUid}`);
+            // setRemoteUids((prev) => prev.filter((id) => id !== remoteUid));
+          // },
+          // onError: (errCode: number, msg: string) => {
+            // logger.log(`[Live] Agora error code=${errCode} msg=${msg}`);
+            // logger.recordError(new Error(`Agora error ${errCode}: ${msg}`), 'Live:Agora');
+          // },
+          // // 1 = capturing, 2 = encoding, 3 = failed. A non-zero error means the
+          // // microphone never started (permission, or another app holding it).
+          // onLocalAudioStateChanged: (_c: any, state: number, error: number) => {
+            // logger.log(`[Live] local audio state=${state} error=${error}`);
+          // },
+          // // Reason 5 = the sender muted, 6 = the receiver muted, 7 = the sender left.
+          // onRemoteAudioStateChanged: (
+            // _c: any,
+            // remoteUid: number,
+            // state: number,
+            // reason: number,
+          // ) => {
+            // logger.log(`[Live] remote audio uid=${remoteUid} state=${state} reason=${reason}`);
+          // },
+          // onUserMuteAudio: (_c: any, remoteUid: number, muted: boolean) => {
+            // logger.log(`[Live] uid=${remoteUid} muted=${muted}`);
+          // },
+          // onAudioRoutingChanged: (routing: number) => {
+            // logger.log(`[Live] audio route=${routing}`);
+          // },
+        // };
+        // AgoraService.registerEvents(eventHandler);
 
-        const effectiveUid = uid ?? (user.studentId ?? 0);
-        logger.log(`[Live] joining as ${isTeacher ? 'host' : 'audience'} uid=${effectiveUid}`);
-        if (isTeacher) {
-          AgoraService.joinAsHost(token, room.channelName, effectiveUid);
-        } else {
-          AgoraService.joinAsAudience(token, room.channelName, effectiveUid);
-        }
-      } catch (err: any) {
-        logger.recordError(err, 'Live:setupAgora');
-        Alert.alert(
-          t('common.error'),
-          err?.userMessage || t('live.joinSessionFailed'),
-        );
-      }
-    };
+        // const effectiveUid = uid ?? (user.studentId ?? 0);
+        // logger.log(`[Live] joining as ${isTeacher ? 'host' : 'audience'} uid=${effectiveUid}`);
+        // if (isTeacher) {
+          // AgoraService.joinAsHost(token, room.channelName, effectiveUid);
+        // } else {
+          // AgoraService.joinAsAudience(token, room.channelName, effectiveUid);
+        // }
+      // } catch (err: any) {
+        // logger.recordError(err, 'Live:setupAgora');
+        // Alert.alert(
+          // t('common.error'),
+          // err?.userMessage || t('live.joinSessionFailed'),
+        // );
+      // }
+    // };
 
-    setupAgora();
+    // setupAgora();
 
-    return () => {
-      mounted = false;
-      if (eventHandler) AgoraService.unregisterEvents(eventHandler);
-      AgoraService.leave();
-      AgoraService.destroy();
-      setAgoraJoined(false);
-      setRemoteUids([]);
-    };
-  }, [joined, room?.channelName]);
+    // return () => {
+      // mounted = false;
+      // if (eventHandler) AgoraService.unregisterEvents(eventHandler);
+      // AgoraService.leave();
+      // AgoraService.destroy();
+      // setAgoraJoined(false);
+      // setRemoteUids([]);
+    // };
+  // }, [joined, room?.channelName]);
 
   // ─── SignalR Setup ───────────────────────────
   // Connect while waiting for approval too, so the StudentApproved event reaches us.
@@ -549,7 +552,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
 
         signalRService.onParticipantList((list: any[]) => {
           if (!mounted) return;
-          setParticipants(Array.isArray(list) ? list : []);
+          setParticipants(presentParticipants(list));
         });
 
         // Hub payload is { userId, connectionId, joinedAt } (no name), so
@@ -560,7 +563,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
             const list = await liveApi.getParticipants(roomId);
             if (!mounted || !Array.isArray(list)) return;
             setParticipants((prev) =>
-              list.map((p) => {
+              presentParticipants(list).map((p) => {
                 const old = prev.find((o) => o.studentId === p.studentId);
                 return old
                   ? { ...p, isHandRaised: old.isHandRaised, isMuted: old.isMuted, isVideoOff: old.isVideoOff }
@@ -589,7 +592,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           setParticipants((prev) =>
             prev.map((p) =>
               p.studentId === data.studentId
-                ? { ...p, status: 'approved' }
+                ? { ...p, status: PARTICIPANT_STATUS.Approved }
                 : p,
             ),
           );
@@ -664,8 +667,9 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   const handleToggleMic = () => {
     const newMuted = !isMuted;
     setIsMuted(newMuted);
-    if (isRealtime) liveRealtime.setMicMuted(newMuted);
-    else AgoraService.toggleMic(newMuted);
+    // if (isRealtime) liveRealtime.setMicMuted(newMuted);
+    // else AgoraService.toggleMic(newMuted);
+    liveRealtime.setMicMuted(newMuted);
     signalRService
       .toggleMute(roomId, hubUserId, newMuted)
       .catch(() => {});
@@ -674,8 +678,9 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   const handleToggleCamera = () => {
     const newOff = !isVideoOff;
     setIsVideoOff(newOff);
-    if (isRealtime) liveRealtime.setCameraOff(newOff);
-    else AgoraService.toggleCamera(newOff);
+    // if (isRealtime) liveRealtime.setCameraOff(newOff);
+    // else AgoraService.toggleCamera(newOff);
+    liveRealtime.setCameraOff(newOff);
     signalRService
       .toggleVideo(roomId, hubUserId, newOff)
       .catch(() => {});
@@ -833,64 +838,65 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   };
 
   const renderVideoArea = () => {
-    if (isRealtime) return renderRealtimeVideoArea();
+    // if (isRealtime) return renderRealtimeVideoArea();
+    return renderRealtimeVideoArea();
 
-    // If Agora is not available, show fallback immediately (don't show infinite spinner)
-    if (!RtcSurfaceView || !AgoraService.isAgoraAvailable()) {
-      return (
-        <View style={styles.videoPlaceholder}>
-          <Ionicons name="videocam-outline" size={48} color={DARK.textSecondary} />
-          <Text style={styles.placeholderText}>
-            {t('live.videoUnavailable')}
-          </Text>
-          <Text style={[styles.placeholderText, { fontSize: 14, marginTop: 4 }]}>
-            {t('live.videoUnavailableHint')}
-          </Text>
-        </View>
-      );
-    }
+    // // If Agora is not available, show fallback immediately (don't show infinite spinner)
+    // if (!RtcSurfaceView || !AgoraService.isAgoraAvailable()) {
+      // return (
+        // <View style={styles.videoPlaceholder}>
+          // <Ionicons name="videocam-outline" size={48} color={DARK.textSecondary} />
+          // <Text style={styles.placeholderText}>
+            // {t('live.videoUnavailable')}
+          // </Text>
+          // <Text style={[styles.placeholderText, { fontSize: 14, marginTop: 4 }]}>
+            // {t('live.videoUnavailableHint')}
+          // </Text>
+        // </View>
+      // );
+    // }
 
-    // Agora available but still connecting
-    if (!agoraJoined) {
-      return (
-        <View style={styles.videoPlaceholder}>
-          <Spinner />
-          <Text style={styles.placeholderText}>{t('live.connecting')}</Text>
-        </View>
-      );
-    }
+    // // Agora available but still connecting
+    // if (!agoraJoined) {
+      // return (
+        // <View style={styles.videoPlaceholder}>
+          // <Spinner />
+          // <Text style={styles.placeholderText}>{t('live.connecting')}</Text>
+        // </View>
+      // );
+    // }
 
-    if (isTeacher) {
-      if (isVideoOff) {
-        return (
-          <View style={styles.videoPlaceholder}>
-            <Ionicons name="videocam-off" size={48} color={DARK.textSecondary} />
-            <Text style={styles.placeholderText}>{t('live.cameraOff')}</Text>
-          </View>
-        );
-      }
-      return <RtcSurfaceView style={styles.fullVideo} canvas={{ uid: 0, renderMode: RENDER_FIT }} />;
-    }
+    // if (isTeacher) {
+      // if (isVideoOff) {
+        // return (
+          // <View style={styles.videoPlaceholder}>
+            // <Ionicons name="videocam-off" size={48} color={DARK.textSecondary} />
+            // <Text style={styles.placeholderText}>{t('live.cameraOff')}</Text>
+          // </View>
+        // );
+      // }
+      // return <RtcSurfaceView style={styles.fullVideo} canvas={{ uid: 0, renderMode: RENDER_FIT }} />;
+    // }
 
-    // Student: show teacher's remote feed
-    const teacherUid = remoteUids.length > 0 ? remoteUids[0] : null;
-    if (teacherUid != null) {
-      return (
-        <RtcSurfaceView
-          style={styles.fullVideo}
-          canvas={{ uid: teacherUid, renderMode: RENDER_FIT }}
-        />
-      );
-    }
+    // // Student: show teacher's remote feed
+    // const teacherUid = remoteUids.length > 0 ? remoteUids[0] : null;
+    // if (teacherUid != null) {
+      // return (
+        // <RtcSurfaceView
+          // style={styles.fullVideo}
+          // canvas={{ uid: teacherUid, renderMode: RENDER_FIT }}
+        // />
+      // );
+    // }
 
-    return (
-      <View style={styles.videoPlaceholder}>
-        <Ionicons name="videocam-outline" size={48} color={DARK.textSecondary} />
-        <Text style={styles.placeholderText}>
-          {t('live.videoActiveWaiting')}
-        </Text>
-      </View>
-    );
+    // return (
+      // <View style={styles.videoPlaceholder}>
+        // <Ionicons name="videocam-outline" size={48} color={DARK.textSecondary} />
+        // <Text style={styles.placeholderText}>
+          // {t('live.videoActiveWaiting')}
+        // </Text>
+      // </View>
+    // );
   };
 
   // ─── Render: Chat Message ────────────────────
@@ -920,7 +926,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
         {item.isMuted && (
           <Ionicons name="mic-off" size={16} color={theme.colors.textSecondary} />
         )}
-        {isTeacher && item.status === 'pending' && (
+        {isTeacher && item.status === PARTICIPANT_STATUS.Pending && (
           <TouchableOpacity
             onPress={() => handleApproveStudent(item.studentId)}
             style={styles.approveBtn}
@@ -928,7 +934,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
             <Ionicons name="checkmark-circle" size={22} color={theme.colors.success} />
           </TouchableOpacity>
         )}
-        {isTeacher && item.status === 'approved' && (
+        {isTeacher && item.status === PARTICIPANT_STATUS.Approved && (
           <TouchableOpacity
             onPress={() => handleRemoveStudent(item.studentId)}
             style={styles.removeBtn}
@@ -1024,7 +1030,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
         >
           <Ionicons name="people" size={18} color={DARK.text} />
           <Text style={styles.participantCountText}>
-            {participants.length}
+            {presentCount}
           </Text>
         </TouchableOpacity>
       </View>
@@ -1214,7 +1220,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
           <View style={[styles.participantsPanel, { backgroundColor: theme.colors.card }]}>
             <View style={styles.panelHeader}>
               <Text style={[styles.panelTitle, { color: theme.colors.text }]}>
-                {t('live.participants')} ({participants.length})
+                {t('live.participants')} ({presentCount})
               </Text>
               <TouchableOpacity
                 onPress={() => setParticipantsVisible(false)}
