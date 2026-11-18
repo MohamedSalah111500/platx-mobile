@@ -57,7 +57,7 @@
             "enableHermes": true,
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": false,
-            "extraProguardRules": "-keepclassmembers class * {\n  @android.webkit.JavascriptInterface <methods>;\n}"
+            "extraProguardRules": "-keepclassmembers class * {\n  @android.webkit.JavascriptInterface <methods>;\n}\n-keep class org.webrtc.** { *; }\n-dontwarn org.webrtc.**"
           },
           "ios": {
             "enableHermes": true
