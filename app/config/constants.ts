@@ -1,5 +1,5 @@
 // Agora App ID for live streaming
-export const AGORA_APP_ID = 'fd628544a0454696ba4e66ad6ebc3edc';
+// export const AGORA_APP_ID = 'fd628544a0454696ba4e66ad6ebc3edc';
 
 // Storage keys
 export const STORAGE_KEYS = {
@@ -34,7 +34,7 @@ export const SUPPORTED_LANGUAGES = [
 ];
 
 export default {
-  AGORA_APP_ID,
+  // AGORA_APP_ID,
   STORAGE_KEYS,
   API_TIMEOUT,
   DEFAULT_PAGE_SIZE,
