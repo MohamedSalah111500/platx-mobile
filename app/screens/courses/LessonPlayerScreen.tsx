@@ -25,7 +25,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSize } from '../../theme/typography';
 import { coursesApi } from '../../services/api/courses.api';
-import { getToken } from '../../services/api/client';
+import apiClient, { getToken } from '../../services/api/client';
 import { FILE_MANAGER_URLS } from '../../services/api/endpoints';
 import type { CoursesStackParamList } from '../../types/navigation.types';
 import type { CourseAvailability } from '../../types/course.types';
@@ -37,6 +37,7 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { useSound } from '../../hooks/useSound';
 import LessonQuiz from './LessonQuiz';
 import { contentFrame } from '../../utils/responsive';
+import { PDF_MIME, ProtectedDocumentViewer, canPreviewProtected } from '../../components/course/ProtectedDocumentViewer';
 
 import { BackButton } from '../../components/ui/BackButton';
 type Props = NativeStackScreenProps<CoursesStackParamList, 'LessonPlayer'>;
@@ -116,6 +117,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
   // Attachment downloaded into the app cache (authenticated), reused by open/download.
   const [localFile, setLocalFile] = useState<{ uri: string; mimeType: string } | null>(null);
   const [fileBusy, setFileBusy] = useState<'open' | 'download' | null>(null);
+  const [protectedDoc, setProtectedDoc] = useState<{ url: string; token: string | null; mimeType: string } | null>(null);
 
   // Block screenshots/screen recording while a lesson video is open, to protect
   // paid course content from being captured.
@@ -129,6 +131,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
   const isQuiz = lesson?.type === 3;
   const isDocOrFile = lesson?.type === 2 || lesson?.type === 4;
   const isLink = lesson?.type === 5;
+  const viewOnly = isStudent && lesson?.allowDownload !== true;
 
   useEffect(() => {
     loadLesson();
@@ -230,7 +233,46 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
     return file;
   };
 
+  const protectedSource = async (attachmentId: number): Promise<string> => {
+    try {
+      const { data } = await apiClient.get<{ url: string }>(FILE_MANAGER_URLS.VIEW_LINK(attachmentId));
+      if (data?.url) return FILE_MANAGER_URLS.VIEW_FILE(data.url);
+    } catch {}
+    return FILE_MANAGER_URLS.DOWNLOAD_FILE(attachmentId);
+  };
+
+  const openProtectedDocument = async () => {
+    if (fileBusy) return;
+    const attachmentId = lesson?.attachementId;
+    if (!attachmentId) {
+      Alert.alert(t('common.info'), t('lessons.noVideo'));
+      return;
+    }
+    const mimeType = lesson?.attachmentContentType?.split(';')[0].trim() || PDF_MIME;
+    if (!canPreviewProtected(mimeType)) {
+      Alert.alert(t('common.info'), t('lessons.cannotPreview'));
+      return;
+    }
+    setFileBusy('open');
+    try {
+      const token = authToken ?? (await getToken().catch(() => null));
+      setProtectedDoc({ url: await protectedSource(attachmentId), token, mimeType });
+      setDocViewerOpen(true);
+    } finally {
+      setFileBusy(null);
+    }
+  };
+
+  const closeDocViewer = () => {
+    setDocViewerOpen(false);
+    setProtectedDoc(null);
+  };
+
   const openDocument = async () => {
+    if (viewOnly) {
+      await openProtectedDocument();
+      return;
+    }
     if (fileBusy) return;
     setFileBusy('open');
     try {
@@ -515,6 +557,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
                     {fileBusy === 'open' ? t('lessons.downloading') : t('lessons.openDocument')}
                   </Text>
                 </TouchableOpacity>
+                {!viewOnly && (
                 <TouchableOpacity
                   style={[styles.docOpenBtn, styles.docSecondaryBtn, { opacity: fileBusy ? 0.7 : 1 }]}
                   onPress={downloadDocument}
@@ -530,7 +573,9 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
                     {fileBusy === 'download' ? t('lessons.downloading') : t('lessons.downloadFile')}
                   </Text>
                 </TouchableOpacity>
+                )}
               </View>
+              {viewOnly && <Text style={styles.viewOnlyText}>{t('lessons.viewOnly')}</Text>}
             </View>
           ) : videoUrl ? (
             <View style={styles.videoContainer}>
@@ -640,16 +685,23 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
       )}
 
       {/* Document viewer */}
-      <Modal visible={docViewerOpen} animationType="slide" onRequestClose={() => setDocViewerOpen(false)}>
+      <Modal visible={docViewerOpen} animationType="slide" onRequestClose={closeDocViewer}>
         <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }} edges={['top']}>
           <View style={styles.header}>
-            <TouchableOpacity style={[styles.backButton, { backgroundColor: 'rgba(255,255,255,0.12)' }]} onPress={() => setDocViewerOpen(false)}>
+            <TouchableOpacity style={[styles.backButton, { backgroundColor: 'rgba(255,255,255,0.12)' }]} onPress={closeDocViewer}>
               <Ionicons name="close" size={22} color="#fff" />
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: '#fff' }]} numberOfLines={1}>{lesson.title}</Text>
             <View style={{ width: 40 }} />
           </View>
-          {localFile ? (
+          {protectedDoc ? (
+            <ProtectedDocumentViewer
+              url={protectedDoc.url}
+              token={protectedDoc.token}
+              mimeType={protectedDoc.mimeType}
+              failedText={t('lessons.downloadFailed')}
+            />
+          ) : localFile ? (
             <WebView
               source={{ uri: localFile.uri }}
               originWhitelist={['*']}
@@ -783,6 +835,12 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
     color: '#fff',
+    textAlign: 'center',
+  },
+  viewOnlyText: {
+    fontSize: 14,
+    fontFamily: 'Cairo_500Medium',
+    color: 'rgba(255,255,255,0.7)',
     textAlign: 'center',
   },
   docActions: {

@@ -466,6 +466,8 @@
     "downloading": "Downloading…",
     "downloadFailed": "Couldn't download the file. Please try again.",
     "noAppToOpen": "No app found to open this file. Use Download to save it.",
+    "cannotPreview": "This file can't be shown in the app.",
+    "viewOnly": "This file is available to view only.",
     "viewsRemaining": "Views left: {{count}}",
     "viewsExhaustedTitle": "No views left",
     "viewsExhaustedBody": "You've used all the views of this lesson from your session attendance. Contact your teacher if you need to watch it again.",

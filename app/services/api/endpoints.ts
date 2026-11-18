@@ -209,6 +209,8 @@ export const FILE_MANAGER_URLS = {
   // Lesson attachments live on AttachementsController (there is no api/FileManager route).
   DOWNLOAD_FILE: (id: number) => `${BASE}api/Attachements/DownloadFile/${id}`,
   PREVIEW_FILE: (id: number) => `${BASE}api/Attachements/PreviewFile/${id}`,
+  VIEW_LINK: (id: number) => `${BASE}api/Attachements/ViewLink/${id}`,
+  VIEW_FILE: (relativeUrl: string) => `${BASE}${relativeUrl}`,
 };
 
 // Online course endpoints.

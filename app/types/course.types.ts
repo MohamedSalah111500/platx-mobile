@@ -76,6 +76,8 @@ export interface Lesson {
   isCompleated?: boolean;
   sectionId: number;
   attachementId?: number;
+  attachmentContentType?: string | null;
+  allowDownload?: boolean;
   examId?: number;
   isInternalExam?: boolean;
   linkUrl?: string | null;
