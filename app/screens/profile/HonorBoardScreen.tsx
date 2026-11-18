@@ -372,15 +372,15 @@ export default function HonorBoardScreen({ navigation }: Props) {
 
       {/* ────── Add Student Modal (teacher only) ────── */}
       {isTeacher && (
-        <Modal visible={showAddModal} animationType="slide" transparent>
+        <Modal visible={showAddModal} animationType="slide" transparent onRequestClose={() => setShowAddModal(false)} statusBarTranslucent>
           <View style={modalStyles.overlay}>
-            <View style={[modalStyles.sheet, { backgroundColor: theme.colors.card }]}>
+            <View style={[modalStyles.sheet, { backgroundColor: theme.colors.card, paddingBottom: insets.bottom + spacing.xl }]}>
               {/* Modal header */}
               <View style={modalStyles.sheetHeader}>
                 <Text style={[modalStyles.sheetTitle, { color: theme.colors.text }]}>
                   {t('honorBoard.title')}
                 </Text>
-                <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                <TouchableOpacity onPress={() => setShowAddModal(false)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('common.close')}>
                   <Ionicons name="close" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
               </View>
@@ -612,7 +612,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Cairo_700Bold',
     color: '#fff',
-    textAlign: 'left',
+    textAlign: 'center',
+    lineHeight: 20,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   topName: {
     fontSize: 14,
@@ -769,9 +772,8 @@ const modalStyles = StyleSheet.create({
     marginTop: spacing.md,
   },
   addBtnText: {
+    ...typography.button,
     color: '#fff',
-    fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
-    textAlign: 'left',
   },
 });

@@ -3,7 +3,7 @@ import { Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontFamily, fontSize } from '../../theme/typography';
+import { fontFamily, fontSize, buttonLineHeight } from '../../theme/typography';
 
 interface ChipProps {
   label: string;
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
     gap: spacing.sm,
   },
-  label: { fontFamily: fontFamily.medium, fontSize: fontSize.sm, textAlign: 'left' },
+  label: { fontFamily: fontFamily.medium, fontSize: fontSize.sm, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
 });
 
 export const Chip = memo(ChipBase);

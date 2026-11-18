@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-na
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 import { discountPercent, effectivePrice, formatAmount, getCurrencySymbol } from '../../utils/price';
 
 type Props = {
@@ -99,6 +99,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.xs),
+    includeFontPadding: false,
   },
 });
 

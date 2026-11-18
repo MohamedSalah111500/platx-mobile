@@ -4,7 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { spacing } from '../../theme/spacing';
-import { fontSize, typography } from '../../theme/typography';
+import { fontSize, typography, buttonLineHeight } from '../../theme/typography';
 
 import { sheetFrame } from '../../utils/responsive';
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   icon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  label: { flex: 1, fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  label: { flex: 1, fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.base), includeFontPadding: false },
 });
 
 export default ActionSheet;

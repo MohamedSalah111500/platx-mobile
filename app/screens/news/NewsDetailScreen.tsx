@@ -92,7 +92,7 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
       alignItems: 'center',
       gap: 4,
     },
-    metaText: { ...typography.caption, color: theme.colors.textMuted },
+    metaText: { ...typography.caption, color: theme.colors.textMuted, includeFontPadding: false, textAlignVertical: 'center' },
     divider: {
       height: 1,
       backgroundColor: theme.colors.divider,
@@ -116,6 +116,8 @@ export default function NewsDetailScreen({ navigation, route }: Props) {
     commentsButtonText: {
       ...typography.body,
       fontFamily: 'Cairo_700Bold',
+      includeFontPadding: false,
+      textAlignVertical: 'center',
     },
     emptyContainer: {
       flex: 1,

@@ -44,6 +44,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.md,
     marginBottom: spacing.lg,
+    includeFontPadding: false,
   },
   retryButton: {
     paddingHorizontal: spacing.xl,

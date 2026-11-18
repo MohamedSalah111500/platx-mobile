@@ -380,6 +380,8 @@ function createStyles(theme: Theme) {
     chipText: {
       ...typography.bodySmall,
       fontFamily: 'Cairo_600SemiBold',
+      includeFontPadding: false,
+      textAlignVertical: 'center',
     },
     card: {
       backgroundColor: theme.colors.card,
@@ -475,6 +477,8 @@ function createStyles(theme: Theme) {
       ...typography.bodySmall,
       fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.text,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
     },
   });
 }

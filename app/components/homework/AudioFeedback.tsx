@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-nat
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer, type AudioStatus } from 'expo-audio';
 import { spacing } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 
 export function AudioFeedback({
   url,
@@ -84,5 +84,5 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 4,
   },
-  audioBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  audioBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
 });

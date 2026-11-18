@@ -148,7 +148,7 @@ function createStyles(theme: Theme) {
       flex: 1,
     },
     content: {
-      padding: spacing['2xl'],
+      padding: spacing.xl,
       paddingBottom: spacing['4xl'],
     },
     iconCircle: {

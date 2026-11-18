@@ -580,6 +580,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_700Bold',
     color: '#FFFFFF',
     textAlign: 'left',
+    lineHeight: 20,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   roleText: {
     fontSize: fontSize.xs,
@@ -730,6 +733,9 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: 'Cairo_600SemiBold',
     textAlign: 'left',
+    lineHeight: 24,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   logoutBtn: {
     borderRadius: 20,

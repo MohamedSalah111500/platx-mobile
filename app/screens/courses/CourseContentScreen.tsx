@@ -13,7 +13,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { Button } from '../../components/ui/Button';
 import { spacing } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 import { courseManageApi } from '../../services/api/courseManage.api';
 import { LESSON_TYPE, type LessonType, type ManagedLesson, type ManagedSection } from '../../types/course.types';
 import type { HomeStackParamList } from '../../types/navigation.types';
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.md, gap: spacing.xs },
   sectionTitleWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   sectionBody: { flex: 1 },
-  sectionTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  sectionTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.base), includeFontPadding: false },
   lesson: { flexDirection: 'row', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   lessonMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   lessonIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
@@ -275,5 +275,5 @@ const styles = StyleSheet.create({
   moveGroup: { flexDirection: 'row' },
   moveButton: { width: 36, height: 40, alignItems: 'center', justifyContent: 'center' },
   addLesson: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth, padding: spacing.md },
-  addLessonText: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold' },
+  addLessonText: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', lineHeight: buttonLineHeight(fontSize.base), includeFontPadding: false },
 });

@@ -171,6 +171,8 @@ function createStyles(theme: Theme) {
     },
     badgeText: {
       ...typography.bodySmall,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
     },
   });
 }

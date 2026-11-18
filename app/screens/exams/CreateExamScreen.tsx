@@ -22,7 +22,7 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { useSound } from '../../hooks/useSound';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 import { examApi } from '../../services/api/exam.api';
 import { groupsApi } from '../../services/api/groups.api';
 import { EXAM_ONLINE_TYPE, QUESTION_TYPE } from '../../types/exam.types';
@@ -466,12 +466,12 @@ function createStyles(theme: any) {
     switchLabel: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.text, textAlign: 'left' },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     chip: { paddingHorizontal: spacing.md, paddingVertical: 8, borderRadius: borderRadius.full, borderWidth: 1 },
-    chipText: { fontSize: fontSize.xs, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+    chipText: { fontSize: fontSize.xs, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.xs), includeFontPadding: false },
     hint: { fontSize: fontSize.xs, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'left' },
     answerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     answerInput: { flex: 1 },
     addAnswer: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.xs },
-    addAnswerText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.primary, textAlign: 'left' },
+    addAnswerText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.primary, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
     scoreRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
     scoreLabel: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.text, textAlign: 'left' },
     scoreInput: { width: 90 },
@@ -487,6 +487,6 @@ function createStyles(theme: any) {
       borderStyle: 'dashed',
       borderColor: theme.colors.primary,
     },
-    addQuestionText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', color: theme.colors.primary, textAlign: 'left' },
+    addQuestionText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', color: theme.colors.primary, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   });
 }

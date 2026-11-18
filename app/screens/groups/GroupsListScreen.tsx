@@ -105,7 +105,7 @@ export default function GroupsListScreen({ navigation }: Props) {
         <View style={styles.groupStats}>
           {item.studentsCount != null && (
             <View style={styles.statItem}>
-              <Ionicons name="school-outline" size={12} color={theme.colors.textMuted} />
+              <Ionicons name="school-outline" size={16} color={theme.colors.textMuted} />
               <Text style={styles.groupMembers}>{t('home.studentsCount', { count: item.studentsCount })}</Text>
             </View>
           )}
@@ -164,6 +164,7 @@ export default function GroupsListScreen({ navigation }: Props) {
     groupMembers: {
       ...typography.caption,
       color: theme.colors.textMuted,
+      includeFontPadding: false,
     },
     addButton: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   });

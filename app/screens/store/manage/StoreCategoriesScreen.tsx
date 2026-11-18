@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { Alert, FlatList, Modal, Pressable, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../../theme/ThemeProvider';
@@ -33,6 +33,7 @@ export default function StoreCategoriesScreen({ navigation }: Props) {
   const { t } = useRTL();
   const { canModule } = useAuth();
   const tabBarSpace = useTabBarSpace();
+  const insets = useSafeAreaInsets();
   const canCreate = canModule('Store', 'create');
   const canEdit = canModule('Store', 'edit');
   const canDelete = canModule('Store', 'delete');
@@ -219,10 +220,10 @@ export default function StoreCategoriesScreen({ navigation }: Props) {
 
       <ActionSheet visible={selected !== null} title={selected?.name} actions={sheetActions} onClose={() => setSelected(null)} />
 
-      <Modal visible={renaming !== null} transparent animationType="slide" onRequestClose={() => !saving && setRenaming(null)}>
+      <Modal visible={renaming !== null} transparent animationType="slide" onRequestClose={() => !saving && setRenaming(null)} statusBarTranslucent>
         <KeyboardAvoidingView behavior="padding" style={styles.flex}>
           <Pressable style={styles.backdrop} onPress={() => !saving && setRenaming(null)}>
-            <Pressable style={[styles.sheet, { backgroundColor: theme.colors.card }]} onPress={() => undefined}>
+            <Pressable style={[styles.sheet, { backgroundColor: theme.colors.card, paddingBottom: insets.bottom + spacing.xl }]} onPress={() => undefined}>
               <Text style={[styles.sheetTitle, text]}>{t('store.CATEGORIES.RENAME')}</Text>
               <TextInput
                 style={[styles.input, styles.sheetInput, { borderColor: theme.colors.inputBorder, backgroundColor: theme.colors.inputBackground, color: theme.colors.inputText }]}
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
   suggested: { gap: spacing.sm, marginTop: spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: borderRadius.xl, padding: spacing.lg },
-  rowTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  rowTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: 24, includeFontPadding: false, textAlignVertical: 'center' },
   empty: { fontSize: 14, fontFamily: 'Cairo_400Regular', textAlign: 'center', paddingVertical: spacing['2xl'] },
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
   sheet: { ...sheetFrame, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: spacing.xl, gap: spacing.sm },

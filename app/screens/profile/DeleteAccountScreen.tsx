@@ -64,7 +64,7 @@ export default function DeleteAccountScreen({ navigation }: Props) {
 
   const Bullet = ({ icon, text, color }: { icon: keyof typeof Ionicons.glyphMap; text: string; color: string }) => (
     <View style={styles.bulletRow}>
-      <Ionicons name={icon} size={18} color={color} />
+      <Ionicons name={icon} size={18} color={color} style={styles.bulletIcon} />
       <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>{text}</Text>
     </View>
   );
@@ -196,9 +196,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: spacing.sm,
   },
+  bulletIcon: {
+    marginTop: 2,
+  },
   bulletText: {
     flex: 1,
     fontSize: fontSize.sm,
+    lineHeight: 22,
     fontFamily: 'Cairo_400Regular',
     textAlign: 'left',
   },

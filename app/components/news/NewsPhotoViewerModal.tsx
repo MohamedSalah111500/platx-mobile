@@ -19,7 +19,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { Spinner } from '../ui/Spinner';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize, typography } from '../../theme/typography';
+import { fontSize, typography, buttonLineHeight } from '../../theme/typography';
 import { newsApi } from '../../services/api/news.api';
 import type { NewsComment } from '../../types/news.types';
 import { parseServerDate } from '../../utils/date';
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   closeBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { ...typography.headerTitle, flex: 1, textAlign: 'center' },
+  headerTitle: { ...typography.headerTitle, flex: 1, textAlign: 'center', includeFontPadding: false },
 
   imageWrap: {
     width: '100%',
@@ -231,8 +231,8 @@ const styles = StyleSheet.create({
   image: { width: '100%', height: '100%' },
 
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, padding: spacing.xl },
-  emptyTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', marginTop: spacing.sm, textAlign: 'left' },
-  emptySub: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
+  emptyTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', marginTop: spacing.sm, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.base), includeFontPadding: false },
+  emptySub: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
 
   commentRow: {
     flexDirection: 'row',
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   bubbleHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   authorName: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', flexShrink: 1, textAlign: 'left' },
   staffPill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: borderRadius.full },
-  staffPillText: { fontSize: 14, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  staffPillText: { fontSize: 14, fontFamily: 'Cairo_700Bold', textAlign: 'left', lineHeight: buttonLineHeight(14), includeFontPadding: false },
   commentText: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', lineHeight: 20, marginTop: 4, textAlign: 'left' },
   bubbleFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
   timeText: { fontSize: 14, fontFamily: 'Cairo_400Regular', textAlign: 'left' },

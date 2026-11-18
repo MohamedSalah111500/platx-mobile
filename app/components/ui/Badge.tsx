@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '@theme/ThemeProvider';
 import { spacing, borderRadius } from '@theme/spacing';
-import { fontSize } from '@theme/typography';
+import { fontSize, buttonLineHeight } from '@theme/typography';
 
 type BadgeVariant = 'primary' | 'success' | 'warning' | 'danger' | 'info';
 
@@ -59,7 +59,10 @@ export function Badge({
       color: '#ffffff',
       fontSize: fontSize.xs,
       fontFamily: 'Cairo_600SemiBold',
-      textAlign: 'left',
+      lineHeight: buttonLineHeight(fontSize.xs),
+      textAlign: 'center',
+      textAlignVertical: 'center',
+      includeFontPadding: false,
     },
   });
 

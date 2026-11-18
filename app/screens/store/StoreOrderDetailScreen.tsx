@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
@@ -135,6 +135,7 @@ export default function StoreOrderDetailScreen({ navigation, route }: Props) {
   const money = useStoreMoney();
   const formatDate = useStoreDate();
   const tabBarSpace = useTabBarSpace();
+  const insets = useSafeAreaInsets();
   const canEdit = !mine && canModule('Store', 'edit');
 
   const [order, setOrder] = useState<StoreOrder | null>(null);
@@ -429,9 +430,9 @@ export default function StoreOrderDetailScreen({ navigation, route }: Props) {
         {renderBody()}
       </ScrollView>
 
-      <Modal visible={receiptOpen} transparent animationType="fade" onRequestClose={() => setReceiptOpen(false)}>
-        <View style={styles.viewer}>
-          <TouchableOpacity style={styles.viewerClose} onPress={() => setReceiptOpen(false)} accessibilityRole="button" accessibilityLabel={t('common.close')}>
+      <Modal visible={receiptOpen} transparent animationType="fade" onRequestClose={() => setReceiptOpen(false)} statusBarTranslucent>
+        <View style={[styles.viewer, { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg }]}>
+          <TouchableOpacity style={[styles.viewerClose, { top: insets.top + spacing.sm }]} onPress={() => setReceiptOpen(false)} accessibilityRole="button" accessibilityLabel={t('common.close')}>
             <Ionicons name="close" size={28} color="#FFFFFF" />
           </TouchableOpacity>
           {receiptUrl ? <Image source={{ uri: getFullImageUrl(receiptUrl) }} style={styles.viewerImage} resizeMode="contain" accessibilityLabel={t('store.TRANSFER.RECEIPT')} /> : null}
@@ -443,10 +444,10 @@ export default function StoreOrderDetailScreen({ navigation, route }: Props) {
         </View>
       </Modal>
 
-      <Modal visible={reasonAction !== null} transparent animationType="slide" onRequestClose={() => !busy && setReasonAction(null)}>
+      <Modal visible={reasonAction !== null} transparent animationType="slide" onRequestClose={() => !busy && setReasonAction(null)} statusBarTranslucent>
         <KeyboardAvoidingView behavior="padding" style={styles.flex}>
           <Pressable style={styles.backdrop} onPress={() => !busy && setReasonAction(null)}>
-            <Pressable style={[styles.sheet, { backgroundColor: theme.colors.card }]} onPress={() => undefined}>
+            <Pressable style={[styles.sheet, { backgroundColor: theme.colors.card, paddingBottom: insets.bottom + spacing.xl }]} onPress={() => undefined}>
               <Text style={[styles.sheetTitle, text]}>
                 {t(reasonAction === 'reject' ? 'store.ORDERS.REJECT_REASON' : 'store.ORDERS.CANCEL_REASON_OPTIONAL')}
               </Text>
@@ -501,7 +502,7 @@ const styles = StyleSheet.create({
   thumbImage: { width: '100%', height: '100%' },
   itemName: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
   itemTotal: { fontSize: 14, fontFamily: 'Cairo_700Bold' },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth },
+  totalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth },
   totalLabel: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold' },
   field: { gap: 2, paddingVertical: spacing.xs },
   fieldLabel: { fontSize: 14, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
@@ -510,12 +511,12 @@ const styles = StyleSheet.create({
   contactRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
   contact: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: borderRadius.lg },
   receiptButton: { alignSelf: 'flex-start', marginTop: spacing.xs },
-  contactText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold' },
+  contactText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', lineHeight: 20, includeFontPadding: false, textAlignVertical: 'center' },
   step: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  stepLabel: { flex: 1, fontSize: 14, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
+  stepLabel: { flex: 1, fontSize: 14, fontFamily: 'Cairo_500Medium', textAlign: 'left', lineHeight: 20, includeFontPadding: false, textAlignVertical: 'center' },
   actions: { gap: spacing.sm },
   viewer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center', padding: spacing.lg, gap: spacing.md },
-  viewerClose: { position: 'absolute', top: spacing['3xl'], right: spacing.lg, padding: spacing.sm, zIndex: 1 },
+  viewerClose: { position: 'absolute', end: spacing.lg, padding: spacing.sm, zIndex: 1 },
   viewerImage: { width: '100%', height: '75%' },
   viewerLink: { color: '#FFFFFF', fontSize: 14, fontFamily: 'Cairo_600SemiBold', textDecorationLine: 'underline' },
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },

@@ -7,7 +7,7 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { Avatar } from '../ui/Avatar';
 import { SearchPickerSheet } from '../ui/SearchPickerSheet';
 import { spacing } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 import { groupsApi } from '../../services/api/groups.api';
 import { staffApi } from '../../services/api/staff.api';
 import { libraryApi } from '../../services/api/library.api';
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   addButton: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: 16, padding: spacing.md },
   body: { flex: 1 },
-  name: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  name: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.base), includeFontPadding: false },
   meta: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
   fileIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   iconButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },

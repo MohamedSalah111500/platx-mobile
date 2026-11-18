@@ -6,7 +6,7 @@ import { getExampleNumber, type CountryCode } from 'libphonenumber-js/mobile';
 import examples from 'libphonenumber-js/mobile/examples';
 import { useTheme } from '@theme/ThemeProvider';
 import { spacing } from '@theme/spacing';
-import { typography, fontSize } from '@theme/typography';
+import { typography, fontSize, buttonLineHeight } from '@theme/typography';
 import { useRTL } from '../../i18n/RTLProvider';
 import { PHONE_COUNTRIES, PRIORITY_PHONE_COUNTRY_COUNT, type PhoneCountry } from '../../utils/phoneCountries';
 import { flagEmoji, normalizeSearch } from '../../utils/phoneNumber';
@@ -168,11 +168,15 @@ const styles = StyleSheet.create({
   flag: {
     fontSize: 20,
     textAlign: 'left',
+    lineHeight: buttonLineHeight(20),
+    includeFontPadding: false,
   },
   callingCode: {
     fontSize: fontSize.base,
     fontFamily: 'Cairo_600SemiBold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.base),
+    includeFontPadding: false,
   },
   input: {
     flex: 1,
@@ -203,6 +207,7 @@ const styles = StyleSheet.create({
     ...typography.h3,
     textAlign: 'center',
     marginBottom: spacing.md,
+    includeFontPadding: false,
   },
   search: {
     flexDirection: 'row',

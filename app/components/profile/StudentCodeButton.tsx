@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
+import { typography, buttonLineHeight } from '../../theme/typography';
 import { QrCode } from '../ui/QrCode';
 
 import { dialogFrame } from '../../utils/responsive';
@@ -67,6 +67,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     writingDirection: 'ltr',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   backdrop: {
     flex: 1,

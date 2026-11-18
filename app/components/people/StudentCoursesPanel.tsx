@@ -6,7 +6,7 @@ import { useDisplayFormat } from '../../hooks/useDisplayFormat';
 import { Spinner } from '../ui/Spinner';
 import { ErrorRetry } from '../ui/ErrorRetry';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 import { coursesApi } from '../../services/api/courses.api';
 import { parseServerDate } from '../../utils/date';
 import { ENROLLMENT_STATUS, type EnrollmentHistoryItem } from '../../types/course.types';
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   name: { flex: 1, fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   pill: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: borderRadius.full },
-  pillText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  pillText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(14), includeFontPadding: false },
   meta: { fontSize: 14, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   track: { flex: 1, height: 6, borderRadius: 3, overflow: 'hidden' },

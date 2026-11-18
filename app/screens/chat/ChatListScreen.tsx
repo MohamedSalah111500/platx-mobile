@@ -20,7 +20,7 @@ import { useRTL } from '../../i18n/RTLProvider';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Spinner } from '../../components/ui/Spinner';
 import { spacing } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
+import { typography, fontSize, buttonLineHeight } from '../../theme/typography';
 import { groupsApi } from '../../services/api/groups.api';
 import { subGroupsApi } from '../../services/api/subgroups.api';
 import { chatApi } from '../../services/api/chat.api';
@@ -342,6 +342,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.xs),
+    includeFontPadding: false,
   },
   listContent: {
     paddingHorizontal: spacing.xl,

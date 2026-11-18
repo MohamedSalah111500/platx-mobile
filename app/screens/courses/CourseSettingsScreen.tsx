@@ -13,7 +13,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { CourseAvailabilityBadge } from '../../components/course/CourseAvailabilityBadge';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize, typography } from '../../theme/typography';
+import { fontSize, typography, buttonLineHeight } from '../../theme/typography';
 import { coursesApi } from '../../services/api/courses.api';
 import { isValidDateInput, resolveCourseAvailability, toDateInputValue } from '../../utils/courseAvailability';
 import type { Course } from '../../types/course.types';
@@ -219,7 +219,7 @@ function createStyles(theme: any) {
     rowHint: { fontSize: fontSize.sm, lineHeight: 20, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'left' },
     scheduleFields: { marginTop: spacing.lg, gap: spacing.md },
     previewRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
-    previewLabel: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', color: theme.colors.textMuted, textAlign: 'left' },
+    previewLabel: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', color: theme.colors.textMuted, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
     previewOpen: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.success, textAlign: 'left' },
   });
 }

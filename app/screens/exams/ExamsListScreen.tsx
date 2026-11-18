@@ -22,7 +22,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { spacing } from '../../theme/spacing';
-import { fontSize, typography } from '../../theme/typography';
+import { fontSize, typography, buttonLineHeight } from '../../theme/typography';
 import { examApi } from '../../services/api/exam.api';
 import { API_CONFIG } from '../../config';
 import type { ExamsStackParamList } from '../../types/navigation.types';
@@ -159,7 +159,7 @@ export default function ExamsListScreen({ navigation }: Props) {
             {item.name}
           </Text>
           <View style={styles.metaRow}>
-            <Ionicons name={getExamTypeIcon(item.onlineType) as any} size={11} color={theme.colors.textMuted} />
+            <Ionicons name={getExamTypeIcon(item.onlineType) as any} size={14} color={theme.colors.textMuted} />
             <Text style={[styles.metaText, { color: theme.colors.textMuted }]}>
               {getExamTypeLabel(item.onlineType)}
             </Text>
@@ -284,6 +284,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.xs),
+    includeFontPadding: false,
   },
   header: {
     flexDirection: 'row',
@@ -300,7 +302,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    marginHorizontal: spacing.lg,
+    marginHorizontal: spacing.xl,
     marginBottom: spacing.md,
     padding: spacing.md,
     borderRadius: 12,
@@ -309,9 +311,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_500Medium',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.sm),
+    includeFontPadding: false,
   },
   listContent: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingBottom: 100,
     gap: spacing.sm,
   },
@@ -348,6 +352,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Cairo_500Medium',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   metaDot: {
     fontSize: 14,

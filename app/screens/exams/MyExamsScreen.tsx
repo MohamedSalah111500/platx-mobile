@@ -12,7 +12,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { spacing } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 import { examApi } from '../../services/api/exam.api';
 import type { ExamsStackParamList } from '../../types/navigation.types';
 import type { ExamHistoryItem } from '../../types/exam.types';
@@ -157,20 +157,20 @@ export default function MyExamsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   list: { padding: spacing.lg, paddingBottom: 60, gap: spacing.md },
-  subtitle: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
+  subtitle: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   card: { borderRadius: 14, padding: spacing.md, gap: spacing.sm },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   cardTitleWrap: { flex: 1, gap: 2 },
   title: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   meta: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
   chip: { paddingHorizontal: 10, paddingVertical: 2, borderRadius: 10 },
-  chipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  chipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   scoreRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   score: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   track: { height: 6, borderRadius: 3, overflow: 'hidden' },
   fill: { height: 6, borderRadius: 3 },
   footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   counts: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  count: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', marginEnd: spacing.sm, textAlign: 'left' },
-  link: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  count: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', marginEnd: spacing.sm, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
+  link: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
 });

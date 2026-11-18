@@ -5,6 +5,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { COURSE_AVAILABILITY, type CourseAvailability } from '../../types/course.types';
 import { spacing, borderRadius } from '../../theme/spacing';
+import { buttonLineHeight } from '../../theme/typography';
 
 interface CourseAvailabilityBadgeProps {
   availability: CourseAvailability;
@@ -25,7 +26,7 @@ export function CourseAvailabilityBadge({ availability, forManager = false, styl
 
   return (
     <View style={[styles.badge, { backgroundColor: color + '1A', borderColor: color + '55' }, style]}>
-      <Ionicons name={upcoming ? 'time-outline' : 'lock-closed-outline'} size={12} color={color} />
+      <Ionicons name={upcoming ? 'time-outline' : 'lock-closed-outline'} size={14} color={color} />
       <Text style={[styles.text, { color }]}>{label}</Text>
     </View>
   );
@@ -42,5 +43,5 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
     borderWidth: 1,
   },
-  text: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  text: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(14), includeFontPadding: false },
 });

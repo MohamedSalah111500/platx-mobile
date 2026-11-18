@@ -11,7 +11,7 @@ import { Spinner } from '../ui/Spinner';
 import { EmptyState } from '../ui/EmptyState';
 import { ErrorRetry } from '../ui/ErrorRetry';
 import { spacing } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 import { reservationsApi } from '../../services/api/reservations.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { parseServerDate } from '../../utils/date';
@@ -174,12 +174,12 @@ function createStyles(theme: any) {
     top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
     name: { flex: 1, fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', color: theme.colors.text, textAlign: 'left' },
     pill: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: 999 },
-    pillText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
+    pillText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
     course: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.textSecondary, textAlign: 'left' },
     meta: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'left' },
     bottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, marginTop: 4 },
     receipt: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    receiptText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.primary },
+    receiptText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.primary, lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   });
 }
 

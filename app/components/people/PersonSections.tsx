@@ -4,7 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { spacing } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -81,5 +81,5 @@ const styles = StyleSheet.create({
   body: { flex: 1 },
   label: { fontSize: 14, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
   value: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
-  action: { flex: 1, fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  action: { flex: 1, fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.base), includeFontPadding: false },
 });

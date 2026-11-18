@@ -15,6 +15,7 @@ import {
   PermissionsAndroid,
   // TurboModuleRegistry,
   Linking,
+  BackHandler,
 } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -131,6 +132,22 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
   const [submittingPayment, setSubmittingPayment] = useState(false);
 
   const chatListRef = useRef<FlatList>(null);
+  const exitingRef = useRef(false);
+
+  const exitRoom = useCallback(
+    (notice?: { title: string; message: string }) => {
+      if (exitingRef.current) return;
+      exitingRef.current = true;
+      liveRealtime.leave();
+      setParticipantsVisible(false);
+      setPaymentModalVisible(false);
+      setChatVisible(false);
+      if (navigation.canGoBack()) navigation.goBack();
+      else navigation.navigate('Main' as never);
+      if (notice) setTimeout(() => Alert.alert(notice.title, notice.message), 400);
+    },
+    [navigation],
+  );
   // // Join already answers with a token bound to a server-assigned Agora uid. Reusing
   // // it avoids a second round trip and keeps two people from picking the same uid,
   // // which Agora resolves by kicking the first one out of the channel.
@@ -601,8 +618,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
         signalRService.onStudentRemoved((data: any) => {
           if (!mounted) return;
           if (data.studentId === user.studentId) {
-            Alert.alert(t('live.removed'), t('live.youWereRemoved'));
-            navigation.goBack();
+            exitRoom({ title: t('live.removed'), message: t('live.youWereRemoved') });
           }
           setParticipants((prev) =>
             prev.filter((p) => p.studentId !== data.studentId),
@@ -611,8 +627,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
 
         signalRService.onLiveSessionEnded(() => {
           if (!mounted) return;
-          Alert.alert(t('live.ended'), t('live.sessionEnded'));
-          navigation.goBack();
+          exitRoom({ title: t('live.ended'), message: t('live.sessionEnded') });
         });
 
         signalRService.onHandRaised((data: any) => {
@@ -731,8 +746,7 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
               liveClassroomId: roomId,
               teacherId: (user.studentId ?? 0),
             });
-            Alert.alert(t('live.ended'), t('live.sessionEnded'));
-            navigation.goBack();
+            exitRoom({ title: t('live.ended'), message: t('live.sessionEnded') });
           } catch {
             Alert.alert(t('common.error'), t('live.endSessionFailed'));
           }
@@ -750,11 +764,20 @@ export default function LiveClassroomScreen({ navigation, route }: Props) {
         {
           text: t('live.leave'),
           style: 'destructive',
-          onPress: () => navigation.goBack(),
+          onPress: () => exitRoom(),
         },
       ]);
     }
   };
+
+  useEffect(() => {
+    if (!joined) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleEndOrLeave();
+      return true;
+    });
+    return () => subscription.remove();
+  });
 
   const handleToggleChat = () => {
     setChatVisible((v) => !v);

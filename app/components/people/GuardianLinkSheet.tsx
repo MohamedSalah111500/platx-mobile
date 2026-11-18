@@ -9,7 +9,7 @@ import { Button } from '../ui/Button';
 import { Spinner } from '../ui/Spinner';
 import { QrCode } from '../ui/QrCode';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize, typography } from '../../theme/typography';
+import { fontSize, typography, buttonLineHeight } from '../../theme/typography';
 import { guardianLinksApi } from '../../services/api/studentAccess.api';
 import { parseServerDate } from '../../utils/date';
 import type { GuardianLink, GuardianLinkCode } from '../../types/people.types';
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: spacing.sm, alignSelf: 'stretch' },
   section: { fontSize: 14, fontFamily: 'Cairo_700Bold', textAlign: 'left', marginTop: spacing.sm },
   link: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  linkTitle: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  linkTitle: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(14), includeFontPadding: false },
 });
 
 export default GuardianLinkSheet;

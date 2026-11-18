@@ -14,7 +14,7 @@ import { ScreenHeader } from '../ui/ScreenHeader';
 import { Spinner } from '../ui/Spinner';
 import { ErrorRetry } from '../ui/ErrorRetry';
 import { spacing } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
+import { typography, fontSize, buttonLineHeight } from '../../theme/typography';
 import type { ExamResult, ExamQuestionResult } from '../../types/exam.types';
 
 interface Props {
@@ -370,6 +370,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.sm),
+    includeFontPadding: false,
   },
   statusChip: {
     flexDirection: 'row',
@@ -383,6 +385,8 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 14,
     fontFamily: 'Cairo_700Bold',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   statsRow: {
     flexDirection: 'row',
@@ -403,11 +407,15 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.base),
+    includeFontPadding: false,
   },
   statLabel: {
     fontSize: 14,
     fontFamily: 'Cairo_500Medium',
     textAlign: 'center',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   // Questions section
   questionsSection: {

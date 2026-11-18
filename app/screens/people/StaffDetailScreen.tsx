@@ -139,6 +139,6 @@ function createStyles(theme: any) {
     hero: { borderRadius: 24, alignItems: 'center', padding: spacing.xl, gap: spacing.sm },
     heroName: { ...typography.h3, color: '#FFFFFF', textAlign: 'center' },
     heroPill: { paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.2)' },
-    heroPillText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', color: '#FFFFFF' },
+    heroPillText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', color: '#FFFFFF', lineHeight: 20, includeFontPadding: false, textAlignVertical: 'center' },
   });
 }

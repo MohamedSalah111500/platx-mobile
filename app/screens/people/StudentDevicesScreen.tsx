@@ -231,9 +231,9 @@ function createStyles(theme: any) {
     cardTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
     title: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', color: theme.colors.text, textAlign: 'left' },
     meta: { fontSize: 14, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'left' },
-    pill: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: borderRadius.full },
+    pill: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: borderRadius.full, alignItems: 'center', justifyContent: 'center' },
     selfStart: { alignSelf: 'flex-start' },
-    pillText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold' },
+    pillText: { fontSize: 14, lineHeight: 20, fontFamily: 'Cairo_600SemiBold', includeFontPadding: false, textAlignVertical: 'center' },
     section: { fontSize: 14, fontFamily: 'Cairo_700Bold', color: theme.colors.textMuted, textAlign: 'left', marginTop: spacing.md },
     empty: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'center', paddingVertical: spacing.md },
   });

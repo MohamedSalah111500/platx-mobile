@@ -20,7 +20,7 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { Spinner } from '../../components/ui/Spinner';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { spacing } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
+import { typography, fontSize, buttonLineHeight } from '../../theme/typography';
 import { examApi } from '../../services/api/exam.api';
 import { API_CONFIG } from '../../config';
 import type { ExamsStackParamList } from '../../types/navigation.types';
@@ -552,6 +552,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   // Scroll
   scrollView: { flex: 1 },
@@ -675,6 +677,7 @@ const styles = StyleSheet.create({
     ...typography.button,
     color: '#fff',
     fontSize: fontSize.base,
+    includeFontPadding: false,
   },
   // Countdown
   countdownContainer: {
@@ -696,6 +699,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_700Bold',
     marginBottom: spacing.xl,
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.lg),
+    includeFontPadding: false,
   },
   countdownRow: {
     flexDirection: 'row',
@@ -728,5 +733,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_500Medium',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.sm),
+    includeFontPadding: false,
   },
 });

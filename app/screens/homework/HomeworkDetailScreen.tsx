@@ -21,7 +21,7 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { Spinner } from '../../components/ui/Spinner';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { spacing } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
+import { typography, fontSize, buttonLineHeight } from '../../theme/typography';
 import { absUrl } from '../../utils/absUrl';
 import { AudioFeedback } from '../../components/homework/AudioFeedback';
 import { homeworkApi } from '../../services/api/homework.api';
@@ -250,14 +250,14 @@ export default function HomeworkDetailScreen({ navigation, route }: Props) {
         {/* Meta */}
         <View style={styles.metaRow}>
           <View style={[styles.metaChip, { backgroundColor: theme.colors.card }]}>
-            <Ionicons name="star-outline" size={13} color={theme.colors.primary} />
+            <Ionicons name="star-outline" size={16} color={theme.colors.primary} />
             <Text style={[styles.metaChipText, { color: theme.colors.textSecondary }]}>
               {hw.totalScore} {t('homework.points')}
             </Text>
           </View>
           {dueLabel && (
             <View style={[styles.metaChip, { backgroundColor: theme.colors.card }]}>
-              <Ionicons name="calendar-outline" size={13} color={theme.colors.primary} />
+              <Ionicons name="calendar-outline" size={16} color={theme.colors.primary} />
               <Text style={[styles.metaChipText, { color: theme.colors.textSecondary }]}>
                 {t('homework.due')}: {dueLabel}
               </Text>
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: 12,
   },
-  bannerTitle: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  bannerTitle: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   bannerText: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   metaRow: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
   metaChip: {
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 10,
   },
-  metaChipText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  metaChipText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(14), includeFontPadding: false },
   card: { borderRadius: 16, padding: spacing.lg, gap: spacing.sm },
   sectionLabel: {
     fontSize: 14,
@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
   answerBody: { flex: 1 },
   answerState: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', marginTop: 2, textAlign: 'left' },
   scoreChip: { paddingHorizontal: 10, paddingVertical: 2, borderRadius: 10 },
-  scoreChipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  scoreChipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   fileRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -639,7 +639,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
   },
-  fileName: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
+  fileName: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   emptyFiles: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
   uploadBtn: {
     flexDirection: 'row',
@@ -652,7 +652,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginTop: 4,
   },
-  uploadBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  uploadBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   draftBtn: {
     flex: 1,
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 12,
   },
-  draftBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  draftBtnText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   submitBtn: {
     flex: 1.4,
     flexDirection: 'row',
@@ -673,5 +673,5 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 12,
   },
-  submitBtnText: { ...typography.button, color: '#fff', fontSize: fontSize.base },
+  submitBtnText: { ...typography.button, color: '#fff', fontSize: fontSize.base, includeFontPadding: false },
 });

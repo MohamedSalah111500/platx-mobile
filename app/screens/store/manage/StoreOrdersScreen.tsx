@@ -204,7 +204,7 @@ export default function StoreOrdersScreen({ navigation }: Props) {
     if (addonOff) {
       return (
         <View style={[styles.banner, { backgroundColor: theme.colors.card }]}>
-          <Ionicons name="lock-closed-outline" size={22} color={theme.colors.textMuted} />
+          <Ionicons name="lock-closed-outline" size={22} color={theme.colors.textMuted} style={styles.bannerIcon} />
           <View style={styles.flex}>
             <Text style={[styles.bannerTitle, text]}>{t('store.ADDON_OFF_TITLE')}</Text>
             <Text style={[styles.meta, muted]}>{t(isAdmin ? 'store.ADDON_OFF_HINT_OWNER' : 'store.ADDON_OFF_HINT_STAFF')}</Text>
@@ -215,7 +215,7 @@ export default function StoreOrdersScreen({ navigation }: Props) {
     if (settings && !settings.enabled) {
       return (
         <View style={[styles.banner, { backgroundColor: theme.colors.card }]}>
-          <Ionicons name="storefront-outline" size={22} color={theme.colors.warning} />
+          <Ionicons name="storefront-outline" size={22} color={theme.colors.warning} style={styles.bannerIcon} />
           <View style={styles.flex}>
             <Text style={[styles.bannerTitle, text]}>{t('store.CLOSED_TITLE')}</Text>
             <Text style={[styles.meta, muted]}>{t(isAdmin ? 'store.CLOSED_HINT' : 'store.CLOSED_HINT_STAFF')}</Text>
@@ -351,7 +351,8 @@ const styles = StyleSheet.create({
   headerBlock: { gap: spacing.md, marginBottom: spacing.xs },
   tabs: { flexDirection: 'row', gap: spacing.sm, paddingVertical: 2 },
   banner: { flexDirection: 'row', gap: spacing.md, borderRadius: borderRadius.xl, padding: spacing.lg, alignItems: 'flex-start' },
-  bannerTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  bannerTitle: { fontSize: fontSize.base, lineHeight: 24, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  bannerIcon: { marginTop: 1 },
   bannerAction: { flexDirection: 'row', marginTop: spacing.sm },
   meta: { fontSize: 14, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
   clear: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },

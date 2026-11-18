@@ -18,7 +18,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { spacing } from '../../theme/spacing';
-import { fontSize, typography } from '../../theme/typography';
+import { fontSize, typography, buttonLineHeight } from '../../theme/typography';
 import { homeworkApi } from '../../services/api/homework.api';
 import type { HomeworkStackParamList } from '../../types/navigation.types';
 import {
@@ -136,7 +136,7 @@ export default function HomeworkListScreen({ navigation }: Props) {
             {item.name}
           </Text>
           <View style={styles.metaRow}>
-            <Ionicons name={sm.icon} size={11} color={sm.color} />
+            <Ionicons name={sm.icon} size={14} color={sm.color} />
             <Text style={[styles.metaText, { color: sm.color }]}>{sm.label}</Text>
             <Text style={[styles.metaDot, { color: theme.colors.textMuted }]}>·</Text>
             <Text style={[styles.metaText, { color: theme.colors.textMuted }]}>
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
   },
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingBottom: 100,
     gap: spacing.sm,
   },
@@ -296,9 +296,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Cairo_500Medium',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   metaDot: {
     fontSize: 14,
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
 });

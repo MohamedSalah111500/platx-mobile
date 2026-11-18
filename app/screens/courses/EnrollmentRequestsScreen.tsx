@@ -13,7 +13,7 @@ import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { Chip } from '../../components/ui/Chip';
 import { ProcessedRequestsList } from '../../components/courses/ProcessedRequestsList';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 import { reservationsApi } from '../../services/api/reservations.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { PAYMENT_METHOD_BANK, PAYMENT_METHOD_INSTAPAY, PAYMENT_METHOD_VODAFONE, type PendingReservation } from '../../types/reservation.types';
@@ -204,7 +204,7 @@ function createStyles(theme: any) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     courseName: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', color: theme.colors.textSecondary, textAlign: 'left' },
-    list: { paddingHorizontal: spacing.lg, paddingTop: spacing.xs },
+    list: { paddingHorizontal: spacing.xl, paddingTop: spacing.xs },
     tabsWrap: { flexGrow: 0 },
     tabs: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
     card: {
@@ -219,12 +219,12 @@ function createStyles(theme: any) {
     email: { fontSize: fontSize.xs, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'left' },
     date: { fontSize: fontSize.xs, fontFamily: 'Cairo_500Medium', color: theme.colors.textMuted, textAlign: 'left' },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    metaText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', color: theme.colors.textSecondary, textAlign: 'left' },
+    metaText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', color: theme.colors.textSecondary, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
     messageBox: { backgroundColor: theme.colors.surface, borderRadius: borderRadius.md, padding: spacing.sm },
     messageText: { fontSize: fontSize.sm, lineHeight: 20, fontFamily: 'Cairo_400Regular', color: theme.colors.textSecondary, textAlign: 'left' },
     proof: { width: '100%', aspectRatio: 16 / 9, maxHeight: 320, borderRadius: borderRadius.lg, backgroundColor: theme.colors.surface },
     actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
     actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: spacing.sm + 2, borderRadius: borderRadius.full },
-    actionText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+    actionText: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   });
 }

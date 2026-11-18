@@ -193,6 +193,8 @@ function createStyles(theme: Theme) {
     },
     badgeText: {
       ...typography.bodySmall,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
     },
     meta: {
       ...typography.bodySmall,

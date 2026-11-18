@@ -6,7 +6,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { Spinner } from './Spinner';
 import { spacing } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 import { libraryApi } from '../../services/api/library.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
 
@@ -79,9 +79,9 @@ const styles = StyleSheet.create({
   box: { height: 160, borderRadius: 16, borderWidth: 1, borderStyle: 'dashed', overflow: 'hidden', justifyContent: 'center' },
   image: { width: '100%', height: '100%' },
   placeholder: { alignItems: 'center', gap: spacing.sm },
-  hint: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium' },
+  hint: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   remove: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.sm, alignSelf: 'flex-start' },
-  removeText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
+  removeText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
 });
 
 export default ImageUploadField;

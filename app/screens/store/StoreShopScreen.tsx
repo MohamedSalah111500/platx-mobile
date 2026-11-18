@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cartBadgeText: { fontSize: fontSize.xs, fontFamily: 'Cairo_600SemiBold', lineHeight: 20 },
+  cartBadgeText: { fontSize: fontSize.xs, fontFamily: 'Cairo_600SemiBold', lineHeight: 20, includeFontPadding: false, textAlignVertical: 'center' },
   filters: { gap: spacing.sm, paddingHorizontal: spacing.xs, paddingBottom: spacing.sm },
   chips: { gap: spacing.sm, paddingVertical: 2 },
   results: { ...typography.bodySmall, fontSize: fontSize.sm, textAlign: 'left' },
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
   },
-  saleText: { color: '#FFFFFF', fontSize: fontSize.xs, fontFamily: 'Cairo_600SemiBold' },
+  saleText: { color: '#FFFFFF', fontSize: fontSize.xs, lineHeight: 20, fontFamily: 'Cairo_600SemiBold', includeFontPadding: false, textAlignVertical: 'center' },
   addButton: {
     position: 'absolute',
     bottom: spacing.sm,
@@ -439,5 +439,5 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   toastText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
-  toastAction: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold' },
+  toastAction: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', lineHeight: 20, includeFontPadding: false, textAlignVertical: 'center' },
 });

@@ -354,6 +354,9 @@ const styles = StyleSheet.create({
   },
   chipText: {
     ...typography.bodySmall,
+    textAlign: 'center',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   empty: {
     ...typography.body,

@@ -233,6 +233,8 @@ function createStyles(theme: Theme) {
     statusText: {
       ...typography.body,
       fontFamily: 'Cairo_700Bold',
+      includeFontPadding: false,
+      textAlignVertical: 'center',
     },
     grade: {
       ...typography.h3,
@@ -299,6 +301,8 @@ function createStyles(theme: Theme) {
     },
     pickedText: {
       ...typography.bodySmall,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
       fontFamily: 'Cairo_600SemiBold',
       color: '#FFFFFF',
     },

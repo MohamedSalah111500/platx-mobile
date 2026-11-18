@@ -19,7 +19,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize, typography } from '../../theme/typography';
+import { fontSize, typography, buttonLineHeight } from '../../theme/typography';
 import { studentsApi, type TopStudent } from '../../services/api/students.api';
 import { reservationsApi } from '../../services/api/reservations.api';
 import { REQUEST_ONLY } from '../../config/storePolicy';
@@ -219,5 +219,5 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: borderRadius.full,
   },
-  enrollPillText: { fontSize: 14, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
+  enrollPillText: { fontSize: 14, fontFamily: 'Cairo_700Bold', textAlign: 'left', lineHeight: buttonLineHeight(14), includeFontPadding: false },
 });

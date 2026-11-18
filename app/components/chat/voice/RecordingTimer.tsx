@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { useTheme } from '../../../theme/ThemeProvider';
-import { fontFamily, fontSize } from '../../../theme/typography';
+import { fontFamily, fontSize, buttonLineHeight } from '../../../theme/typography';
 import { formatVoiceTime } from './waveform';
 
 interface Props {
@@ -41,5 +41,5 @@ export function RecordingTimer({ elapsedMs, running }: Props) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  time: { fontSize: fontSize.base, fontFamily: fontFamily.semibold, minWidth: 44, textAlign: 'left', fontVariant: ['tabular-nums'] },
+  time: { fontSize: fontSize.base, fontFamily: fontFamily.semibold, minWidth: 44, textAlign: 'left', fontVariant: ['tabular-nums'], lineHeight: buttonLineHeight(fontSize.base), includeFontPadding: false },
 });

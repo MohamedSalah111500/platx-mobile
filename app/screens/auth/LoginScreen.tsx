@@ -356,6 +356,7 @@ function createStyles(theme: any) {
     googleButtonText: {
       ...typography.button,
       color: theme.colors.text,
+      includeFontPadding: false,
     },
   });
 }

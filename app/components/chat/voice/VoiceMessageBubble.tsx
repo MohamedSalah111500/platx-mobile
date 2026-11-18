@@ -4,7 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { useRTL } from '../../../i18n/RTLProvider';
 import { spacing } from '../../../theme/spacing';
-import { fontFamily, fontSize } from '../../../theme/typography';
+import { fontFamily, fontSize, buttonLineHeight } from '../../../theme/typography';
 import { VoiceWaveform } from './VoiceWaveform';
 import { useVoicePlayback } from './useVoicePlayback';
 import { voicePlayback } from './voicePlayback';
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   metaStart: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   metaEnd: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: { fontSize: fontSize.sm, fontFamily: fontFamily.medium, textAlign: 'left' },
+  metaText: { fontSize: fontSize.sm, fontFamily: fontFamily.medium, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   rateChip: {
     height: META_HEIGHT,
     minWidth: 40,
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  failureText: { flex: 1, fontSize: fontSize.sm, fontFamily: fontFamily.medium, textAlign: 'left' },
+  failureText: { flex: 1, fontSize: fontSize.sm, fontFamily: fontFamily.medium, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   retry: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  retryText: { fontSize: fontSize.sm, fontFamily: fontFamily.bold, textAlign: 'left' },
+  retryText: { fontSize: fontSize.sm, fontFamily: fontFamily.bold, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
 });

@@ -8,7 +8,7 @@ import { Spinner } from '../ui/Spinner';
 import { ErrorRetry } from '../ui/ErrorRetry';
 import { Button } from '../ui/Button';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 import { examApi } from '../../services/api/exam.api';
 import { parseServerDate } from '../../utils/date';
 import type { ExamHistoryItem } from '../../types/exam.types';
@@ -114,9 +114,9 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   titleWrap: { flex: 1 },
   name: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
-  meta: { fontSize: 14, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
+  meta: { fontSize: 14, fontFamily: 'Cairo_400Regular', textAlign: 'left', lineHeight: buttonLineHeight(14), includeFontPadding: false },
   pill: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: borderRadius.full },
-  pillText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  pillText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(14), includeFontPadding: false },
   scoreRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   score: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   spacer: { flex: 1 },

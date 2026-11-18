@@ -10,7 +10,7 @@ import {
   Platform,
   Modal,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { WebView } from 'react-native-webview';
 import * as WebBrowser from 'expo-web-browser';
@@ -23,7 +23,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { Spinner } from '../../components/ui/Spinner';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
+import { typography, fontSize, buttonLineHeight } from '../../theme/typography';
 import { coursesApi } from '../../services/api/courses.api';
 import apiClient, { getToken } from '../../services/api/client';
 import { FILE_MANAGER_URLS } from '../../services/api/endpoints';
@@ -103,6 +103,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
   const { lessonId, courseId, isCompleted: routeCompleted, isEnrolled: routeEnrolled } =
     route.params;
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const { t, isRTL } = useRTL();
   const { play } = useSound();
   const [lesson, setLesson] = useState<Lesson | null>(null);
@@ -685,10 +686,10 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
       )}
 
       {/* Document viewer */}
-      <Modal visible={docViewerOpen} animationType="slide" onRequestClose={closeDocViewer}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }} edges={['top']}>
+      <Modal visible={docViewerOpen} animationType="slide" onRequestClose={closeDocViewer} statusBarTranslucent>
+        <View style={{ flex: 1, backgroundColor: '#000', paddingTop: insets.top, paddingBottom: insets.bottom }}>
           <View style={styles.header}>
-            <TouchableOpacity style={[styles.backButton, { backgroundColor: 'rgba(255,255,255,0.12)' }]} onPress={closeDocViewer}>
+            <TouchableOpacity style={[styles.backButton, { backgroundColor: 'rgba(255,255,255,0.12)' }]} onPress={closeDocViewer} hitSlop={8} accessibilityRole="button">
               <Ionicons name="close" size={22} color="#fff" />
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: '#fff' }]} numberOfLines={1}>{lesson.title}</Text>
@@ -716,7 +717,7 @@ export default function LessonPlayerScreen({ navigation, route }: Props) {
               )}
             />
           ) : null}
-        </SafeAreaView>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -733,11 +734,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Cairo_500Medium',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   viewsNoticeTitle: {
     fontSize: 17,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'center',
+    lineHeight: buttonLineHeight(17),
+    includeFontPadding: false,
   },
   container: { flex: 1 },
   header: {
@@ -758,6 +763,7 @@ const styles = StyleSheet.create({
     ...typography.headerTitle,
     flex: 1,
     textAlign: 'center',
+    includeFontPadding: false,
   },
   completeButton: {
     width: 40,
@@ -812,6 +818,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: '#666',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.sm),
+    includeFontPadding: false,
   },
   // Document / file panel
   docPanel: {
@@ -836,6 +844,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_600SemiBold',
     color: '#fff',
     textAlign: 'center',
+    lineHeight: buttonLineHeight(fontSize.sm),
+    includeFontPadding: false,
   },
   viewOnlyText: {
     fontSize: 14,
@@ -868,6 +878,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.sm),
+    includeFontPadding: false,
   },
   // Info section
   infoScroll: {
@@ -904,6 +916,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   completedTag: {
     flexDirection: 'row',
@@ -915,6 +929,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_600SemiBold',
     color: '#34C38F',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   lessonTitle: {
     fontSize: fontSize.lg,
@@ -937,6 +953,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_500Medium',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.xs),
+    includeFontPadding: false,
   },
   descriptionWrap: {
     borderTopWidth: 1,
@@ -976,6 +994,8 @@ const styles = StyleSheet.create({
   completeCardSub: {
     fontSize: 14,
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   // Error
   errorContainer: {
@@ -996,6 +1016,7 @@ const styles = StyleSheet.create({
     ...typography.body,
     textAlign: 'center',
     marginBottom: spacing.lg,
+    includeFontPadding: false,
   },
   retryButton: {
     paddingHorizontal: spacing.xl,

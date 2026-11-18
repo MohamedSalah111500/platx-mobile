@@ -20,7 +20,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Spinner';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
+import { typography, fontSize, buttonLineHeight } from '../../theme/typography';
 import * as WebBrowser from 'expo-web-browser';
 import { courseManageApi } from '../../services/api/courseManage.api';
 import { coursesApi } from '../../services/api/courses.api';
@@ -460,7 +460,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
           {course.instructorName ? (
             <View style={styles.instructorRow}>
               <View style={[styles.instructorDot, { backgroundColor: theme.colors.primary + '22' }]}>
-                <Ionicons name="person" size={13} color={theme.colors.primary} />
+                <Ionicons name="person" size={16} color={theme.colors.primary} />
               </View>
               <Text style={[styles.instructorName, { color: theme.colors.textSecondary }]}>{course.instructorName}</Text>
             </View>
@@ -717,7 +717,7 @@ export default function CourseDetailScreen({ navigation, route }: Props) {
                           <View style={styles.lessonMeta}>
                             {durationMin != null && (
                               <View style={styles.lessonMetaChip}>
-                                <Ionicons name="time-outline" size={11} color={theme.colors.textMuted} />
+                                <Ionicons name="time-outline" size={14} color={theme.colors.textMuted} />
                                 <Text style={[styles.lessonMetaText, { color: theme.colors.textMuted }]}>{durationMin} {t('exams.min')}</Text>
                               </View>
                             )}
@@ -912,8 +912,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   manageIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  manageTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
-  manageSub: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left', marginTop: 1 },
+  manageTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.base), includeFontPadding: false },
+  manageSub: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left', marginTop: 1, lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
 
   backBtnFloat: {
     position: 'absolute',
@@ -1009,6 +1009,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_500Medium',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.sm),
+    includeFontPadding: false,
   },
   statsRow: {
     flexDirection: 'row',
@@ -1031,11 +1033,15 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.base),
+    includeFontPadding: false,
   },
   statLabel: {
     fontSize: 14,
     fontFamily: 'Cairo_500Medium',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   description: {
     fontSize: fontSize.sm,
@@ -1058,6 +1064,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Cairo_500Medium',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
 
   // Certificate card
@@ -1087,6 +1095,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_500Medium',
     marginTop: 2,
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
 
   // Sections
@@ -1189,6 +1199,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Cairo_400Regular',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   lessonTypePill: {
     paddingHorizontal: 7,
@@ -1199,6 +1211,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   lessonArrow: {
     width: 26,
@@ -1259,6 +1273,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontFamily: 'Cairo_600SemiBold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.xs),
+    includeFontPadding: false,
   },
   lessonPartChip: {
     alignSelf: 'flex-start',

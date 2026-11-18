@@ -230,6 +230,7 @@ const styles = StyleSheet.create({
   buttonText: {
     ...typography.button,
     color: '#FFFFFF',
+    includeFontPadding: false,
   },
   codeBlock: {
     borderTopWidth: 1,

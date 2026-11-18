@@ -22,7 +22,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
+import { typography, fontSize, buttonLineHeight } from '../../theme/typography';
 import { subGroupsApi } from '../../services/api/subgroups.api';
 import { groupsApi } from '../../services/api/groups.api';
 import { usePlatformAccess } from '../../store/platformAccess.store';
@@ -330,14 +330,14 @@ export default function SubGroupDetailScreen({ navigation, route }: Props) {
       />
 
       {isTeacher && (
-        <Modal visible={showAddModal} animationType="slide" transparent>
+        <Modal visible={showAddModal} animationType="slide" transparent onRequestClose={() => setShowAddModal(false)} statusBarTranslucent>
           <View style={ms.overlay}>
-            <View style={[ms.sheet, { backgroundColor: theme.colors.card }]}>
+            <View style={[ms.sheet, { backgroundColor: theme.colors.card, paddingBottom: insets.bottom + spacing.xl }]}>
               <View style={ms.sheetHeader}>
                 <Text style={[ms.sheetTitle, { color: theme.colors.text }]}>
                   {t('groups.addToSubGroup')}
                 </Text>
-                <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                <TouchableOpacity onPress={() => setShowAddModal(false)} hitSlop={8}>
                   <Ionicons name="close" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
               </View>
@@ -475,10 +475,14 @@ const s = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(16),
+    includeFontPadding: false,
   },
   statLabel: {
     fontSize: 14,
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
 
   // Search

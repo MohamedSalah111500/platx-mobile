@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { logger } from '../services/logger';
 import i18n from '../i18n/i18n.config';
+import { buttonLineHeight } from '../theme/typography';
 
 interface Props {
   children: ReactNode;
@@ -166,6 +167,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(16),
+    includeFontPadding: false,
   },
   linkButton: {
     paddingVertical: 12,

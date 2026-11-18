@@ -22,7 +22,7 @@ import { Button } from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Spinner';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize, typography } from '../../theme/typography';
+import { fontSize, typography, buttonLineHeight } from '../../theme/typography';
 import { reservationsApi } from '../../services/api/reservations.api';
 import { getFullImageUrl } from '../../utils/imageUrl';
 import { CoursePrice } from '../../components/course/CoursePrice';
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     marginBottom: spacing.lg,
   },
-  noticeText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
+  noticeText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
 
   proofPicker: {
     height: 180,
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   },
   proofPreview: { width: '100%', height: '100%' },
   proofEmpty: { alignItems: 'center', gap: spacing.sm },
-  proofEmptyText: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
+  proofEmptyText: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   changeProof: { alignSelf: 'center', paddingVertical: spacing.sm, marginBottom: spacing.sm },
   changeProofText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
 

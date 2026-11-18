@@ -130,6 +130,7 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: '#FFFFFF',
     textAlign: 'center',
+    includeFontPadding: false,
   },
   feedback: {
     marginHorizontal: spacing.xl,

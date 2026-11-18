@@ -201,7 +201,10 @@ const styles = StyleSheet.create({
   tabButtonText: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
-    textAlign: 'left',
+    textAlign: 'center',
+    lineHeight: 20,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   listContent: {
     paddingHorizontal: spacing.lg,
@@ -245,5 +248,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
+    lineHeight: 20,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
 });

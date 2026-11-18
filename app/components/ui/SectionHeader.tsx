@@ -46,6 +46,7 @@ const styles = StyleSheet.create({
   seeAll: {
     ...typography.bodySmall,
     fontFamily: 'Cairo_600SemiBold',
+    includeFontPadding: false,
   },
 });
 

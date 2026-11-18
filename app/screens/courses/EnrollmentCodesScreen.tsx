@@ -31,7 +31,7 @@ import { DateField } from '../../components/ui/DateField';
 import { SelectField } from '../../components/ui/SelectField';
 import { QrCode } from '../../components/ui/QrCode';
 import { spacing } from '../../theme/spacing';
-import { fontSize, typography } from '../../theme/typography';
+import { fontSize, typography, buttonLineHeight } from '../../theme/typography';
 import { courseManageApi } from '../../services/api/courseManage.api';
 import { parseServerDate } from '../../utils/date';
 import {
@@ -425,7 +425,7 @@ function createStyles(theme: any) {
     cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
     serial: { fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', color: theme.colors.text },
     pill: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: 999 },
-    pillText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
+    pillText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
     meta: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'left' },
     center: { textAlign: 'center' },
     label: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.text, textAlign: 'left' },

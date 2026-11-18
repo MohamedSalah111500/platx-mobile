@@ -245,7 +245,10 @@ function createStyles(theme: any, isDark: boolean) {
       color: '#fff',
       fontSize: 14,
       fontFamily: 'Cairo_700Bold',
-      textAlign: 'left',
+      textAlign: 'center',
+      lineHeight: 20,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
     },
     markAll: {
       flexDirection: 'row',
@@ -261,6 +264,9 @@ function createStyles(theme: any, isDark: boolean) {
       fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.primary,
       textAlign: 'left',
+      lineHeight: 20,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
     },
     openRow: {
       flexDirection: 'row',
@@ -273,6 +279,9 @@ function createStyles(theme: any, isDark: boolean) {
       fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.primary,
       textAlign: 'left',
+      lineHeight: 20,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
     },
     listContent: {
       paddingHorizontal: 16,

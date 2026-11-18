@@ -21,7 +21,7 @@ import { ImageUploadField } from '../../components/ui/ImageUploadField';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { SearchPickerSheet } from '../../components/ui/SearchPickerSheet';
 import { spacing } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 import { courseManageApi } from '../../services/api/courseManage.api';
 import { libraryApi, VIDEO_STORAGE_KEY, FILE_STORAGE_KEY, type UploadAsset } from '../../services/api/library.api';
 import { REQUEST_ONLY } from '../../config/storePolicy';
@@ -491,7 +491,7 @@ function createStyles(theme: any) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     content: { paddingHorizontal: spacing.xl, paddingTop: spacing.sm },
-    label: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.text, marginBottom: spacing.sm, textAlign: 'left' },
+    label: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.text, marginBottom: spacing.sm, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
     types: { gap: spacing.sm, paddingBottom: spacing.lg },
     field: { marginBottom: spacing.lg },
     box: {
@@ -504,7 +504,7 @@ function createStyles(theme: any) {
       backgroundColor: theme.colors.card,
     },
     boxBody: { flex: 1 },
-    boxTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', color: theme.colors.text, textAlign: 'left' },
+    boxTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', color: theme.colors.text, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.base), includeFontPadding: false },
     boxHint: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'left', marginTop: spacing.xs },
     link: { fontSize: fontSize.sm, fontFamily: 'Cairo_700Bold', color: theme.colors.primary },
     progress: { marginTop: spacing.sm, gap: spacing.xs },
@@ -519,7 +519,7 @@ function createStyles(theme: any) {
       backgroundColor: theme.colors.card,
     },
     pickerText: { flex: 1, fontSize: fontSize.base, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
-    error: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', color: theme.colors.danger, marginTop: spacing.xs, textAlign: 'left' },
+    error: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', color: theme.colors.danger, marginTop: spacing.xs, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
     spaced: { marginBottom: spacing.lg },
     delete: { marginTop: spacing.md },
   });

@@ -186,7 +186,7 @@ export function LessonReviewsSection({ lessonId }: { lessonId: number }) {
           {[5, 4, 3, 2, 1].map((star) => (
             <View key={star} style={styles.distRow}>
               <Text style={styles.distLabel}>{star}</Text>
-              <Ionicons name="star" size={12} color={theme.colors.warning} />
+              <Ionicons name="star" size={14} color={theme.colors.warning} />
               <View style={styles.bar}>
                 <View style={[styles.barFill, { width: `${percent(star)}%` }]} />
               </View>
@@ -327,7 +327,7 @@ function createStyles(theme: Theme) {
     average: { fontSize: 30, lineHeight: 38, fontFamily: 'Cairo_700Bold', color: theme.colors.text },
     distribution: { flex: 1, gap: 4 },
     distRow: { flexDirection: 'row', alignItems: 'center', gap: 4, direction: 'ltr' },
-    distLabel: { ...typography.bodySmall, color: theme.colors.text, width: 10 },
+    distLabel: { ...typography.bodySmall, color: theme.colors.text, width: 10, includeFontPadding: false },
     bar: { flex: 1, height: 6, borderRadius: 3, backgroundColor: theme.colors.border, overflow: 'hidden', marginHorizontal: 4 },
     barFill: { height: '100%', borderRadius: 3, backgroundColor: theme.colors.warning },
     distPct: { ...typography.bodySmall, color: theme.colors.textMuted, width: 40, textAlign: 'right' },
@@ -363,7 +363,7 @@ function createStyles(theme: Theme) {
     commentMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     commentText: { ...typography.bodySmall, color: theme.colors.text },
     mineBadge: { backgroundColor: theme.colors.primary + '1F', borderRadius: borderRadius.full, paddingHorizontal: spacing.sm },
-    mineBadgeText: { ...typography.bodySmall, color: theme.colors.primary },
+    mineBadgeText: { ...typography.bodySmall, color: theme.colors.primary, includeFontPadding: false },
     more: { alignItems: 'center', paddingVertical: spacing.sm },
   });
 }

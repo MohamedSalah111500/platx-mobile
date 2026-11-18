@@ -22,7 +22,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { fontSize, typography } from '../../theme/typography';
+import { fontSize, typography, buttonLineHeight } from '../../theme/typography';
 import { groupsApi } from '../../services/api/groups.api';
 import { subGroupsApi } from '../../services/api/subgroups.api';
 import { usePlatformAccess } from '../../store/platformAccess.store';
@@ -621,14 +621,14 @@ export default function GroupDetailScreen({ navigation, route }: Props) {
 
       {/* ── Invite Student Modal ── */}
       {isTeacher && (
-        <Modal visible={showInviteModal} animationType="slide" transparent>
+        <Modal visible={showInviteModal} animationType="slide" transparent onRequestClose={() => setShowInviteModal(false)} statusBarTranslucent>
           <View style={ms.overlay}>
-            <View style={[ms.sheet, { backgroundColor: theme.colors.card }]}>
+            <View style={[ms.sheet, { backgroundColor: theme.colors.card, paddingBottom: insets.bottom + spacing.xl }]}>
               <View style={ms.sheetHeader}>
                 <Text style={[ms.sheetTitle, { color: theme.colors.text }]}>
                   {t('groups.inviteStudent')}
                 </Text>
-                <TouchableOpacity onPress={() => setShowInviteModal(false)}>
+                <TouchableOpacity onPress={() => setShowInviteModal(false)} hitSlop={8}>
                   <Ionicons name="close" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
               </View>
@@ -880,6 +880,8 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Cairo_600SemiBold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
 
   // Info tab
@@ -902,6 +904,8 @@ const s = StyleSheet.create({
     fontSize: fontSize.lg,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.lg),
+    includeFontPadding: false,
   },
   infoGrade: {
     fontSize: 14,
@@ -932,10 +936,14 @@ const s = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(16),
+    includeFontPadding: false,
   },
   statLabel: {
     fontSize: 14,
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   infoRow: {
     flexDirection: 'row',
@@ -948,6 +956,8 @@ const s = StyleSheet.create({
   infoRowLabel: {
     fontSize: 14,
     textAlign: 'left',
+    lineHeight: buttonLineHeight(14),
+    includeFontPadding: false,
   },
   infoRowValue: {
     fontSize: 14,
@@ -1058,5 +1068,7 @@ const ms = StyleSheet.create({
     fontSize: fontSize.base,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.base),
+    includeFontPadding: false,
   },
 });

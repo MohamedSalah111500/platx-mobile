@@ -197,7 +197,7 @@ export default function StoreProductScreen({ navigation, route }: Props) {
             ) : null}
 
             <View style={[styles.infoCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-              <Ionicons name="bicycle-outline" size={20} color={theme.colors.primary} />
+              <Ionicons name="bicycle-outline" size={20} color={theme.colors.primary} style={styles.infoIcon} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.infoTitle, { color: theme.colors.text }]}>{t('store.SF.DELIVERY_TITLE')}</Text>
                 <Text style={[styles.meta, { color: theme.colors.textSecondary }]}>{t('store.SF.DELIVERY_TEXT')}</Text>
@@ -270,19 +270,20 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
   price: { fontSize: fontSize['2xl'], fontFamily: 'Cairo_700Bold' },
   listPrice: { fontSize: fontSize.base, fontFamily: 'Cairo_400Regular', textDecorationLine: 'line-through' },
-  saveBadge: { borderRadius: borderRadius.full, paddingHorizontal: spacing.sm, paddingVertical: 2 },
-  saveText: { color: '#FFFFFF', fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold' },
+  saveBadge: { borderRadius: borderRadius.full, paddingHorizontal: spacing.sm, paddingVertical: 2, justifyContent: 'center' },
+  saveText: { color: '#FFFFFF', fontSize: fontSize.sm, lineHeight: 20, fontFamily: 'Cairo_600SemiBold', includeFontPadding: false, textAlignVertical: 'center' },
   stockRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  stockText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  stockText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: 20, includeFontPadding: false, textAlignVertical: 'center' },
   meta: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', textAlign: 'left' },
   description: { fontSize: fontSize.base, fontFamily: 'Cairo_400Regular', lineHeight: 26, textAlign: 'left' },
   infoCard: { flexDirection: 'row', gap: spacing.md, padding: spacing.lg, borderRadius: borderRadius.lg, borderWidth: 1 },
-  infoTitle: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  infoIcon: { marginTop: 2 },
+  infoTitle: { fontSize: fontSize.base, lineHeight: 24, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
   footer: { borderTopWidth: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.md },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.lg },
   stepButton: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   disabled: { opacity: 0.4 },
-  quantity: { fontSize: fontSize.lg, fontFamily: 'Cairo_700Bold', minWidth: 32, textAlign: 'center' },
+  quantity: { fontSize: fontSize.lg, fontFamily: 'Cairo_700Bold', minWidth: 32, textAlign: 'center', lineHeight: 26, includeFontPadding: false, textAlignVertical: 'center' },
   actions: { flexDirection: 'row', gap: spacing.md },
   actionButton: { flex: 1 },
 });

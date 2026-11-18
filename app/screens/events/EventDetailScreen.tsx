@@ -90,6 +90,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
       ...typography.body,
       color: theme.colors.textSecondary,
       flexShrink: 1,
+      includeFontPadding: false,
     },
     description: {
       ...typography.body,

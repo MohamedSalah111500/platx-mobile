@@ -244,7 +244,7 @@ function createStyles(theme: any) {
     text: { fontSize: 14, fontFamily: 'Cairo_400Regular', color: theme.colors.textSecondary, textAlign: 'left' },
     meta: { fontSize: 14, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'left' },
     title: { flex: 1, fontSize: fontSize.base, fontFamily: 'Cairo_700Bold', color: theme.colors.text, textAlign: 'left' },
-    status: { fontSize: 14, fontFamily: 'Cairo_600SemiBold' },
+    status: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', lineHeight: 20, includeFontPadding: false, textAlignVertical: 'center' },
     rowTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     drop: {
       borderWidth: 1.5,
@@ -254,7 +254,7 @@ function createStyles(theme: any) {
       alignItems: 'center',
       gap: spacing.xs,
     },
-    dropText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.text },
+    dropText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.text, lineHeight: 20, includeFontPadding: false, textAlignVertical: 'center' },
     section: { fontSize: 14, fontFamily: 'Cairo_700Bold', color: theme.colors.textMuted, textAlign: 'left', marginTop: spacing.md },
     empty: { fontSize: fontSize.sm, fontFamily: 'Cairo_400Regular', color: theme.colors.textMuted, textAlign: 'center', paddingVertical: spacing.md },
     backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },

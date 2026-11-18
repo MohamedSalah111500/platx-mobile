@@ -155,7 +155,7 @@ function createStyles(theme: any) {
     groupsLabel: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', color: theme.colors.textSecondary, textAlign: 'left' },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     chip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.md, paddingVertical: spacing.xs + 2, borderRadius: borderRadius.full, borderWidth: 1 },
-    chipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+    chipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: 20, includeFontPadding: false, textAlignVertical: 'center' },
     errorText: { fontSize: fontSize.xs, fontFamily: 'Cairo_500Medium', color: theme.colors.danger, textAlign: 'left' },
   });
 }

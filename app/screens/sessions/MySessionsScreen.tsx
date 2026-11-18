@@ -180,6 +180,8 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     ...typography.bodySmall,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   meta: {
     ...typography.bodySmall,

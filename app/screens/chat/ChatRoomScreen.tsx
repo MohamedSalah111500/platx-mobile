@@ -6,7 +6,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useRTL } from '../../i18n/RTLProvider';
 import { spacing } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
+import { typography, fontSize, buttonLineHeight } from '../../theme/typography';
 import type { ChatStackParamList } from '../../types/navigation.types';
 import { ChatConversation } from '../../components/chat/ChatConversation';
 import { BackButton } from '../../components/ui/BackButton';
@@ -90,6 +90,8 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: 'Cairo_700Bold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(17),
+    includeFontPadding: false,
   },
   headerInfo: { flex: 1, gap: 1 },
   headerName: { ...typography.body, fontFamily: 'Cairo_700Bold' },

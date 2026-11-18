@@ -287,9 +287,9 @@ export default function HomeScreen({ navigation }: Props) {
 
       header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.xl, gap: spacing.md },
       headerText: { flex: 1, alignItems: 'flex-start' },
-      headerName: { fontFamily: fontFamily.bold, fontSize: fontSize.lg, lineHeight: 28, color: ink, textAlign: 'left' },
+      headerName: { fontFamily: fontFamily.bold, fontSize: fontSize.lg, lineHeight: 28, color: ink, textAlign: 'left', includeFontPadding: false },
       greetingRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-      greeting: { ...typography.bodySmall, color: theme.colors.textSecondary },
+      greeting: { ...typography.bodySmall, color: theme.colors.textSecondary, includeFontPadding: false },
       iconButton: {
         width: 44,
         height: 44,

@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { typography, fontFamily, fontSize } from '../../theme/typography';
+import { typography, fontFamily, fontSize, buttonLineHeight } from '../../theme/typography';
 import { PlayCircle } from './PlayCircle';
 
 interface MediaCardProps {
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.95)',
   },
   topEnd: { position: 'absolute', top: spacing.md, end: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  badgeText: { fontFamily: fontFamily.bold, fontSize: fontSize.sm, color: '#18181B', textAlign: 'left' },
+  badgeText: { fontFamily: fontFamily.bold, fontSize: fontSize.sm, color: '#18181B', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   overlay: {
     position: 'absolute',
     start: 0,

@@ -159,6 +159,8 @@ function createStyles(theme: Theme) {
       ...typography.bodySmall,
       fontFamily: 'Cairo_600SemiBold',
       color: theme.colors.primary,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
     },
     card: {
       flexDirection: 'row',
@@ -194,6 +196,8 @@ function createStyles(theme: Theme) {
     },
     chipText: {
       ...typography.bodySmall,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
       fontFamily: 'Cairo_600SemiBold',
     },
     time: {

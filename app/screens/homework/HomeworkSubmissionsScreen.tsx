@@ -11,7 +11,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { spacing } from '../../theme/spacing';
-import { fontSize } from '../../theme/typography';
+import { fontSize, buttonLineHeight } from '../../theme/typography';
 import { homeworkApi } from '../../services/api/homework.api';
 import type { HomeworkStackParamList } from '../../types/navigation.types';
 import {
@@ -90,7 +90,7 @@ export default function HomeworkSubmissionsScreen({ navigation, route }: Props) 
               <>
                 <Text style={[styles.dot, { color: theme.colors.textMuted }]}>·</Text>
                 <View style={styles.aiChip}>
-                  <Ionicons name="sparkles" size={9} color={theme.colors.primary} />
+                  <Ionicons name="sparkles" size={14} color={theme.colors.primary} />
                   <Text style={[styles.aiChipText, { color: theme.colors.primary }]}>{t('homework.aiSuggested')}</Text>
                 </View>
               </>
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   name: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap' },
   metaText: { fontSize: 14, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
-  dot: { fontSize: 14, textAlign: 'left' },
+  dot: { fontSize: 14, textAlign: 'left', lineHeight: buttonLineHeight(14), includeFontPadding: false },
   aiChip: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  aiChipText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  aiChipText: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(14), includeFontPadding: false },
 });

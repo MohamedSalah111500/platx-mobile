@@ -13,7 +13,7 @@ import {
 } from '../../services/realtime/pushNotifications';
 import { getAppVersion } from '../../utils/version';
 import { spacing } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
+import { typography, fontSize, buttonLineHeight } from '../../theme/typography';
 
 function Chip({
   value,
@@ -326,11 +326,15 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.sm),
+    includeFontPadding: false,
   },
   versionText: {
     fontSize: fontSize.sm,
     fontFamily: 'Cairo_600SemiBold',
     textAlign: 'left',
+    lineHeight: buttonLineHeight(fontSize.sm),
+    includeFontPadding: false,
   },
   logoutBtn: {
     borderRadius: 20,
@@ -342,5 +346,6 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     ...typography.button,
+    includeFontPadding: false,
   },
 });

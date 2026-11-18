@@ -28,7 +28,7 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { Spinner } from '../../components/ui/Spinner';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { spacing } from '../../theme/spacing';
-import { typography, fontSize } from '../../theme/typography';
+import { typography, fontSize, buttonLineHeight } from '../../theme/typography';
 import { API_CONFIG } from '../../config';
 import { homeworkApi } from '../../services/api/homework.api';
 import type { HomeworkStackParamList } from '../../types/navigation.types';
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
   gradeValue: { color: '#fff', fontSize: 28, fontFamily: 'Cairo_700Bold', textAlign: 'left' },
   gradeUnit: { fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
   aiBanner: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md, borderRadius: 12 },
-  aiText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  aiText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   card: { borderRadius: 16, padding: spacing.lg, gap: spacing.sm },
   sectionLabel: { fontSize: 14, fontFamily: 'Cairo_700Bold', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'left' },
   qHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
   answerText: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', lineHeight: 20, textAlign: 'left' },
   selectedTag: { fontSize: 14, fontFamily: 'Cairo_600SemiBold', lineHeight: 20, textAlign: 'left' },
   fileRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: 10, paddingHorizontal: spacing.md, paddingVertical: 10 },
-  fileName: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
+  fileName: { flex: 1, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   gradeInputRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   gradeInput: { flex: 1, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: spacing.md, paddingVertical: 12, fontFamily: 'Cairo_700Bold', fontSize: fontSize.lg, textAlign: 'left' },
   gradeInputMax: { fontSize: fontSize.base, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
@@ -495,12 +495,12 @@ const styles = StyleSheet.create({
   counter: { fontSize: 14, fontFamily: 'Cairo_500Medium', textAlign: 'left' },
   feedbackInput: { minHeight: 90, borderWidth: 1.5, borderRadius: 12, padding: spacing.md, fontSize: fontSize.sm, fontFamily: 'Cairo_500Medium', textAlignVertical: 'top' },
   recBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderWidth: 1.5, borderRadius: 12, paddingVertical: 13 },
-  recText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  recText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   recDot: { width: 12, height: 12, borderRadius: 6 },
   voiceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   playBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: 12, borderRadius: 12 },
-  playText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+  playText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
   removeVoice: { padding: 10 },
   publishBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderRadius: 14, paddingVertical: 12, marginTop: spacing.sm },
-  publishText: { ...typography.button, color: '#fff', fontSize: fontSize.base },
+  publishText: { ...typography.button, color: '#fff', fontSize: fontSize.base, includeFontPadding: false },
 });

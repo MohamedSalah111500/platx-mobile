@@ -253,7 +253,7 @@ function createStyles(theme: any) {
       borderRadius: borderRadius.full,
       borderWidth: 1,
     },
-    chipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left' },
+    chipText: { fontSize: fontSize.sm, fontFamily: 'Cairo_600SemiBold', textAlign: 'left', lineHeight: 20, includeFontPadding: false, textAlignVertical: 'center' },
     bodyInput: { minHeight: 130 },
     counter: {
       alignSelf: 'flex-end',

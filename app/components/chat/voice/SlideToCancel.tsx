@@ -13,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { useRTL } from '../../../i18n/RTLProvider';
-import { fontFamily, fontSize } from '../../../theme/typography';
+import { fontFamily, fontSize, buttonLineHeight } from '../../../theme/typography';
 
 const TOWARD_START = I18nManager.isRTL ? 1 : -1;
 
@@ -58,5 +58,5 @@ export function SlideToCancel({ dragX, cancelDistance }: Props) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   flip: { transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }] },
-  label: { fontSize: fontSize.sm, fontFamily: fontFamily.medium, textAlign: 'left' },
+  label: { fontSize: fontSize.sm, fontFamily: fontFamily.medium, textAlign: 'left', lineHeight: buttonLineHeight(fontSize.sm), includeFontPadding: false },
 });
