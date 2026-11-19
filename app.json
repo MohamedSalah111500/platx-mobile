@@ -22,7 +22,7 @@
     },
     "android": {
       "package": "com.platx.platform",
-      "versionCode": 54,
+      "versionCode": 55,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -89,6 +89,7 @@
         }
       ],
       "./plugins/removePermissions",
+      "./plugins/optionalScreenFeatures",
       "expo-localization",
       "expo-secure-store",
       "expo-asset",
